@@ -1,4 +1,4 @@
-# discord-coinbot
+# NeoVision Discord-Bot
 A coin system for Discord with an API.
 
 Basically an updated and improved version of **https://github.com/nsde/SCD-Bot**.
