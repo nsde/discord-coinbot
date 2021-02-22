@@ -1,0 +1,27 @@
+[project]
+name = "NeoVision"
+version = "1.0.0"
+description = "A useful discord bot."
+authors = [
+    "nsde"
+    "beban09"
+]
+license = "MIT"
+readme = "README.md"
+python = "^3.6"
+homepage = "https://github.com/nsde/NeoVision"
+repository = "https://github.com/nsde/NeoVision"
+documentation = "https://github.com/nsde/NeoVision/wiki"
+
+keywords = ["discord", "bot", "disocrd-bot"]
+
+classifiers = [
+    "Topic :: Discord Bot"
+]
+
+# Requirements
+[dependencies]
+pyyaml = "^0.1"
+discord.py = "^0.1"
+discord = "^0.1"
+python = "^3.7"
