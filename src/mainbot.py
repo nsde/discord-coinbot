@@ -28,10 +28,8 @@ try:
     with open (CWD + '/config/token.txt') as f:
         token = f.read()
     print('Token loaded. Length: ' + str(len(token)))
-
     if token == '':
         tokenError()
-
 except:
     tokenError()
 
@@ -57,11 +55,9 @@ with open(CWD + '/data/dailycoins.yml') as f:
 async def on_ready():
     print(f'\nLogged in as {client.user}\n')
 
-
 @client.command(name='ping')
 async def ping(ctx):
     await ctx.send('Ping!')
-
 
 @client.command(name='say')
 async def say(ctx, *args):
@@ -69,7 +65,6 @@ async def say(ctx, *args):
     for s in args:
         var += f'{s} '
     await ctx.send(var)
-
 
 @client.command(name='user')
 async def user(ctx):
@@ -79,7 +74,6 @@ async def user(ctx):
     await ctx.send(user)
     await ctx.send(mention)
     await ctx.send(id)
-
 
 @client.command(name='stop')
 @commands.has_permissions(administrator=True)
@@ -103,7 +97,7 @@ async def dailycoins(ctx):
 @client.command(name='tempchannel', aliases=['tchannel'])
 async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
   if cname is None:
-    cname = f'💬│{ctx.message.author.display_name}-{timeout}{timeout[-1]}'
+    cname = f'💬│{ctx.message.author.display_name[:13].lower()}-{timeout}{timeout[-1]}'
 
   if ctype is None:
     await ctx.send(':x: ERROR: Please follow the syntax: `t(emp)channel [text/voice] <inactivity-timeout-minutes> (channel-name)`')
@@ -125,22 +119,25 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
   elif ctype == 'voice':
     category = ctx.channel.category
     channel = await ctx.guild.create_voice_channel(cname, category=category)
-    while len(channel.members) != 0:
-      pass
-    if timeout[-1] == 's':
-      timeout = timeout.replace('s', '')
-      await asyncio.sleep(int(timeout)
+    while True:
       if len(channel.members) == 0:
-        await channel.delete()
-    elif timeout[-1] == 'm':
-      timeout = timeout.replace('m', '')
-      await asyncio.sleep(float(round(int(timeout)*60))
-      if len(channel.members) == 0:
-        await channel.delete()
-    else:
-      await asyncio.sleep(float(round(int(timeout)*60))
-      if len(channel.members) == 0:
-         await channel.delete()
+        if timeout[-1] == 's':
+          timeout_temp = timeout.replace('s', '')
+          await asyncio.sleep(int(timeout_temp))
+          if len(channel.members) == 0:
+            await channel.delete()
+            break
+        elif timeout[-1] == 'm':
+          timeout_temp = timeout.replace('m', '')
+          await asyncio.sleep(float(round(int(timeout_temp)*60)))
+          if len(channel.members) == 0:
+            await channel.delete()
+            break
+        else:
+          await asyncio.sleep(float(round(int(timeout)*60)))
+          if len(channel.members) == 0:
+            await channel.delete()
+            break
     
   
 # Run
