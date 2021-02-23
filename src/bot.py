@@ -15,9 +15,10 @@ print(TOKEN)
 # Set token
 def tokenError():
     print('Please type in a valid bot token.\n\nThe token can be found at config/token.txt. Remember to not give anyone access to this secret file!')
-    set_token = input('Token: ')
+    token = ''
+    token = input('Token: ')
     with open (CWD + '/config/token.txt', 'w') as f:
-        token = f.write(set_token)
+      f.write(token)
 
 try:
     with open (CWD + '/config/token.txt') as f:
@@ -89,18 +90,36 @@ async def dailycoins(ctx):
     else:
         await ctx.send(config['currency']['symbols']['error'] + ' ' + lang('dailyerror'))
 
-@client.command(name='tempchannel', aliases=['tchannel'])
+@client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='Create a temporary channel.', usage='[v|t] <time>(s) (<name>)')
 async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
   if cname is None:
-    cname = f'💬│{ctx.message.author.display_name[:13].lower()}-{timeout}{timeout[-1]}'
+    cname = f'⏳│{ctx.message.author.display_name[:13].lower()}-{timeout}'
+  else:
+    cname = "⏳│" + str(cname) 
+  
+  await ctx.send(f'''
+  :wrench: Creating channel...
+  > **Type:** {ctype}
+  > **Timeout:** {timeout}
+  > **Channel name:** {cname}
+  ''', delete_after=3)
 
-  if timeout is None and ctype[0] is not 'v':
-    (':x: **ERROR:** Only voice channels don\' need a timeout. Please also give a valid timout argument.')
+
+  if not ctype:
+    await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
+    return
+
+  if timeout is None and ctype[0] != 'v':
+    await ctx.send(':x: **ERROR:** Only voice channels don\'t need a timeout. Therefore, please give a valid timout argument.')
+    return
 
   if ctype is None:
     await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
+    return
 
   elif ctype[0] == 't':
+    await ctx.send(f':white_check_mark: Created text channel ***#{cname}*** with timeout ***{timeout}***.')
+
     category = ctx.channel.category
     channel = await ctx.guild.create_text_channel(cname, category=category)
     if timeout[-1] == 's':
@@ -116,6 +135,8 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
       await channel.delete()
 
   elif ctype[0] == 'v':
+    await ctx.send(f':white_check_mark: Created voice channel ***#{cname}*** with timeout ***{timeout}***.')
+
     category = ctx.channel.category
     channel = await ctx.guild.create_voice_channel(cname, category=category)
     while True:
@@ -140,8 +161,27 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
   
   else:
     await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
-    
-  
+    return
+
+@client.command(name='tempuserlimit', aliases=['tul', 'tempul', 'tcul'], help='Edit a temporary channel.', usage='<limit>')
+async def tempchannel(ctx, limit=None):
+  if not limit:
+    limit = 0
+
+  limit = int(limit)
+
+  channel = ctx.author.voice.channel
+  if limit > 1:
+    limit = len(channel.members)
+    if ctx.author.voice and ctx.author.voice.channel:
+        await channel.edit(user_limit=limit)
+        await ctx.send(f'''
+        :white_check_mark: New user limit for {channel.name} is {limit}.
+        Keep in mind that users with certain permission can bypass this restriction.''')
+    else:
+        await ctx.send(':x: **ERROR:** Please join a voice channel to change its userlimit and try again.')
+        return
+
 # Run
 try:
     client.run(token)
