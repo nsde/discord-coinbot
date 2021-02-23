@@ -119,7 +119,6 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
 
   elif ctype[0] == 't':
     await ctx.send(f':white_check_mark: Created text channel ***#{cname}*** with timeout ***{timeout}***.')
-
     category = ctx.channel.category
     channel = await ctx.guild.create_text_channel(cname, category=category)
     if timeout[-1] == 's':
@@ -136,7 +135,6 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
 
   elif ctype[0] == 'v':
     await ctx.send(f':white_check_mark: Created voice channel ***#{cname}*** with timeout ***{timeout}***.')
-
     category = ctx.channel.category
     channel = await ctx.guild.create_voice_channel(cname, category=category)
     while True:
@@ -158,29 +156,26 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
           if len(channel.members) == 0:
             await channel.delete()
             break
-  
   else:
     await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
     return
 
-@client.command(name='tempuserlimit', aliases=['tul', 'tempul', 'tcul'], help='Edit a temporary channel.', usage='<limit>')
+@client.command(name='tempuserlimit', aliases=['tul', 'tempul', 'tcul'], help='Edit a voice channel\'s user limit.', usage='<limit>')
 async def tempchannel(ctx, limit=None):
   if not limit:
     limit = 0
-
   limit = int(limit)
-
   channel = ctx.author.voice.channel
-  if limit > 1:
+  if limit < 2:
     limit = len(channel.members)
-    if ctx.author.voice and ctx.author.voice.channel:
-        await channel.edit(user_limit=limit)
-        await ctx.send(f'''
-        :white_check_mark: New user limit for {channel.name} is {limit}.
-        Keep in mind that users with certain permission can bypass this restriction.''')
-    else:
-        await ctx.send(':x: **ERROR:** Please join a voice channel to change its userlimit and try again.')
-        return
+  if ctx.author.voice and ctx.author.voice.channel:
+    await channel.edit(user_limit=limit)
+    await ctx.send(f'''
+      :white_check_mark: New user limit for ***{channel.name}*** is **{limit}**.
+      Keep in mind that users with certain permissions can bypass this restriction.''')
+  else:
+    await ctx.send(':x: **ERROR:** Please join a voice channel to change its userlimit and try again.')
+    return
 
 # Run
 try:
