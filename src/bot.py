@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-
-
-# Load modules
-# try:
 import os
 import sys
 import yaml #pip install pyyaml
@@ -10,7 +5,7 @@ import random
 import discord #pip install discord
 import asyncio
 
-from discord.ext import commands #pip install discord.py
+from discord.ext import commands
 
 # Some basic defenitions
 CWD = os.getcwd()
@@ -99,9 +94,13 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
   if cname is None:
     cname = f'💬│{ctx.message.author.display_name[:13].lower()}-{timeout}{timeout[-1]}'
 
+  if timeout is None and ctype[0] is not 'v':
+    (':x: **ERROR:** Only voice channels don\' need a timeout. Please also give a valid timout argument.')
+
   if ctype is None:
-    await ctx.send(':x: ERROR: Please follow the syntax: `t(emp)channel [text/voice] <inactivity-timeout-minutes> (channel-name)`')
-  elif ctype == 'text':
+    await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
+
+  elif ctype[0] == 't':
     category = ctx.channel.category
     channel = await ctx.guild.create_text_channel(cname, category=category)
     if timeout[-1] == 's':
@@ -116,7 +115,7 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
       await asyncio.sleep(float(round(int(timeout)*60)))
       await channel.delete()
 
-  elif ctype == 'voice':
+  elif ctype[0] == 'v':
     category = ctx.channel.category
     channel = await ctx.guild.create_voice_channel(cname, category=category)
     while True:
@@ -138,6 +137,9 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
           if len(channel.members) == 0:
             await channel.delete()
             break
+  
+  else:
+    await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
     
   
 # Run
