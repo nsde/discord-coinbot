@@ -1,7 +1,10 @@
 # NeoVision Discord-Bot
-A coin system for Discord with an API.
+A Discord-Bot written in Python with features like coin/economy system, music, utilities and more!
 
-Basically an updated and improved version of **https://github.com/nsde/SCD-Bot**.
+[![huntr](https://cdn.huntr.dev/huntr_security_badge.svg)](https://huntr.dev)
+
+## Information
+This is basically an updated and improved version of **https://github.com/nsde/SCD-Bot**.
 
 *"Why didn't I just update the SCD-Repo?"*, you might ask.
 > It's because the SCD-Bot was created for a gaming clan, but thgis one is a public bot.
