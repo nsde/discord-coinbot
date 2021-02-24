@@ -4,6 +4,7 @@ import yaml #pip install pyyaml
 import random
 import discord #pip install discord
 import asyncio
+import datetime
 
 from pytube import YouTube #pip install pytube
 from youtube_search import YoutubeSearch #pip install youtube-search
@@ -34,7 +35,7 @@ except:
 
 # Load config
 with open(CWD + '/config/config.yml') as f:
-    config = yaml.load(f, Loader=yaml.FullLoader)
+    config = yaml.load(f, Loader=yaml.SafeLoader)
 
     def fixuml(x):
         '''Fix wrong coding of äüö (German language only)'''
@@ -47,7 +48,7 @@ with open(CWD + '/config/config.yml') as f:
     client = commands.Bot(command_prefix = config['main']['prefix'])
 
 with open(CWD + '/data/dailycoins.yml') as f:
-    daily = yaml.load(f, Loader=yaml.FullLoader)
+    daily = yaml.load(f, Loader=yaml.SafeLoader)
 
 # Bot
 @client.event
@@ -202,79 +203,95 @@ async def playsong(ctx, *args):
   if not args:
     await  ctx.send(':x: **ERROR** No argument for the search term given.')
     return    
-
   try:
-    results = YoutubeSearch(' '.join(args), max_results=2).to_dict()
+    results = YoutubeSearch(' '.join(args), max_results=10).to_dict()
     video = results[0]
   except Exception as e:
     await  ctx.send(f':x: **ERROR** Sorry, I couldn\'t find videos on YouTube with that search term. Error:\n`{e}`')
     return
 
-  url = 'https://www.youtube.com' + video['url_suffix']
+  for video in results:
+    url = 'https://www.youtube.com' + video['url_suffix']
+    if YouTube(url).length > 6*60: # (in seconds) to make sure that no 1 hour loops or so play
+      continue
+    else:
+      easteregg_videos = ['dQw4w9WgXcQ', 'ub82Xb1C8os', 'iik25wqIuFo', 'YddwkMJG1Jo', '8ybW48rKBME', 'dRV6NaciZVk', 'QB7ACr7pUuE', 'll-mQPDCn-U', 'ehSiEHFY5v4', '-51AfyMqnpI',
+      'Tt7bzxurJ1I', 'fC7oUOUEEi4', 'O91DT1pR1ew']
+      if video['id'] in easteregg_videos:
+        description = 'No, not again.'
+      else:
+        description = ''
+      thumbnail = video['thumbnails'][0]
+      views = video['views'].split()[0]
 
-  easteregg_videos = ['dQw4w9WgXcQ', 'ub82Xb1C8os', 'iik25wqIuFo', 'YddwkMJG1Jo', '8ybW48rKBME', 'dRV6NaciZVk', 'QB7ACr7pUuE', 'll-mQPDCn-U', 'ehSiEHFY5v4', '-51AfyMqnpI',
-  'Tt7bzxurJ1I', 'fC7oUOUEEi4', 'O91DT1pR1ew']
-  if video['id'] in easteregg_videos:
-    description = 'No, not again.'
-  else:
-    description = ''
-  thumbnail = video['thumbnails'][0]
-  views = video['views'].split()[0]
-
-  embed = discord.Embed(title=video['title'], colour=discord.Colour(0x20b1d5), url=url, description=description)
-  embed.set_thumbnail(url=thumbnail)
-  embed.add_field(name='__Channel__', value=video['channel'], inline=True)
-  embed.add_field(name='__Duration__', value=video['duration'], inline=True)
-  embed.add_field(name='__Views__', value=views, inline=True)
-
-  await ctx.send(embed=embed)
+      embed = discord.Embed(title=video['title'], colour=discord.Colour(0x20b1d5), url=url, description=description)
+      embed.set_thumbnail(url=thumbnail)
+      embed.add_field(name='__Channel__', value=video['channel'], inline=True)
+      embed.add_field(name='__Duration__', value=video['duration'], inline=True)
+      embed.add_field(name='__Views__', value=views.replace('.', ','), inline=True)
+      embed.add_field(name='__Uploaded__', value=YouTube(url).publish_date.strftime('%x'), inline=True)
+        
+      await ctx.send(embed=embed)
 
 # ==============================================================================================================
 
-  song_there = os.path.isfile('song.mp3')
-  try:
-      if song_there:
-          os.remove('song.mp3')
-  except PermissionError:
-      await ctx.send(':x: **ERROR** Wait for the current playing music to end or use the \'stop\' command')
-      return
+      filetype = 'webm'
+      filename = video['id']
 
-  try:
-    channel = ctx.author.voice.channel
-  except:
-    await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
-    return
+      song_there = os.path.isfile(CWD + '\\temp\\' + filename + '.' + filetype)
+      try:
+          if song_there:
+              os.remove(CWD + '\\temp\\' + filename + '.' + filetype)
+      except PermissionError:
+          await ctx.send(':x: **ERROR** Wait for the current playing music to end or use the \'stop\' command')
+          return
 
-  if ctx.author.voice and ctx.author.voice.channel:
-    pass
-  else:
-    await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
-    return
-  
-  try:
-    await channel.connect()
-  except:
-    pass
-  voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+      try:
+        channel = ctx.author.voice.channel
+      except:
+        await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
+        return
 
-  # Download
-  temp_path = CWD + '/temp'
-  try:
-    os.mkdir(temp_path)
-  except:
-    pass
+      if ctx.author.voice and ctx.author.voice.channel:
+        pass
+      else:
+        await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
+        return
+      
+      try:
+        await channel.connect()
+      except:
+        pass
+      voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
 
-  filename = video['id']
+      # Download
+      temp_path = CWD + '/temp'
+      try:
+        os.rmdir(temp_path)  
+        os.mkdir(temp_path)
+      except Exception as e:
+        print('Temp error\n\n', e)
 
-  YouTube(url).streams.first().download(output_path=temp_path, filename=filename)  
+      print(YouTube(url).streams.filter(file_extension=filetype, only_audio=True).first())
+      YouTube(url).streams.filter(file_extension=filetype, only_audio=True).first().download(output_path=temp_path, filename=filename)  
 
-  try:
-    voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '\\' + filename + '.mp4'))
-  except Exception as e:
-    print(f'Couldn\'t play the song. I believe FFMPEG has not been installed correctly.\n{e}')
+      try:
+        voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '\\' + filename + '.' + filetype))
+      except Exception as e:
+        print(f'Couldn\'t play the song. I believe FFMPEG has not been installed correctly.\n{e}')
+      
+      break
 
 
-@client.command(name='stopsong', aliases=['stops', 'stop', 'ss'])
+@client.command(name='pauseresumesong', aliases=['pause', 'resume'], help='Pause or resume a song with the same command.')
+async def pause(ctx):
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    if voice.is_playing():
+        voice.pause()
+    else:
+        voice.resume()
+
+@client.command(name='stopsong', aliases=['stop', 'xs'])
 async def stopsong(ctx):
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
     voice.stop()
