@@ -11,8 +11,9 @@ Basically an updated and improved version of **https://github.com/nsde/SCD-Bot**
 > I'm not sure yet, but probably no.
 
 # Installation
-Execute in root dir: `pip install -r requirements.txt` to install the needed libaries.
-After that, create a file in "\config" called "token.txt". The content of the file has to be the bot token (see the section "Security" > "Token") for security information.
+1. Execute in root dir: `pip install -r requirements.txt` to install the needed libaries.
+2. After that, create a file in "\config" called "token.txt". The content of the file has to be the bot token (see the section "Security" > "Token") for security information.
+3. Go to https://github.com/BtbN/FFmpeg-Builds/releases download `ffmpeg-n(VERSION)-win64-gpl-(VERSION).zip` and paste `/bin/ffmpeg.exe` to `C:/ffmpeg/ffmpeg.exe`.
 
 ## Fix errors:
 If you get "ERROR: Could not build wheels for multidict, yarl which use PEP 517 and cannot be installed directly":

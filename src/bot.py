@@ -5,12 +5,15 @@ import random
 import discord #pip install discord
 import asyncio
 
+from pytube import YouTube #pip install pytube
+from youtube_search import YoutubeSearch #pip install youtube-search
 from discord.ext import commands
+
+#pip install PyNaCl
 
 # Some basic defenitions
 CWD = os.getcwd()
 TOKEN = open(CWD + '/config/token.txt').read()
-print(TOKEN)
 
 # Set token
 def tokenError():
@@ -71,10 +74,10 @@ async def user(ctx):
     await ctx.send(mention)
     await ctx.send(id)
 
-@client.command(name='stop')
+@client.command(name='quit')
 @commands.has_permissions(administrator=True)
-async def stop_bot(ctx):
-    await ctx.send('Bot stoppt...')
+async def quit(ctx):
+    await ctx.send('Quitting...')
     await client.close()
 
 # Commands
@@ -95,7 +98,7 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
   if cname is None:
     cname = f'⏳│{ctx.message.author.display_name[:13].lower()}-{timeout}'
   else:
-    cname = "⏳│" + str(cname) 
+    cname = '⏳│' + str(cname) 
   
   await ctx.send(f'''
   :wrench: Creating channel...
@@ -103,7 +106,6 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
   > **Timeout:** {timeout}
   > **Channel name:** {cname}
   ''', delete_after=3)
-
 
   if not ctype:
     await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
@@ -120,7 +122,11 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
   elif ctype[0] == 't':
     await ctx.send(f':white_check_mark: Created text channel ***#{cname}*** with timeout ***{timeout}***.')
     category = ctx.channel.category
-    channel = await ctx.guild.create_text_channel(cname, category=category)
+    try:
+      channel = await ctx.guild.create_text_channel(cname, category=category)
+    except discord.errors.Forbidden as e:
+      await ctx.send(f':x: **ERROR:** Sorry, I don\'t have the permissions for this. Error:\n{e}')
+      return
     if timeout[-1] == 's':
       timeout = timeout.replace('s', '')
       await asyncio.sleep(int(timeout))
@@ -161,7 +167,7 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
     return
 
 @client.command(name='tempuserlimit', aliases=['tul', 'tempul', 'tcul'], help='Edit a voice channel\'s user limit.', usage='<limit>')
-async def tempchannel(ctx, limit=None):
+async def tempuserlimit(ctx, limit=None):
   if not limit:
     limit = 0
   limit = int(limit)
@@ -177,10 +183,105 @@ async def tempchannel(ctx, limit=None):
     await ctx.send(':x: **ERROR:** Please join a voice channel to change its userlimit and try again.')
     return
 
+@client.command(name='execute', aliases=['exe', 'exec', 'exc'], help='Execute Python code.', usage='<code>')
+async def execute(ctx, code):
+  try:
+    output = exec(code.replace('&', ' '))
+  except Exception as e:
+    output = f'There was an error executing this command:\n{e}\nTip: Use `&` to make spaces.'
+
+  await ctx.send(
+  f'''
+  ```py
+  {output}
+  ```
+  ''')
+
+@client.command(name='playsong', aliases=['play', 'psong', 'ps'], help='Execute Python code.', usage='<search>')
+async def playsong(ctx, *args):
+  if not args:
+    await  ctx.send(':x: **ERROR** No argument for the search term given.')
+    return    
+
+  try:
+    results = YoutubeSearch(' '.join(args), max_results=2).to_dict()
+    video = results[0]
+  except Exception as e:
+    await  ctx.send(f':x: **ERROR** Sorry, I couldn\'t find videos on YouTube with that search term. Error:\n`{e}`')
+    return
+
+  url = 'https://www.youtube.com' + video['url_suffix']
+
+  easteregg_videos = ['dQw4w9WgXcQ', 'ub82Xb1C8os', 'iik25wqIuFo', 'YddwkMJG1Jo', '8ybW48rKBME', 'dRV6NaciZVk', 'QB7ACr7pUuE', 'll-mQPDCn-U', 'ehSiEHFY5v4', '-51AfyMqnpI',
+  'Tt7bzxurJ1I', 'fC7oUOUEEi4', 'O91DT1pR1ew']
+  if video['id'] in easteregg_videos:
+    description = 'No, not again.'
+  else:
+    description = ''
+  thumbnail = video['thumbnails'][0]
+  views = video['views'].split()[0]
+
+  embed = discord.Embed(title=video['title'], colour=discord.Colour(0x20b1d5), url=url, description=description)
+  embed.set_thumbnail(url=thumbnail)
+  embed.add_field(name='__Channel__', value=video['channel'], inline=True)
+  embed.add_field(name='__Duration__', value=video['duration'], inline=True)
+  embed.add_field(name='__Views__', value=views, inline=True)
+
+  await ctx.send(embed=embed)
+
+# ==============================================================================================================
+
+  song_there = os.path.isfile('song.mp3')
+  try:
+      if song_there:
+          os.remove('song.mp3')
+  except PermissionError:
+      await ctx.send(':x: **ERROR** Wait for the current playing music to end or use the \'stop\' command')
+      return
+
+  try:
+    channel = ctx.author.voice.channel
+  except:
+    await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
+    return
+
+  if ctx.author.voice and ctx.author.voice.channel:
+    pass
+  else:
+    await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
+    return
+  
+  try:
+    await channel.connect()
+  except:
+    pass
+  voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+
+  # Download
+  temp_path = CWD + '/temp'
+  try:
+    os.mkdir(temp_path)
+  except:
+    pass
+
+  filename = video['id']
+
+  YouTube(url).streams.first().download(output_path=temp_path, filename=filename)  
+
+  try:
+    voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '\\' + filename + '.mp4'))
+  except Exception as e:
+    print(f'Couldn\'t play the song. I believe FFMPEG has not been installed correctly.\n{e}')
+
+
+@client.command(name='stopsong', aliases=['stops', 'stop', 'ss'])
+async def stopsong(ctx):
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    voice.stop()
+
 # Run
 try:
     client.run(token)
-
 except:
     print('ERROR: Unable to run the client. Did you input a invalid token?')
     sys.exit(0)
