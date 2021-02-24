@@ -2,6 +2,7 @@ import os
 import sys
 import yaml #pip install pyyaml
 import random
+import shutil
 import discord #pip install discord
 import asyncio
 import datetime
@@ -12,11 +13,19 @@ from discord.ext import commands
 
 #pip install PyNaCl
 
-# Some basic defenitions
+# stuff
 CWD = os.getcwd()
 TOKEN = open(CWD + '/config/token.txt').read()
 
-# Set token
+# temp
+temp_path = CWD + '/temp'
+try:
+  shutil.rmtree(temp_path)
+  os.mkdir(temp_path)
+except Exception as e:
+  print('Temp error\n\n', e)
+
+# set token
 def tokenError():
     print('Please type in a valid bot token.\n\nThe token can be found at config/token.txt. Remember to not give anyone access to this secret file!')
     token = ''
@@ -94,13 +103,15 @@ async def dailycoins(ctx):
     else:
         await ctx.send(config['currency']['symbols']['error'] + ' ' + lang('dailyerror'))
 
-@client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='Create a temporary channel.', usage='[v|t] <time>(s) (<name>)')
-async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
-  if cname is None:
-    cname = f'⏳│{ctx.message.author.display_name[:13].lower()}-{timeout}'
-  else:
-    cname = '⏳│' + str(cname) 
+@client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='Create a temporary channel.', usage='[v|t] <time>(s) (x)')
+async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
+  cname = f'⏳│{ctx.message.author.display_name[:13].lower()}-{timeout}'
   
+  if not afk_timer:
+    afk_timer = True
+  else:
+    afk_timer = False
+
   await ctx.send(f'''
   :wrench: Creating channel...
   > **Type:** {ctype}
@@ -120,49 +131,77 @@ async def tempchannel(ctx, ctype=None, timeout=None, cname=None):
     await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
     return
 
-  elif ctype[0] == 't':
+  if timeout[-1] == 's':
+    timeout = int(timeout.replace('s', ''))
+  else:
+    timeout = int(timeout.replace('m', ''))
+    timeout *= 60
+
+  category = ctx.channel.category
+
+  if ctype[0] == 't':
     await ctx.send(f':white_check_mark: Created text channel ***#{cname}*** with timeout ***{timeout}***.')
-    category = ctx.channel.category
+    
     try:
       channel = await ctx.guild.create_text_channel(cname, category=category)
     except discord.errors.Forbidden as e:
       await ctx.send(f':x: **ERROR:** Sorry, I don\'t have the permissions for this. Error:\n{e}')
       return
-    if timeout[-1] == 's':
-      timeout = timeout.replace('s', '')
-      await asyncio.sleep(int(timeout))
-      await channel.delete()
-    elif timeout[-1] == 'm':
-      timeout = timeout.replace('m', '')
-      await asyncio.sleep(float(round(int(timeout)*60)))
-      await channel.delete()
+
+    if afk_timer:
+      timer = 0
+      while timer < timeout:
+        await asyncio.sleep(1)     
+        if len(channel.members) == 0:
+          timer += 1
+        else:
+          timer = 0
     else:
-      await asyncio.sleep(float(round(int(timeout)*60)))
-      await channel.delete()
+      await asyncio.sleep(timeout)
+    await channel.delete()
+
 
   elif ctype[0] == 'v':
-    await ctx.send(f':white_check_mark: Created voice channel ***#{cname}*** with timeout ***{timeout}***.')
-    category = ctx.channel.category
-    channel = await ctx.guild.create_voice_channel(cname, category=category)
-    while True:
-      if len(channel.members) == 0:
-        if timeout[-1] == 's':
-          timeout_temp = timeout.replace('s', '')
-          await asyncio.sleep(int(timeout_temp))
-          if len(channel.members) == 0:
-            await channel.delete()
-            break
-        elif timeout[-1] == 'm':
-          timeout_temp = timeout.replace('m', '')
-          await asyncio.sleep(float(round(int(timeout_temp)*60)))
-          if len(channel.members) == 0:
-            await channel.delete()
-            break
+    try:
+      channel = await ctx.guild.create_voice_channel(cname, category=category)
+      await ctx.send(f':white_check_mark: Created voice channel ***#{cname}*** with timeout ***{timeout}***.')
+    except discord.errors.Forbidden as e:
+      await ctx.send(f':x: **ERROR:** Sorry, I don\'t have the permissions for this. Error:\n{e}')
+      return
+
+    if afk_timer:
+      timer = 0
+      while timer < timeout:
+        await asyncio.sleep(1)     
+        if len(channel.members) == 0:
+          timer += 1
         else:
-          await asyncio.sleep(float(round(int(timeout)*60)))
-          if len(channel.members) == 0:
-            await channel.delete()
-            break
+          timer = 0
+    else:
+      await asyncio.sleep(timeout)
+    await channel.delete()
+
+    '''Code by @beban09'''
+    # while True:
+    #   if len(channel.members) == 0:
+    #     if timeout[-1] == 's':
+    #       timeout_temp = timeout.replace('s', '')
+    #       await asyncio.sleep(int(timeout_temp))
+    #       if len(channel.members) == 0:
+    #         await channel.delete()
+    #         break
+    #     elif timeout[-1] == 'm':
+    #       timeout_temp = timeout.replace('m', '')
+    #       await asyncio.sleep(float(round(int(timeout_temp)*60)))
+    #       if len(channel.members) == 0:
+    #         await channel.delete()
+    #         break
+    #     else:
+    #       await asyncio.sleep(float(round(int(timeout)*60)))
+    #       if len(channel.members) == 0:
+    #         await channel.delete()
+    #         break
+
   else:
     await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
     return
@@ -265,15 +304,13 @@ async def playsong(ctx, *args):
       voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
 
       # Download
-      temp_path = CWD + '/temp'
-      try:
-        os.rmdir(temp_path)  
-        os.mkdir(temp_path)
-      except Exception as e:
-        print('Temp error\n\n', e)
 
-      print(YouTube(url).streams.filter(file_extension=filetype, only_audio=True).first())
-      YouTube(url).streams.filter(file_extension=filetype, only_audio=True).first().download(output_path=temp_path, filename=filename)  
+      video_stream = YouTube(url).streams.filter(file_extension=filetype, only_audio=True).first()
+
+      ctx.send(f':arrow_down: Downloading...\n{video_stream}', delete_after=5)
+
+      video_stream.download(output_path=temp_path, filename=filename)  
+      print(video_stream)
 
       try:
         voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '\\' + filename + '.' + filetype))
