@@ -1,6 +1,7 @@
 import os
 import sys
 import yaml #pip install pyyaml
+import time
 import random
 import shutil
 import discord #pip install discord
@@ -10,7 +11,6 @@ import datetime
 from pytube import YouTube #pip install pytube
 from youtube_search import YoutubeSearch #pip install youtube-search
 from discord.ext import commands
-
 #pip install PyNaCl
 
 # stuff
@@ -63,10 +63,16 @@ with open(CWD + '/data/dailycoins.yml') as f:
 @client.event
 async def on_ready():
     print(f'\nLogged in as {client.user}\n')
+    await client.change_presence(activity=discord.Game(name='.help | visit bit.ly/nevi'))
 
 @client.command(name='ping')
 async def ping(ctx):
-    await ctx.send('Ping!')
+    old = time.mktime(ctx.channel.last_message.created_at.timetuple())
+    new = datetime.datetime.timestamp(datetime.datetime.now())
+    await ctx.send('**__Ping Stats__**')
+    await ctx.send('> :desktop: **Client:** ' + str(round(client.latency, 2)) + 'ms')
+    await ctx.send('> :chart_with_upwards_trend:  **Response time:** ' + str(round((new - old) - 3600, 2)) + 'ms')
+    
 
 @client.command(name='say')
 async def say(ctx, *args):
@@ -79,15 +85,15 @@ async def say(ctx, *args):
 async def user(ctx):
     user = ctx.message.author
     mention = ctx.message.author.mention
-    id = ctx.message.author.id
+    msg_id = ctx.message.author.id
     await ctx.send(user)
     await ctx.send(mention)
-    await ctx.send(id)
+    await ctx.send(msg_id)
 
-@client.command(name='quit')
+@client.command(name='terminate')
 @commands.has_permissions(administrator=True)
 async def quit(ctx):
-    await ctx.send('Quitting...')
+    await ctx.send('Terminating Bot...')
     await client.close()
 
 # Commands
@@ -154,12 +160,10 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
       last_saved = 0 # last 'saved' message id
       while difference <= timeout:
         # check
-        print(difference)
         await asyncio.sleep(1)
-        if channel.last_message:
+        if channel.last_message_id:
           # the channel is not empty
-          message = channel.last_message.id
-          print(message)
+          message = channel.last_message_id
           if last_saved == message:
             # same message
             difference += 1
@@ -321,26 +325,34 @@ async def playsong(ctx, *args):
 
       video_stream = YouTube(url).streams.filter(file_extension=filetype, only_audio=True).first()
 
-      ctx.send(f':arrow_down: Downloading...\n{video_stream}', delete_after=5)
+      await ctx.send(f':arrow_down: Downloading...\n```{video_stream}```', delete_after=5)
 
       video_stream.download(output_path=temp_path, filename=filename)  
-      print(video_stream)
 
       try:
         voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '\\' + filename + '.' + filetype))
       except Exception as e:
         print(f'Couldn\'t play the song. I believe FFMPEG has not been installed correctly.\n{e}')
-      
+        await ctx.send(f'x: **CLIENT ERROR** An error occured on the system hosting this bot.\n{e}')
       break
 
 
-@client.command(name='pauseresumesong', aliases=['pause', 'resume'], help='Pause or resume a song with the same command.')
+@client.command(name='pausesong', aliases=['pause', 'resume'], help='Pause or resume a song.')
 async def pause(ctx):
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
     if voice.is_playing():
         voice.pause()
     else:
         voice.resume()
+
+@client.command(name='move', help='Move the voice client to another channel.')
+async def move(ctx):
+  channel = ctx.author.voice.channel
+  try:
+    discord.VoiceClient.move_to(channel)
+  except Exception as e:
+    await ctx.send(f':x: **ERROR** Couldn\'t move the voice client to your channel. Please join a voice channel and try again. Error:\n{e}')
+    return
 
 @client.command(name='stopsong', aliases=['stop', 'xs'])
 async def stopsong(ctx):
