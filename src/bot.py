@@ -149,13 +149,27 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
       return
 
     if afk_timer:
-      timer = 0
-      while timer < timeout:
-        await asyncio.sleep(1)     
-        if len(channel.members) == 0:
-          timer += 1
+      # checks if there are new messages
+      difference = 0
+      last_saved = 0 # last 'saved' message id
+      while difference <= timeout:
+        # check
+        print(difference)
+        await asyncio.sleep(1)
+        if channel.last_message:
+          # the channel is not empty
+          message = channel.last_message.id
+          print(message)
+          if last_saved == message:
+            # same message
+            difference += 1
+          else:
+            # new message
+            difference = 0
+            last_saved = message
         else:
-          timer = 0
+          # the channel is empty
+          difference += 1
     else:
       await asyncio.sleep(timeout)
     await channel.delete()
