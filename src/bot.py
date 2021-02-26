@@ -157,17 +157,21 @@ async def dailycoins(ctx):
   else:
       await ctx.send(config['currency']['symbols']['error'] + ' ' + lang('dailyerror'))
 
-@client.command(name='meme', help='Show a random meme.')
-async def meme(ctx):
-  try:
-    await ctx.send(random.choice(meme_list)._pic_url)
-  except:
-    a = meme_get.RedditMemes()
-    meme_list = a.get_memes(100)
-    await ctx.send(':white_check_mark: Loaded 100 memes.')
-    await ctx.send(random.choice(meme_list)._pic_url)
+@client.command(name='meme', help='Shows a random meme. Specify "load count" to a high number to get more unique memes.', usage='(load_count)')
+async def meme(ctx, load_count=None):
+  meme_loader = meme_get.RedditMemes()
+  if not load_count:
+    load_count = 100
+  meme_list = meme_loader.get_memes(load_count)
 
-@client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='Create a temporary channel.', usage='[v|t] <time>(s) (x)')
+  meme_data = random.choice(meme_list)
+  if meme_data._caption:
+    caption = meme_data._caption
+  else:
+    caption = ''
+  await ctx.send(caption + meme_data._pic_url)
+
+@client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='Creates a temporary channel.', usage='[v|t] <time>(s) (x)')
 async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
   cname = f'⏳│{ctx.message.author.display_name[:13].lower()}-{timeout}'
   
@@ -282,7 +286,7 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
     await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
     return
 
-@client.command(name='tempuserlimit', aliases=['tul', 'tempul', 'tcul'], help='Edit a voice channel\'s user limit.', usage='<limit>')
+@client.command(name='tempuserlimit', aliases=['tul', 'tempul', 'tcul'], help='Edits a voice channel\'s user limit.', usage='<limit>')
 async def tempuserlimit(ctx, limit=None):
   if not limit:
     limit = 0
@@ -313,7 +317,7 @@ async def execute(ctx, code):
   ```
   ''')
 
-@client.command(name='playsong', aliases=['play', 'psong', 'ps'], help='Execute Python code.', usage='<search>')
+@client.command(name='playsong', aliases=['play', 'psong', 'ps'], help='Executes Python code.', usage='<search>')
 async def playsong(ctx, *args):
   print('Start')
 
@@ -415,7 +419,7 @@ async def playsong(ctx, *args):
   print('After playing start')
 
 
-@client.command(name='pausesong', aliases=['pause', 'resume'], help='Pause or resume a song.')
+@client.command(name='pausesong', aliases=['pause', 'resume'], help='Pauses or resumes a song.')
 async def pause(ctx):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   if voice.is_playing():
@@ -442,7 +446,7 @@ async def stopsong(ctx):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   voice.stop()
 
-@client.command(name='clear', aliases=['cls'], help='Clear the last x messages from a channel.', usage='<amount>')
+@client.command(name='clear', aliases=['cls'], help='Clears the last x messages from a channel.', usage='<amount>')
 async def clear(ctx, amount : int):
   await ctx.channel.purge(limit=amount)
   await ctx.send(f':white_check_mark: I deleted **{amount}** messages.', delete_after=3)
