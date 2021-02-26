@@ -9,10 +9,11 @@ import shutil
 import discord #pip install discord
 import asyncio
 import datetime
+import meme_get #pip install meme_get
 
 import youtubesearchpython as ysp #pip install youtube-search-python
 
-from discord.ext import commands
+from discord.ext import commands #pip install discord.py
 
 # stuff
 CWD = os.getcwd()
@@ -66,41 +67,46 @@ async def on_ready():
   print(f'\nLogged in as {client.user}\n')
   await client.change_presence(activity=discord.Game(name='.help | visit bit.ly/nevi'))
 
-@client.event
-async def on_command_error(ctx, error):
-  if isinstance(error, commands.MissingRequiredArgument):
-    error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
-  if isinstance(error, commands.TooManyArguments):
-    error_msg = 'You passed too many arguments. You can use `.help` for information'
-  if isinstance(error, commands.Cooldown):
-    error_msg = 'Please wait. You are on a cooldown.'
-  if isinstance(error, commands.CommandError):
-    error_msg = 'There was an error with this command.'
-  if isinstance(error, commands.MessageNotFound):
-    error_msg = 'I couldn\'t find this message.'
-  if isinstance(error, commands.ChannelNotFound):
-    error_msg = 'I couldn\'t find this channel.'
-  if isinstance(error, commands.UserInputError):
-    error_msg = 'I couldn\'t find this user.'
-  if isinstance(error, commands.ChannelNotFound):
-    error_msg = 'I couldn\'t find this channel.'
-  if isinstance(error, commands.NoPrivateMessage):
-    error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
-  if isinstance(error, commands.MissingPermissions):
-    error_msg = 'Sorry, you don\'t have the role permissions for this.'
-  if isinstance(error, commands.BotMissingPermissions):
-    error_msg = 'Sorry, I don\'t have permissions to do this.'
-  if isinstance(error, commands.ExtensionError):
-    error_msg = 'I apologize, but I couldn\'t load the needed extension.'
-  if isinstance(error, commands.CheckFailure):
-    error_msg = 'Sorry, you don\'t have the permissions for this.'
-  if isinstance(error, commands.BadArgument):
-    error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
+# @client.event
+# async def on_command_error(ctx, error):
+#   error_msg = 'Unknown error.'
 
-  await ctx.send(f':x: **ERROR**\n{error_msg}')
+#   if isinstance(error, commands.MissingRequiredArgument):
+#     error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
+#   if isinstance(error, commands.TooManyArguments):
+#     error_msg = 'You passed too many arguments. You can use `.help` for information'
+#   if isinstance(error, commands.Cooldown):
+#     error_msg = 'Please wait. You are on a cooldown.'
+#   # if isinstance(error, commands.CommandError):
+#   #   error_msg = 'There was an error with this command.'
+#   if isinstance(error, commands.MessageNotFound):
+#     error_msg = 'I couldn\'t find this message.'
+#   if isinstance(error, commands.ChannelNotFound):
+#     error_msg = 'I couldn\'t find this channel.'
+#   if isinstance(error, commands.UserInputError):
+#     error_msg = 'I couldn\'t find this user.'
+#   if isinstance(error, commands.ChannelNotFound):
+#     error_msg = 'I couldn\'t find this channel.'
+#   if isinstance(error, commands.NoPrivateMessage):
+#     error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
+#   if isinstance(error, commands.MissingPermissions):
+#     error_msg = 'Sorry, you don\'t have the role permissions for this.'
+#   if isinstance(error, commands.BotMissingPermissions):
+#     error_msg = 'Sorry, I don\'t have permissions to do this.'
+#   if isinstance(error, commands.ExtensionError):
+#     error_msg = 'I apologize, but I couldn\'t load the needed extension.'
+#   if isinstance(error, commands.CheckFailure):
+#     error_msg = 'Sorry, you don\'t have the permissions for this.'
+#   if isinstance(error, commands.BadArgument):
+#     error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
 
+#   await ctx.send(f':x: **ERROR**\n{error_msg}')
 
-@client.command(name='ping')
+@client.command(name='stats', help='Get statistics about this bot.')
+async def stats(ctx):
+  await ctx.send(f':heart: A big **thank you** for **{len(client.guilds)}** servers using my bot!')
+
+@client.command(name='ping', help='Get statistics about the connection and latency.')
 async def ping(ctx):
   old = time.mktime(ctx.channel.last_message.created_at.timetuple())
   new = datetime.datetime.timestamp(datetime.datetime.now())
@@ -150,6 +156,16 @@ async def dailycoins(ctx):
           yaml.dump(daily_list, f)
   else:
       await ctx.send(config['currency']['symbols']['error'] + ' ' + lang('dailyerror'))
+
+@client.command(name='meme', help='Show a random meme.')
+async def meme(ctx):
+  try:
+    await ctx.send(random.choice(meme_list)._pic_url)
+  except:
+    a = meme_get.RedditMemes()
+    meme_list = a.get_memes(100)
+    await ctx.send(':white_check_mark: Loaded 100 memes.')
+    await ctx.send(random.choice(meme_list)._pic_url)
 
 @client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='Create a temporary channel.', usage='[v|t] <time>(s) (x)')
 async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
@@ -425,6 +441,11 @@ async def move(ctx):
 async def stopsong(ctx):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   voice.stop()
+
+@client.command(name='clear', aliases=['cls'], help='Clear the last x messages from a channel.', usage='<amount>')
+async def clear(ctx, amount : int):
+  await ctx.channel.purge(limit=amount)
+  await ctx.send(f':white_check_mark: I deleted **{amount}** messages.', delete_after=3)
 
 # Run
 try:
