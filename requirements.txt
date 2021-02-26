@@ -1,6 +1,6 @@
 discord
 disocrd.py
 pyyaml
-youtube-search
+youtube-search-python
 PyNaCl
 pytube

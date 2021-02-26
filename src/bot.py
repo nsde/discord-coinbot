@@ -2,16 +2,17 @@ import os
 import sys
 import yaml #pip install pyyaml
 import time
+import pytube #pip install pytube
 import random
 import shutil
+#pip install PyNaCl
 import discord #pip install discord
 import asyncio
 import datetime
 
-from pytube import YouTube #pip install pytube
-from youtube_search import YoutubeSearch #pip install youtube-search
+import youtubesearchpython as ysp #pip install youtube-search-python
+
 from discord.ext import commands
-#pip install PyNaCl
 
 # stuff
 CWD = os.getcwd()
@@ -27,87 +28,126 @@ except Exception as e:
 
 # set token
 def tokenError():
-    print('Please type in a valid bot token.\n\nThe token can be found at config/token.txt. Remember to not give anyone access to this secret file!')
-    token = ''
-    token = input('Token: ')
-    with open (CWD + '/config/token.txt', 'w') as f:
-      f.write(token)
+  print('Please type in a valid bot token.\n\nThe token can be found at config/token.txt. Remember to not give anyone access to this secret file!')
+  token = ''
+  token = input('Token: ')
+  with open (CWD + '/config/token.txt', 'w') as f:
+    f.write(token)
 
 try:
-    with open (CWD + '/config/token.txt') as f:
-        token = f.read()
-    print('Token loaded. Length: ' + str(len(token)))
-    if token == '':
-        tokenError()
+  with open (CWD + '/config/token.txt') as f:
+      token = f.read()
+  print('Token loaded. Length: ' + str(len(token)))
+  if token == '':
+      tokenError()
 except:
-    tokenError()
+  tokenError()
 
 # Load config
 with open(CWD + '/config/config.yml') as f:
-    config = yaml.load(f, Loader=yaml.SafeLoader)
+  config = yaml.load(f, Loader=yaml.SafeLoader)
 
-    def fixuml(x):
-        '''Fix wrong coding of äüö (German language only)'''
-        return x.replace('Ã¤','ä').replace('Ã¶','ö').replace('Ã¼', 'ü')
+  def fixuml(x):
+      '''Fix wrong coding of äüö (German language only)'''
+      return x.replace('Ã¤','ä').replace('Ã¶','ö').replace('Ã¼', 'ü')
 
-    def lang(x):
-        return fixuml(random.choice(config['language'][x]))
+  def lang(x):
+      return fixuml(random.choice(config['language'][x]))
 
-    # Def bot
-    client = commands.Bot(command_prefix = config['main']['prefix'])
+  # Def bot
+  client = commands.Bot(command_prefix = config['main']['prefix'])
 
 with open(CWD + '/data/dailycoins.yml') as f:
-    daily = yaml.load(f, Loader=yaml.SafeLoader)
+  daily = yaml.load(f, Loader=yaml.SafeLoader)
 
 # Bot
 @client.event
 async def on_ready():
-    print(f'\nLogged in as {client.user}\n')
-    await client.change_presence(activity=discord.Game(name='.help | visit bit.ly/nevi'))
+  print(f'\nLogged in as {client.user}\n')
+  await client.change_presence(activity=discord.Game(name='.help | visit bit.ly/nevi'))
+
+@client.event
+async def on_command_error(ctx, error):
+  if isinstance(error, commands.MissingRequiredArgument):
+    error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
+  if isinstance(error, commands.TooManyArguments):
+    error_msg = 'You passed too many arguments. You can use `.help` for information'
+  if isinstance(error, commands.Cooldown):
+    error_msg = 'Please wait. You are on a cooldown.'
+  if isinstance(error, commands.MessageNotFound):
+    error_msg = 'I couldn\'t find this message.'
+  if isinstance(error, commands.ChannelNotFound):
+    error_msg = 'I couldn\'t find this channel.'
+  if isinstance(error, commands.UserInputError):
+    error_msg = 'I couldn\'t find this user.'
+  if isinstance(error, commands.ChannelNotFound):
+    error_msg = 'I couldn\'t find this channel.'
+  if isinstance(error, commands.NoPrivateMessage):
+    error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
+  if isinstance(error, commands.MissingPermissions):
+    error_msg = 'Sorry, you don\'t have the role permissions for this.'
+  if isinstance(error, commands.BotMissingPermissions):
+    error_msg = 'Sorry, I don\'t have permissions to do this.'
+  if isinstance(error, commands.ExtensionError):
+    error_msg = 'I apologize, but I couldn\'t load the needed extension.'
+  if isinstance(error, commands.CheckFailure):
+    error_msg = 'Sorry, you don\'t have the permissions for this.'
+  if isinstance(error, commands.BadArgument):
+    error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
+
+  await ctx.send(f':x: **ERROR**\n{error_msg}')
+
 
 @client.command(name='ping')
 async def ping(ctx):
-    old = time.mktime(ctx.channel.last_message.created_at.timetuple())
-    new = datetime.datetime.timestamp(datetime.datetime.now())
-    await ctx.send('**__Ping Stats__**')
-    await ctx.send('> :desktop: **Client:** ' + str(round(client.latency, 2)) + 'ms')
-    await ctx.send('> :chart_with_upwards_trend:  **Response time:** ' + str(round((new - old) - 3600, 2)) + 'ms')
-    
+  old = time.mktime(ctx.channel.last_message.created_at.timetuple())
+  new = datetime.datetime.timestamp(datetime.datetime.now())
+
+  voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+
+  await ctx.send('**__Ping Stats__**')
+  await ctx.send('> :desktop: **Client:** ' + str(round(client.latency * 1000, 2)) + 'ms')
+  # await ctx.send('> :chart_with_upwards_trend: **Response time:** ' + str(round(((new - old) - 3000 ) * 1, 2)) + 'ms')
+  try:
+    await ctx.send('> :loud_sound: **Audio latency:** ' + str(round(voice.latency * 1000, 2)) + 'ms')
+  except:
+    await ctx.send('> :loud_sound: **Audio latency:** *[deactivated]*')
+  
 
 @client.command(name='say')
 async def say(ctx, *args):
-    var = ''
-    for s in args:
-        var += f'{s} '
-    await ctx.send(var)
+  var = ''
+  for s in args:
+      var += f'{s} '
+  await ctx.send(var)
 
 @client.command(name='user')
 async def user(ctx):
-    user = ctx.message.author
-    mention = ctx.message.author.mention
-    msg_id = ctx.message.author.id
-    await ctx.send(user)
-    await ctx.send(mention)
-    await ctx.send(msg_id)
+  user = ctx.message.author
+  mention = ctx.message.author.mention
+  msg_id = ctx.message.author.id
+  await ctx.send(user)
+  await ctx.send(mention)
+  await ctx.send(msg_id)
 
 @client.command(name='terminate')
 @commands.has_permissions(administrator=True)
 async def quit(ctx):
-    await ctx.send('Terminating Bot...')
-    await client.close()
+  await ctx.send('Terminating Bot...')
+  await client.close()
 
 # Commands
 @client.command(name='dailycoins', aliases=['dcoins'])
 async def dailycoins(ctx):
-    if ctx.message.author not in daily['blocked']['coins']:
-        await ctx.send(lang('dailycoins') + '\n> +' + str(random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])) + ' ' + config['currency']['symbols']['currency_normal'])
-        daily['blocked']['coins'].append(ctx.message.author)
-        with open(CWD + '/config/daily.yml', 'w') as f:
-            daily_list = []
-            daily_list.append(daily)
-            yaml.dump(daily_list, f)
-    else:
-        await ctx.send(config['currency']['symbols']['error'] + ' ' + lang('dailyerror'))
+  if ctx.message.author not in daily['blocked']['coins']:
+      await ctx.send(lang('dailycoins') + '\n> +' + str(random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])) + ' ' + config['currency']['symbols']['currency_normal'])
+      daily['blocked']['coins'].append(ctx.message.author)
+      with open(CWD + '/config/daily.yml', 'w') as f:
+          daily_list = []
+          daily_list.append(daily)
+          yaml.dump(daily_list, f)
+  else:
+      await ctx.send(config['currency']['symbols']['error'] + ' ' + lang('dailyerror'))
 
 @client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='Create a temporary channel.', usage='[v|t] <time>(s) (x)')
 async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
@@ -257,111 +297,136 @@ async def execute(ctx, code):
 
 @client.command(name='playsong', aliases=['play', 'psong', 'ps'], help='Execute Python code.', usage='<search>')
 async def playsong(ctx, *args):
+  print('Start')
+
   if not args:
     await  ctx.send(':x: **ERROR** No argument for the search term given.')
     return    
   try:
-    results = YoutubeSearch(' '.join(args), max_results=10).to_dict()
-    video = results[0]
+    result = ysp.VideosSearch(' '.join(args), limit=1).result()['result'][0]
   except Exception as e:
     await  ctx.send(f':x: **ERROR** Sorry, I couldn\'t find videos on YouTube with that search term. Error:\n`{e}`')
     return
 
-  for video in results:
-    url = 'https://www.youtube.com' + video['url_suffix']
-    if YouTube(url).length > 6*60: # (in seconds) to make sure that no 1 hour loops or so play
-      continue
-    else:
-      easteregg_videos = ['dQw4w9WgXcQ', 'ub82Xb1C8os', 'iik25wqIuFo', 'YddwkMJG1Jo', '8ybW48rKBME', 'dRV6NaciZVk', 'QB7ACr7pUuE', 'll-mQPDCn-U', 'ehSiEHFY5v4', '-51AfyMqnpI',
-      'Tt7bzxurJ1I', 'fC7oUOUEEi4', 'O91DT1pR1ew']
-      if video['id'] in easteregg_videos:
-        description = 'No, not again.'
-      else:
-        description = ''
-      thumbnail = video['thumbnails'][0]
-      views = video['views'].split()[0]
+  print('Before video check')
 
-      embed = discord.Embed(title=video['title'], colour=discord.Colour(0x20b1d5), url=url, description=description)
-      embed.set_thumbnail(url=thumbnail)
-      embed.add_field(name='__Channel__', value=video['channel'], inline=True)
-      embed.add_field(name='__Duration__', value=video['duration'], inline=True)
-      embed.add_field(name='__Views__', value=views.replace('.', ','), inline=True)
-      embed.add_field(name='__Uploaded__', value=YouTube(url).publish_date.strftime('%x'), inline=True)
-        
-      await ctx.send(embed=embed)
+
+  url = result['link']
+
+  data = ysp.Video.getInfo(url, mode=ysp.ResultMode.dict)
+
+  video_id = data['id']
+  title = data['title']
+  views = data['viewCount']['text']
+  channel = data['channel']['name']
+  upload_date = data['uploadDate']
+  description = data['description'][:100] + ' *[...]*'
+
+  easteregg_videos = ['dQw4w9WgXcQ', 'ub82Xb1C8os', 'iik25wqIuFo', 'YddwkMJG1Jo', '8ybW48rKBME', 'dRV6NaciZVk', 'QB7ACr7pUuE', 'll-mQPDCn-U', 'ehSiEHFY5v4', '-51AfyMqnpI',
+  'Tt7bzxurJ1I', 'fC7oUOUEEi4', 'O91DT1pR1ew']
+
+  if video_id in easteregg_videos:
+    description = 'No, not again.'
+
+  print('Before embed')
+
+  embed = discord.Embed(title=title, colour=discord.Colour(0x20b1d5), url=url, description=description)
+  # embed.set_thumbnail(url=thumbnail)
+  embed.add_field(name='__Channel__', value=channel, inline=True)
+  # embed.add_field(name='__Duration__', value=duration], inline=True)
+  embed.add_field(name='__Views__', value=views, inline=True)
+  embed.add_field(name='__Uploaded__', value=upload_date, inline=True)
+    
+  await ctx.send(embed=embed)
 
 # ==============================================================================================================
 
-      filetype = 'webm'
-      filename = video['id']
+  print('After embed')
 
-      song_there = os.path.isfile(CWD + '\\temp\\' + filename + '.' + filetype)
-      try:
-          if song_there:
-              os.remove(CWD + '\\temp\\' + filename + '.' + filetype)
-      except PermissionError:
-          await ctx.send(':x: **ERROR** Wait for the current playing music to end or use the \'stop\' command')
-          return
+  filetype = 'webm'
+  filename = video_id
 
-      try:
-        channel = ctx.author.voice.channel
-      except:
-        await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
-        return
+  song_there = os.path.isfile(CWD + '\\temp\\' + filename + '.' + filetype)
+  try:
+      if song_there:
+          os.remove(CWD + '\\temp\\' + filename + '.' + filetype)
+  except PermissionError:
+      await ctx.send(':x: **ERROR** Wait for the current playing music to end or use the \'stop\' command')
+      return
 
-      if ctx.author.voice and ctx.author.voice.channel:
-        pass
-      else:
-        await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
-        return
-      
-      try:
-        await channel.connect()
-      except:
-        pass
-      voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+  print('After song overwrite check')
 
-      # Download
+  try:
+    channel = ctx.author.voice.channel
+  except:
+    await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
+    return
 
-      video_stream = YouTube(url).streams.filter(file_extension=filetype, only_audio=True).first()
+  if ctx.author.voice and ctx.author.voice.channel:
+    pass
+  else:
+    await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
+    return
+  
+  print('Before client connect')
 
-      await ctx.send(f':arrow_down: Downloading...\n```{video_stream}```', delete_after=5)
+  try:
+    await channel.connect()
+  except:
+    pass
 
-      video_stream.download(output_path=temp_path, filename=filename)  
+  # Download
 
-      try:
-        voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '\\' + filename + '.' + filetype))
-      except Exception as e:
-        print(f'Couldn\'t play the song. I believe FFMPEG has not been installed correctly.\n{e}')
-        await ctx.send(f'x: **CLIENT ERROR** An error occured on the system hosting this bot.\n{e}')
-      break
+  print('Before download')
+
+  video_stream = pytube.YouTube(url).streams.filter(file_extension=filetype, only_audio=True).first()
+
+  await ctx.send(f':arrow_down: Downloading...\n```{video_stream}```', delete_after=5)
+
+  video_stream.download(output_path=temp_path, filename=filename)  
+
+  print('After download')
+
+  try:
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '\\' + filename + '.' + filetype))
+  except Exception as e:
+    print(f'Couldn\'t play the song. I believe FFMPEG has not been installed correctly.\n{e}')
+    await ctx.send(f'x: **CLIENT ERROR** An error occured on the system hosting this bot.\n{e}')
+
+  print('After playing start')
 
 
 @client.command(name='pausesong', aliases=['pause', 'resume'], help='Pause or resume a song.')
 async def pause(ctx):
-    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-    if voice.is_playing():
-        voice.pause()
-    else:
-        voice.resume()
+  voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+  if voice.is_playing():
+    voice.pause()
+  else:
+    voice.resume()
 
 @client.command(name='move', help='Move the voice client to another channel.')
 async def move(ctx):
   channel = ctx.author.voice.channel
   try:
-    discord.VoiceClient.move_to(channel)
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    voice.pause()
+    await asyncio.sleep(0.7) # The delays are because it crashes otherwise.
+    await voice.move_to(channel)
+    await asyncio.sleep(0.7) # I tried a lot and think that 0.7s is the best delay.
+    voice.resume()
   except Exception as e:
     await ctx.send(f':x: **ERROR** Couldn\'t move the voice client to your channel. Please join a voice channel and try again. Error:\n{e}')
     return
 
 @client.command(name='stopsong', aliases=['stop', 'xs'])
 async def stopsong(ctx):
-    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-    voice.stop()
+  voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+  voice.stop()
 
 # Run
 try:
-    client.run(token)
+  client.run(token)
 except:
-    print('ERROR: Unable to run the client. Did you input a invalid token?')
-    sys.exit(0)
+  print('ERROR: Unable to run the client. Did you input a invalid token?')
+  sys.exit(0)
