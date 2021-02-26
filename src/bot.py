@@ -74,6 +74,8 @@ async def on_command_error(ctx, error):
     error_msg = 'You passed too many arguments. You can use `.help` for information'
   if isinstance(error, commands.Cooldown):
     error_msg = 'Please wait. You are on a cooldown.'
+  if isinstance(error, commands.CommandError):
+    error_msg = 'There was an error with this command.'
   if isinstance(error, commands.MessageNotFound):
     error_msg = 'I couldn\'t find this message.'
   if isinstance(error, commands.ChannelNotFound):
