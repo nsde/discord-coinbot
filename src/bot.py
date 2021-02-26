@@ -358,7 +358,8 @@ async def playsong(ctx, *args):
   # embed.add_field(name='__Duration__', value=duration], inline=True)
   embed.add_field(name='__Views__', value=views, inline=True)
   embed.add_field(name='__Uploaded__', value=upload_date, inline=True)
-    
+  
+  globals()['embed'] = embed
   await ctx.send(embed=embed)
 
 # ==============================================================================================================
@@ -412,6 +413,8 @@ async def playsong(ctx, *args):
   try:
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
     voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '\\' + filename + '.' + filetype))
+    voice.source = discord.PCMVolumeTransformer(voice.source)
+    voice.source.volume = 0.07
   except Exception as e:
     print(f'Couldn\'t play the song. I believe FFMPEG has not been installed correctly.\n{e}')
     await ctx.send(f'x: **CLIENT ERROR** An error occured on the system hosting this bot.\n{e}')
@@ -445,6 +448,13 @@ async def move(ctx):
 async def stopsong(ctx):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   voice.stop()
+
+@client.command(name='songname', aliases=['musicname', 'sn'], help='What song is currently being played?')
+async  def songname(ctx):
+  try:
+    await ctx.send(f'Currently playing:', embed=embed)
+  except:
+    await ctx.send('No song is currently playing.')
 
 @client.command(name='clear', aliases=['cls'], help='Clears the last x messages from a channel.', usage='<amount>')
 async def clear(ctx, amount : int):
