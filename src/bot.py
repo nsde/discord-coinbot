@@ -340,6 +340,18 @@ async def playsong(ctx, *args):
   video_id = data['id']
   title = data['title']
   views = data['viewCount']['text']
+
+  if int(views) > 1000000000:
+    views = str(round(int(views)/1000000000, 1)) + 'b'
+
+  elif int(views) > 1000000:
+    views = str(round(int(views)/1000000, 1)) + 'm'
+
+  elif int(views) > 1000:
+    views = str(round(int(views)/1000, 1)) + 'k'
+  
+  views = views.replace('.', ',')
+
   channel = data['channel']['name']
   upload_date = data['uploadDate']
   description = data['description'][:100] + ' *[...]*'
@@ -404,7 +416,7 @@ async def playsong(ctx, *args):
 
   video_stream = pytube.YouTube(url).streams.filter(file_extension=filetype, only_audio=True).first()
 
-  await ctx.send(f':arrow_down: Downloading...\n```{video_stream}```', delete_after=5)
+  await ctx.send(f':arrow_down: Downloading...\n```{video_stream}```', delete_after=3)
 
   video_stream.download(output_path=temp_path, filename=filename)  
 
