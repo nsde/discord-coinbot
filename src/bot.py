@@ -2,18 +2,19 @@ import os
 import sys
 import yaml #pip install pyyaml
 import time
-import pytube #pip install pytube
+import pytube #pip install pytube | for downloading YouTube videos and reading their data
 import random
 import shutil
 #pip install PyNaCl
 import discord #pip install discord
 import asyncio
 import datetime
-import meme_get #pip install meme_get
+import meme_get #pip install meme_get | for gags/jokes-commands
+import deep_translator #pip install deep_translator | for translating-commands
 
-import youtubesearchpython as ysp #pip install youtube-search-python
+import youtubesearchpython as ysp #pip install youtube-search-python | for YouTube-Search
 
-from discord.ext import commands #pip install discord.py
+from discord.ext import commands #pip install discord.py | For an advanced version of the "normal" discord libary
 
 # stuff
 CWD = os.getcwd()
@@ -143,6 +144,13 @@ async def user(ctx):
 async def quit(ctx):
   await ctx.send('Terminating Bot...')
   await client.close()
+
+@client.command(name='translate', aliases=['tl'], help='Translate a text!', usage='<to_lang> <text>')
+async def translate(ctx, *args):
+  to_lang = args[0].lower()
+  text = ' '.join(args[1:])
+  translated = deep_translator.GoogleTranslator(source='auto', target=to_lang).translate(text)
+  await ctx.send(translated)
 
 # Commands
 @client.command(name='dailycoins', aliases=['dcoins'])
