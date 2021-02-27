@@ -6,3 +6,4 @@ PyNaCl
 pytube
 meme_get
 deep_translator
+pillow

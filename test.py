@@ -3,8 +3,7 @@ import time
 tic = time.perf_counter()
 # ===================================================================
 
-mylist = ['dog', 'cat', 'dolphin', 'parrot']
-for animal in mylist: print(animal)
+import os; os.system("echo hello")
 
 # ===================================================================
 toc = time.perf_counter()

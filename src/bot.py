@@ -1,4 +1,6 @@
 import os
+import io
+import ast
 import sys
 import yaml #pip install pyyaml
 import time
@@ -17,12 +19,13 @@ import deep_translator #pip install deep_translator | for translating-commands
 import youtubesearchpython as ysp #pip install youtube-search-python | for YouTube-Search
 
 from discord.ext import commands #pip install discord.py | For an advanced version of the "normal" discord libary
+from PIL import Image, ImageFilter #pip install pillow | for image modification | sorry for important this that way, but see https://stackoverflow.com/questions/11911480/python-pil-has-no-attribute-image
 
-# stuff
+# Stuff
 CWD = os.getcwd()
 TOKEN = open(CWD + '/config/token.txt').read()
 
-# temp
+# Temp
 temp_path = CWD + '/temp'
 try:
   shutil.rmtree(temp_path)
@@ -30,7 +33,7 @@ try:
 except Exception as e:
   print('Temp error\n\n', e)
 
-# set token
+# Set token
 def tokenError():
   print('Please type in a valid bot token.\n\nThe token can be found at config/token.txt. Remember to not give anyone access to this secret file!')
   token = ''
@@ -64,7 +67,7 @@ with open(CWD + '/config/config.yml') as f:
 with open(CWD + '/data/dailycoins.yml') as f:
   daily = yaml.load(f, Loader=yaml.SafeLoader)
 
-# Bot
+
 @client.event
 async def on_ready():
   print(f'\nLogged in as {client.user}\n')
@@ -124,15 +127,7 @@ async def ping(ctx):
   except:
     await ctx.send('> :loud_sound: **Audio latency:** *[deactivated]*')
   
-
-@client.command(name='say')
-async def say(ctx, *args):
-  var = ''
-  for s in args:
-      var += f'{s} '
-  await ctx.send(var)
-
-@client.command(name='user')
+@client.command(name='user', help='Get information about an user.')
 async def user(ctx):
   user = ctx.message.author
   mention = ctx.message.author.mention
@@ -141,11 +136,23 @@ async def user(ctx):
   await ctx.send(mention)
   await ctx.send(msg_id)
 
-@client.command(name='terminate')
+@client.command(name='terminate', help='Stops the bot (administrator only)')
 @commands.has_permissions(administrator=True)
 async def quit(ctx):
   await ctx.send('Terminating Bot...')
   await client.close()
+
+@client.event
+async def on_message(message):
+  bridge_names = ['nv-bridge', '𝔫𝔳-𝔟𝔯𝔦𝔡𝔤𝔢', '𝖓𝖛-𝖇𝖗𝖎𝖉𝖌𝖊', '𝓷𝓿-𝓫𝓻𝓲𝓭𝓰𝓮', '𝓃𝓋-𝒷𝓇𝒾𝒹𝑔𝑒', '𝕟𝕧-𝕓𝕣𝕚𝕕𝕘𝕖', '𝘯𝘷-𝘣𝘳𝘪𝘥𝘨𝘦', '𝙣𝙫-𝙗𝙧𝙞𝙙𝙜𝙚', '𝚗𝚟-𝚋𝚛𝚒𝚍𝚐𝚎', '𝐧𝐯-𝐛𝐫𝐢𝐝𝐠𝐞', 'ᑎᐯ-ᗷᖇᎥᗪǤᗴ'] # channel names for bridges can be...
+  if not message.author.bot:
+    for bridge_name in bridge_names:
+      if bridge_name in str(message.channel):
+        for guild in client.guilds:
+          for channel in guild.text_channels:
+            for bridge_name in bridge_names:
+              if bridge_name in channel.name:
+                await channel.send(f'**[{message.guild.name}] {message.author}** » {message.content}')
 
 @client.command(name='translate', aliases=['tl'], help='Translate a text!', usage='<to_lang> <text>')
 async def translate(ctx, *args):
@@ -181,7 +188,7 @@ async def price(ctx, *args):
   product = obj.parse()
 
   embed = discord.Embed(title=f'**__{product.name[:100]}__**', colour=discord.Colour(0x2a5aff))
-  embed.set_footer(text='Data without guarantee. County: **' + country.upper() + '**', icon_url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fs3-eu-west-1.amazonaws.com%2Ftpd%2Flogos%2F46d31a8a000064000500a7c8%2F0x0.png&f=1&nofb=1')
+  embed.set_footer(text='Data without guarantee. County: __' + country.upper() + '__', icon_url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fs3-eu-west-1.amazonaws.com%2Ftpd%2Flogos%2F46d31a8a000064000500a7c8%2F0x0.png&f=1&nofb=1')
   embed.add_field(name=f'__URL__', value=url, inline=False)
   try:
     embed.add_field(name=f'__Lowest price__', value=str(product.prices[0]) + product.price_currency , inline=True)
@@ -193,7 +200,7 @@ async def price(ctx, *args):
   await ctx.send(embed=embed)
 
 # Commands
-@client.command(name='dailycoins', aliases=['dcoins'])
+@client.command(name='dailycoins', aliases=['dcoins'], help='Economy command to get daily coins.')
 async def dailycoins(ctx):
   if ctx.message.author not in daily['blocked']['coins']:
       await ctx.send(lang('dailycoins') + '\n> +' + str(random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])) + ' ' + config['currency']['symbols']['currency_normal'])
@@ -205,7 +212,7 @@ async def dailycoins(ctx):
   else:
       await ctx.send(config['currency']['symbols']['error'] + ' ' + lang('dailyerror'))
 
-@client.command(name='meme', help='Shows a random meme. Specify "load count" to a high number to get more unique memes.', usage='(load_count)')
+@client.command(name='meme', help='Shows a random meme. Specify "load count" to a high number to get more unique memes.', usage='(<load_count>)')
 async def meme(ctx, load_count=None):
   meme_loader = meme_get.RedditMemes()
   if not load_count:
@@ -218,6 +225,26 @@ async def meme(ctx, load_count=None):
   else:
     caption = ''
   await ctx.send(caption + meme_data._pic_url)
+
+@client.command(name='image', aliases=['picture', 'img', 'pic'], help='Create a funny image of an user (you by default).', usage='<style> (<user>)')
+async def image(ctx, style, user:discord.Member=None):
+  if not user:
+    user = ctx.author
+  
+  styles = {'business': [103, 310, 43]}  # Syntax: {'style_name': [resize, x, y]}
+
+  template = Image.open(f'{CWD}/data/images/{style}.png')
+  profile_pic = user.avatar_url_as(size=256)
+  profile_pic_bytes = io.BytesIO(await profile_pic.read())
+  profile_pic = Image.open(profile_pic_bytes)
+
+  profile_pic = profile_pic.resize((styles[style][0], styles[style][0]))
+  template.paste(profile_pic, (styles[style][1], styles[style][2]))
+
+  filepath = f'{CWD}/temp/{user.id}.png'
+  template.save(filepath)
+
+  await ctx.send(file=discord.File(filepath))
 
 @client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='Creates a temporary channel.', usage='[v|t] <time>(s) (x)')
 async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
@@ -334,8 +361,8 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
     await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
     return
 
-@client.command(name='tempuserlimit', aliases=['tul', 'tempul', 'tcul'], help='Edits a voice channel\'s user limit.', usage='<limit>')
-async def tempuserlimit(ctx, limit=None):
+@client.command(name='templimit', aliases=['tul', 'tempul', 'tcul'], help='Edits a voice channel\'s user limit.', usage='<limit>')
+async def templimit(ctx, limit=None):
   if not limit:
     limit = 0
   limit = int(limit)
@@ -351,19 +378,48 @@ async def tempuserlimit(ctx, limit=None):
     await ctx.send(':x: **ERROR:** Please join a voice channel to change its userlimit and try again.')
     return
 
-@client.command(name='execute', aliases=['exe', 'exec', 'exc'], help='Execute Python code.', usage='<code>')
-async def execute(ctx, code):
-  try:
-    output = exec(code.replace('&', ' '))
-  except Exception as e:
-    output = f'There was an error executing this command:\n{e}\nTip: Use `&` to make spaces.'
+"""Copied from https://gist.github.com/nitros12/2c3c265813121492655bc95aa54da6b9"""
+"""============================================================================="""
+def insert_returns(body):
+    # insert return stmt if the last expression is a expression statement
+    if isinstance(body[-1], ast.Expr):
+        body[-1] = ast.Return(body[-1].value)
+        ast.fix_missing_locations(body[-1])
 
-  await ctx.send(
-  f'''
-  ```py
-  {output}
-  ```
-  ''')
+    # for if statements, we insert returns into the body and the orelse
+    if isinstance(body[-1], ast.If):
+        insert_returns(body[-1].body)
+        insert_returns(body[-1].orelse)
+
+    # for with blocks, again we insert returns into the body
+    if isinstance(body[-1], ast.With):
+        insert_returns(body[-1].body)
+
+
+@client.command(name='execute', aliases=['exe', 'exec', 'exc', 'eval'], help='Execute Python code. (Administrator only)', usage='<code>')
+@commands.has_permissions(administrator=True)
+async def execute(ctx, code):
+  fn_name = "_eval_expr"
+  cmd = cmd.strip("` ")
+  cmd = "\n".join(f"    {i}" for i in cmd.splitlines())
+  body = f"async def {fn_name}():\n{cmd}"
+  parsed = ast.parse(body)
+  body = parsed.body[0].body
+  insert_returns(body)
+
+  env = {
+      'bot': ctx.bot,
+      'discord': discord,
+      'commands': commands,
+      'ctx': ctx,
+      '__import__': __import__
+  }
+  exec(compile(parsed, filename="<ast>", mode="exec"), env)
+
+  result = (await eval(f"{fn_name}()", env))
+  await ctx.send(result)
+
+"""============================================================================="""
 
 @client.command(name='playsong', aliases=['play', 'psong', 'ps'], help='Executes Python code.', usage='<search>')
 async def playsong(ctx, *args):
@@ -429,10 +485,10 @@ async def playsong(ctx, *args):
   filetype = 'webm'
   filename = video_id
 
-  song_there = os.path.isfile(CWD + '\\temp\\' + filename + '.' + filetype)
+  song_there = os.path.isfile(CWD + '/temp/' + filename + '.' + filetype)
   try:
       if song_there:
-          os.remove(CWD + '\\temp\\' + filename + '.' + filetype)
+          os.remove(CWD + '/temp/' + filename + '.' + filetype)
   except PermissionError:
       await ctx.send(':x: **ERROR** Wait for the current playing music to end or use the \'stop\' command')
       return
@@ -472,7 +528,7 @@ async def playsong(ctx, *args):
 
   try:
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-    voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '\\' + filename + '.' + filetype))
+    voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '/' + filename + '.' + filetype))
     voice.source = discord.PCMVolumeTransformer(voice.source)
     voice.source.volume = 0.07
   except Exception as e:
@@ -504,7 +560,7 @@ async def move(ctx):
     await ctx.send(f':x: **ERROR** Couldn\'t move the voice client to your channel. Please join a voice channel and try again. Error:\n{e}')
     return
 
-@client.command(name='stopsong', aliases=['stop', 'xs'])
+@client.command(name='stopsong', aliases=['stop', 'xs'], help='Stops a song without leaving.')
 async def stopsong(ctx):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   voice.stop()
