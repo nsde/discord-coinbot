@@ -3,9 +3,8 @@ import time
 tic = time.perf_counter()
 # ===================================================================
 
-from deep_translator import GoogleTranslator
-translated = GoogleTranslator(source='auto', target='de').translate("keep it up, you are awesome")  # output -> Weiter so, du bist großartig
-print(translated)
+mylist = ['dog', 'cat', 'dolphin', 'parrot']
+for animal in mylist: print(animal)
 
 # ===================================================================
 toc = time.perf_counter()

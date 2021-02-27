@@ -10,6 +10,8 @@ import discord #pip install discord
 import asyncio
 import datetime
 import meme_get #pip install meme_get | for gags/jokes-commands
+import googlesearch #pip install google
+import geizhalscrawler #pip install geizhalscrawler | for product data (price, etc.)
 import deep_translator #pip install deep_translator | for translating-commands
 
 import youtubesearchpython as ysp #pip install youtube-search-python | for YouTube-Search
@@ -151,6 +153,44 @@ async def translate(ctx, *args):
   text = ' '.join(args[1:])
   translated = deep_translator.GoogleTranslator(source='auto', target=to_lang).translate(text)
   await ctx.send(translated)
+
+@client.command(name='price', aliases=['bestprice'], help='Get price information about a product on the internet.', usage='<country_code> <product>')
+async def price(ctx, *args):
+  await ctx.send('*Please wait...*', delete_after=3)
+
+  country = args[0].lower()
+  countries = ['at', 'eu', 'de', 'uk', 'pl']
+  country_list = '` or `'.join(countries)
+  if not country in countries:
+    await ctx.send(
+      f':x: **ERROR** Invalid country code argument. Country code can be: `{country_list}`')
+    return
+
+  product = ' '.join(args[1:])
+
+  query = 'site:geizhals.eu ' + product
+
+  try:
+    for result in googlesearch.search(query, tld=country.lower(), num=1, stop=1, pause=2):
+      url = result
+  except:
+    await ctx.send(':x: **ERROR** Sorry, there was an error while searching for the product. Try another country or product name.')
+    return
+
+  obj = geizhalscrawler.Geizhals(url, country.upper())
+  product = obj.parse()
+
+  embed = discord.Embed(title=f'**__{product.name[:100]}__**', colour=discord.Colour(0x2a5aff))
+  embed.set_footer(text='Data without guarantee. County: **' + country.upper() + '**', icon_url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fs3-eu-west-1.amazonaws.com%2Ftpd%2Flogos%2F46d31a8a000064000500a7c8%2F0x0.png&f=1&nofb=1')
+  embed.add_field(name=f'__URL__', value=url, inline=False)
+  try:
+    embed.add_field(name=f'__Lowest price__', value=str(product.prices[0]) + product.price_currency , inline=True)
+    embed.add_field(name=f'__AVG price__', value=str(round(sum(product.prices)/len(product.prices), 2)) + product.price_currency, inline=True)
+  except:
+    embed.add_field(name=f'__Error__', value='Price not avaiable', inline=True)
+
+
+  await ctx.send(embed=embed)
 
 # Commands
 @client.command(name='dailycoins', aliases=['dcoins'])
