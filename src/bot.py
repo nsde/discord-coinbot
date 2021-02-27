@@ -73,40 +73,40 @@ async def on_ready():
   print(f'\nLogged in as {client.user}\n')
   await client.change_presence(activity=discord.Game(name='.help | visit bit.ly/nevi'))
 
-# @client.event
-# async def on_command_error(ctx, error):
-#   error_msg = 'Unknown error.'
+@client.event
+async def on_command_error(ctx, error):
+  error_msg = 'Unknown error.'
 
-#   if isinstance(error, commands.MissingRequiredArgument):
-#     error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
-#   if isinstance(error, commands.TooManyArguments):
-#     error_msg = 'You passed too many arguments. You can use `.help` for information'
-#   if isinstance(error, commands.Cooldown):
-#     error_msg = 'Please wait. You are on a cooldown.'
-#   # if isinstance(error, commands.CommandError):
-#   #   error_msg = 'There was an error with this command.'
-#   if isinstance(error, commands.MessageNotFound):
-#     error_msg = 'I couldn\'t find this message.'
-#   if isinstance(error, commands.ChannelNotFound):
-#     error_msg = 'I couldn\'t find this channel.'
-#   if isinstance(error, commands.UserInputError):
-#     error_msg = 'I couldn\'t find this user.'
-#   if isinstance(error, commands.ChannelNotFound):
-#     error_msg = 'I couldn\'t find this channel.'
-#   if isinstance(error, commands.NoPrivateMessage):
-#     error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
-#   if isinstance(error, commands.MissingPermissions):
-#     error_msg = 'Sorry, you don\'t have the role permissions for this.'
-#   if isinstance(error, commands.BotMissingPermissions):
-#     error_msg = 'Sorry, I don\'t have permissions to do this.'
-#   if isinstance(error, commands.ExtensionError):
-#     error_msg = 'I apologize, but I couldn\'t load the needed extension.'
-#   if isinstance(error, commands.CheckFailure):
-#     error_msg = 'Sorry, you don\'t have the permissions for this.'
-#   if isinstance(error, commands.BadArgument):
-#     error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
+  if isinstance(error, commands.MissingRequiredArgument):
+    error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
+  if isinstance(error, commands.TooManyArguments):
+    error_msg = 'You passed too many arguments. You can use `.help` for information'
+  if isinstance(error, commands.Cooldown):
+    error_msg = 'Please wait. You are on a cooldown.'
+  # if isinstance(error, commands.CommandError):
+  #   error_msg = 'There was an error with this command.'
+  if isinstance(error, commands.MessageNotFound):
+    error_msg = 'I couldn\'t find this message.'
+  if isinstance(error, commands.ChannelNotFound):
+    error_msg = 'I couldn\'t find this channel.'
+  if isinstance(error, commands.UserInputError):
+    error_msg = 'I couldn\'t find this user.'
+  if isinstance(error, commands.ChannelNotFound):
+    error_msg = 'I couldn\'t find this channel.'
+  if isinstance(error, commands.NoPrivateMessage):
+    error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
+  if isinstance(error, commands.MissingPermissions):
+    error_msg = 'Sorry, you don\'t have the role permissions for this.'
+  if isinstance(error, commands.BotMissingPermissions):
+    error_msg = 'Sorry, I don\'t have permissions to do this.'
+  if isinstance(error, commands.ExtensionError):
+    error_msg = 'I apologize, but I couldn\'t load the needed extension.'
+  if isinstance(error, commands.CheckFailure):
+    error_msg = 'Sorry, you don\'t have the permissions for this.'
+  if isinstance(error, commands.BadArgument):
+    error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
 
-#   await ctx.send(f':x: **ERROR**\n{error_msg}')
+  await ctx.send(f':x: **ERROR**\n{error_msg}')
 
 @client.command(name='stats', help='Get statistics about this bot.')
 async def stats(ctx):
@@ -142,18 +142,6 @@ async def quit(ctx):
   await ctx.send('Terminating Bot...')
   await client.close()
 
-@client.event
-async def on_message(message):
-  bridge_names = ['nv-bridge', '𝔫𝔳-𝔟𝔯𝔦𝔡𝔤𝔢', '𝖓𝖛-𝖇𝖗𝖎𝖉𝖌𝖊', '𝓷𝓿-𝓫𝓻𝓲𝓭𝓰𝓮', '𝓃𝓋-𝒷𝓇𝒾𝒹𝑔𝑒', '𝕟𝕧-𝕓𝕣𝕚𝕕𝕘𝕖', '𝘯𝘷-𝘣𝘳𝘪𝘥𝘨𝘦', '𝙣𝙫-𝙗𝙧𝙞𝙙𝙜𝙚', '𝚗𝚟-𝚋𝚛𝚒𝚍𝚐𝚎', '𝐧𝐯-𝐛𝐫𝐢𝐝𝐠𝐞', 'ᑎᐯ-ᗷᖇᎥᗪǤᗴ'] # channel names for bridges can be...
-  if not message.author.bot:
-    for bridge_name in bridge_names:
-      if bridge_name in str(message.channel):
-        for guild in client.guilds:
-          for channel in guild.text_channels:
-            for bridge_name in bridge_names:
-              if bridge_name in channel.name:
-                await channel.send(f'**[{message.guild.name}] {message.author}** » {message.content}')
-
 @client.command(name='translate', aliases=['tl'], help='Translate a text!', usage='<to_lang> <text>')
 async def translate(ctx, *args):
   to_lang = args[0].lower()
@@ -184,11 +172,15 @@ async def price(ctx, *args):
     await ctx.send(':x: **ERROR** Sorry, there was an error while searching for the product. Try another country or product name.')
     return
 
-  obj = geizhalscrawler.Geizhals(url, country.upper())
+  try:
+    obj = geizhalscrawler.Geizhals(url, country.upper())
+  except:
+    await ctx.send(':x: **ERROR** Sorry, the bot is being **rate-limited**. ¯\_(ツ)_/¯\nThis means we have to wait...\nIn the meanwhile, listen to this instead:\n*[https://youtu.be/BezpUnoZObw]*')
+    return
   product = obj.parse()
 
   embed = discord.Embed(title=f'**__{product.name[:100]}__**', colour=discord.Colour(0x2a5aff))
-  embed.set_footer(text='Data without guarantee. County: __' + country.upper() + '__', icon_url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fs3-eu-west-1.amazonaws.com%2Ftpd%2Flogos%2F46d31a8a000064000500a7c8%2F0x0.png&f=1&nofb=1')
+  embed.set_footer(text='Data without guarantee. Country: ' + country.upper(), icon_url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fs3-eu-west-1.amazonaws.com%2Ftpd%2Flogos%2F46d31a8a000064000500a7c8%2F0x0.png&f=1&nofb=1')
   embed.add_field(name=f'__URL__', value=url, inline=False)
   try:
     embed.add_field(name=f'__Lowest price__', value=str(product.prices[0]) + product.price_currency , inline=True)
@@ -335,28 +327,6 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
     else:
       await asyncio.sleep(timeout)
     await channel.delete()
-
-    '''Code by @beban09'''
-    # while True:
-    #   if len(channel.members) == 0:
-    #     if timeout[-1] == 's':
-    #       timeout_temp = timeout.replace('s', '')
-    #       await asyncio.sleep(int(timeout_temp))
-    #       if len(channel.members) == 0:
-    #         await channel.delete()
-    #         break
-    #     elif timeout[-1] == 'm':
-    #       timeout_temp = timeout.replace('m', '')
-    #       await asyncio.sleep(float(round(int(timeout_temp)*60)))
-    #       if len(channel.members) == 0:
-    #         await channel.delete()
-    #         break
-    #     else:
-    #       await asyncio.sleep(float(round(int(timeout)*60)))
-    #       if len(channel.members) == 0:
-    #         await channel.delete()
-    #         break
-
   else:
     await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
     return
@@ -421,7 +391,7 @@ async def execute(ctx, code):
 
 """============================================================================="""
 
-@client.command(name='playsong', aliases=['play', 'psong', 'ps'], help='Executes Python code.', usage='<search>')
+@client.command(name='playsong', aliases=['play', 'psong', 'ps'], help='Search and play song on YouTube.', usage='<search>')
 async def playsong(ctx, *args):
   print('Start')
 
@@ -577,6 +547,20 @@ async def clear(ctx, amount : int):
   await ctx.channel.purge(limit=amount)
   await ctx.send(f':white_check_mark: I deleted **{amount}** messages.', delete_after=3)
 
+@client.event
+async def on_message(message):
+  bridge_names = ['nv-bridge', '𝔫𝔳-𝔟𝔯𝔦𝔡𝔤𝔢', '𝖓𝖛-𝖇𝖗𝖎𝖉𝖌𝖊', '𝓷𝓿-𝓫𝓻𝓲𝓭𝓰𝓮', '𝓃𝓋-𝒷𝓇𝒾𝒹𝑔𝑒', '𝕟𝕧-𝕓𝕣𝕚𝕕𝕘𝕖', '𝘯𝘷-𝘣𝘳𝘪𝘥𝘨𝘦', '𝙣𝙫-𝙗𝙧𝙞𝙙𝙜𝙚', '𝚗𝚟-𝚋𝚛𝚒𝚍𝚐𝚎', '𝐧𝐯-𝐛𝐫𝐢𝐝𝐠𝐞', 'ᑎᐯ-ᗷᖇᎥᗪǤᗴ'] # channel names for bridges can be...
+  if not message.author.bot:
+    for bridge_name in bridge_names:
+      if bridge_name in str(message.channel):
+        for guild in client.guilds:
+          for channel in guild.text_channels:
+            for bridge_name in bridge_names:
+              if bridge_name in channel.name:
+                if message.channel.name != channel.name:
+                  await channel.send(f'**[{message.guild.name}] {message.author}** » {message.content}')
+  await client.process_commands(message)
+  
 # Run
 try:
   client.run(token)
