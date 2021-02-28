@@ -1,9 +1,9 @@
-# NeoVision Discord-Bot
+# 🤖 NeoVision Discord-Bot
 A Discord-Bot written in Python with features like coin/economy system, music, utilities and more!
 
 [![huntr](https://cdn.huntr.dev/huntr_security_badge.svg)](https://huntr.dev)
 
-## Information
+## ℹ️ Information
 This is basically an updated and improved version of **https://github.com/nsde/SCD-Bot**.
 
 *"Why didn't I just update the SCD-Repo?"*, you might ask.
@@ -13,12 +13,12 @@ This is basically an updated and improved version of **https://github.com/nsde/S
 
 > I'm not sure yet, but probably no.
 
-# Installation
+# 🔨 Installation
 1. Execute in root dir: `pip install -r requirements.txt` to install the needed libaries.
-2. After that, create a file in "\config" called "token.txt". The content of the file has to be the bot token (see the section "Security" > "Token") for security information.
+2  After that, create a file in "\config" called "token.txt". The content of the file has to be the bot token (see the section "Security" > "Token") for security information.
 3. Go to https://github.com/BtbN/FFmpeg-Builds/releases download `ffmpeg-n(VERSION)-win64-gpl-(VERSION).zip` and paste `/bin/ffmpeg.exe` to `C:/ffmpeg/ffmpeg.exe`.
 
-## Fix errors:
+## ⛔ Fix errors:
 If you get "ERROR: Could not build wheels for multidict, yarl which use PEP 517 and cannot be installed directly":
 - __(not recommended)__ Downgrade to Python 3.8.6 
 - __(not recommended)__ Download the "cp39" (for Python 3.9)-Versions of:
@@ -40,7 +40,7 @@ If you get "ERROR: Could not build wheels for multidict, yarl which use PEP 517 
 Run the "main"-python file in /src and follow the instructions and you are *good to go*!
 
 
-# Security note
+# 🔒 Security note
 This section will inform you about how you can safe your bot against black hat hackers/exploits etc.
 
 ## Permissions
@@ -50,7 +50,7 @@ Please go to the Discord Developer Portal `/applications/<application id>/bot` a
 The bot token is secret! Everyone with access to the token can execute everything allowed to the bot (see "Permissions"). Therefore, remember to put the token.txt in the `.gitignore`, if you are using Git.
 
 
-## Features
+## ✔️ Features
 ### Tempchannels
 Create channels (text or voice), that delete themselves after a specific amount of time inactivity.
 
