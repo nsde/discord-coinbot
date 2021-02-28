@@ -1,5 +1,6 @@
 token.txt
 temp/
+.google-cookie
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
