@@ -1,5 +1,5 @@
 # 🤖 NeoVision Discord-Bot
-A Discord-Bot written in Python with features like coin/economy system, music, utilities and more!
+A Discord-Bot written in Python with features like coin/economy system, music, memes, temporary channels, server-bridge utilities and more!
 
 [![huntr](https://cdn.huntr.dev/huntr_security_badge.svg)](https://huntr.dev)
 
@@ -49,28 +49,46 @@ Please go to the Discord Developer Portal `/applications/<application id>/bot` a
 ## Token
 The bot token is secret! Everyone with access to the token can execute everything allowed to the bot (see "Permissions"). Therefore, remember to put the token.txt in the `.gitignore`, if you are using Git.
 
-
 ## ✔️ Features
+Sorry if they aren't up to date. Keep in mind you can always use the command **`.help`** to get information about other commands. Use **`.command`**
+
 ### Tempchannels
-Create channels (text or voice), that delete themselves after a specific amount of time inactivity.
+Create channels (text or voice) deleting themselves after a specific amount of time of user inactivity.
 
-This helpes the server being organised and clean.
+Inactivity means:
+- no user being in a **voice** channel
+- no message written in a **text** channel
 
-**Syntax:**
-- `t(emp)channel [text/voice] <inactivity-timeout>(s) (t) <channel-name>`.
-  - **text/voice**: type of the channel
-  - [Optional, if type=voice] **inactivity-timeout**: timeout in minutes
-  - [Optional] **s**: measure the timeout in seconds, not a single argument, but directly after `inactivity-timeout`
-  - [Optional] **t**: timeout even on activity
-  - [Optional] **channel-name**: custom channel name 
+### Syntax:
+- `[tempcreate|tcc|tempc|tcreate] [t(ext)|v(oice)] <timeout>(s) (x)`
+  Create a temporary channel. 
+  > The channel name will be '⌛|<your_name>-<timeout>' by default.
+  
+  
+  - **type**: 't' or 'text' for a text channel, 'v' or 'voice' for a **voice** channel
+  - **timeout**: timeout in minutes (or append a 's' for seconds)
+  - [Optional] **s**: measure the timeout in seconds, appended directly after `<timeout>`
+  - [Optional] **x**: ignore user inactivity / force deleting the channel after time passed
 
- When creating a voice channel, if no *inactivity-timeout*-argument is given, I will delete itself when noone is in the channel. The inactivity timeout is measured in minutes, by default. But if there is the letter 's' at the end, it will count in seconds.
+### Examples
+- `tcc t 2`: a two-minute text channel
+- `tcc t 2 x`: a two-minute text channel deleting itself even after user activity  
+- `tcc v 10s`: a ten-second voice channel 
 
-**Defaults:**
-- `channel-name`: `<user>`-`<timeout>`(s)
 
-**Examples:**
-- `tchannel text 2` will create a text channel deleting itself after 2 minutes of no new message
-- `tchannel voice 5` will create a voice channel deleting itself after 5 minutes when everybody left it.
-- `tchannel voice` will create a voice channel deleting itself immediatly if everybody left it.a
-- `tchannel text 10s` will create a voice channel 
+## Music Bot
+Play music from YouTube.
+
+### Syntax
+- `[playsong|play|psong|ps] <search_query>`
+  Search and play a video on YouTube.
+  > Make sure to join a channel before executing the command.
+  
+  
+  - **search_query**: search for a video
+
+- `[stopsong|stop|xs]`
+  Stop a song.
+
+- `move`
+  Move the bot to your channel.
