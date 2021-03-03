@@ -3,12 +3,12 @@ import time
 tic = time.perf_counter()
 # ===================================================================
 
-from gtts import gTTS
-import os
+from skingrabber import skingrabber
 
-tts = gTTS('Hallo ich bin Felix.', lang='de')
-tts.save('file.mp3')
-os.system('start file.mp3')
+sg = skingrabber()
+
+response = sg.get_skin_rendered(user='onlixx')
+print(response)
 
 # ===================================================================
 toc = time.perf_counter()

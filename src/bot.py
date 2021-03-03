@@ -15,6 +15,7 @@ import asyncio
 import datetime
 import meme_get #pip install meme_get | for gags/jokes-commands
 import langdetect #pip install langdetect | to detect langauges in a string
+import skingrabber #pip install skingrabber | to render skins
 import googlesearch #pip install google | to search something on the web
 import geizhalscrawler #pip install geizhalscrawler | for product data (price, etc.)
 import deep_translator #pip install deep_translator | for translating-commands
@@ -205,6 +206,9 @@ async def minecraft(ctx, name):
   else:
     skin = mojang.MojangAPI.get_profile(uuid).skin_url
 
+  skinrender = skingrabber.skingrabber()
+  skinrendered = skinrender.get_skin_rendered(user=name)
+
   drop = mojang.MojangAPI.get_drop_timestamp(name)
 
   if not drop:
@@ -214,7 +218,7 @@ async def minecraft(ctx, name):
     drop = f'Dropping in: {drop} Seconds'
 
   embed = discord.Embed(title=name, colour=discord.Colour(0x009fff))
-  embed.set_thumbnail(url=skin)
+  embed.set_thumbnail(url=skinrendered)
   embed.add_field(name='Name', value=name, inline=False)
   embed.add_field(name='UUID', value=uuid, inline=False)
   embed.add_field(name='Drop status', value=drop, inline=False)
