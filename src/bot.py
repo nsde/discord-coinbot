@@ -213,7 +213,7 @@ async def minecraft(ctx, name):
     drop = drop - time.time()
     drop = f'Dropping in: {drop} Seconds'
 
-  embed = discord.Embed(title="Author of the message:", colour=discord.Colour(0x3e038c))
+  embed = discord.Embed(title=name, colour=discord.Colour(0x009fff))
   embed.set_thumbnail(url=skin)
   embed.add_field(name='Name', value=name, inline=False)
   embed.add_field(name='UUID', value=uuid, inline=False)
