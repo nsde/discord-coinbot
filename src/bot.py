@@ -2,8 +2,9 @@ import os
 import io
 import ast
 import sys
-import yaml #pip install pyyaml
+import yaml #pip install pyyaml | for config files
 import time
+import gtts #pip install gtts | for translating
 import pytube #pip install pytube | for downloading YouTube videos and reading their data
 import random
 import shutil
@@ -12,7 +13,8 @@ import discord #pip install discord
 import asyncio
 import datetime
 import meme_get #pip install meme_get | for gags/jokes-commands
-import googlesearch #pip install google
+import langdetect #pip install langdetect | to detect langauges in a string
+import googlesearch #pip install google | to search something on the web
 import geizhalscrawler #pip install geizhalscrawler | for product data (price, etc.)
 import deep_translator #pip install deep_translator | for translating-commands
 
@@ -23,15 +25,15 @@ from PIL import Image, ImageFilter #pip install pillow | for image modification 
 
 # Stuff
 CWD = os.getcwd()
-TOKEN = open(CWD + '/config/token.txt').read()
 
 # Temp
 temp_path = CWD + '/temp'
 try:
   shutil.rmtree(temp_path)
-  os.mkdir(temp_path)
 except Exception as e:
-  print('Temp error\n\n', e)
+  pass
+finally:
+  os.mkdir(temp_path)
 
 # Set token
 def tokenError():
@@ -42,13 +44,14 @@ def tokenError():
     f.write(token)
 
 try:
-  with open (CWD + '/config/token.txt') as f:
-      token = f.read()
+  token = open(CWD + '/config/token.txt').read()
   print('Token loaded. Length: ' + str(len(token)))
   if token == '':
       tokenError()
+      sys.exit(-1)
 except:
   tokenError()
+  sys.exit(-1)
 
 # Load config
 with open(CWD + '/config/config.yml') as f:
@@ -73,40 +76,40 @@ async def on_ready():
   print(f'\nLogged in as {client.user}\n')
   await client.change_presence(activity=discord.Game(name='.help | visit bit.ly/nevi'))
 
-@client.event
-async def on_command_error(ctx, error):
-  error_msg = 'Unknown error.'
+# @client.event
+# async def on_command_error(ctx, error):
+#   error_msg = 'Unknown error.'
 
-  if isinstance(error, commands.MissingRequiredArgument):
-    error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
-  if isinstance(error, commands.TooManyArguments):
-    error_msg = 'You passed too many arguments. You can use `.help` for information'
-  if isinstance(error, commands.Cooldown):
-    error_msg = 'Please wait. You are on a cooldown.'
-  # if isinstance(error, commands.CommandError):
-  #   error_msg = 'There was an error with this command.'
-  if isinstance(error, commands.MessageNotFound):
-    error_msg = 'I couldn\'t find this message.'
-  if isinstance(error, commands.ChannelNotFound):
-    error_msg = 'I couldn\'t find this channel.'
-  if isinstance(error, commands.UserInputError):
-    error_msg = 'I couldn\'t find this user.'
-  if isinstance(error, commands.ChannelNotFound):
-    error_msg = 'I couldn\'t find this channel.'
-  if isinstance(error, commands.NoPrivateMessage):
-    error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
-  if isinstance(error, commands.MissingPermissions):
-    error_msg = 'Sorry, you don\'t have the role permissions for this.'
-  if isinstance(error, commands.BotMissingPermissions):
-    error_msg = 'Sorry, I don\'t have permissions to do this.'
-  if isinstance(error, commands.ExtensionError):
-    error_msg = 'I apologize, but I couldn\'t load the needed extension.'
-  if isinstance(error, commands.CheckFailure):
-    error_msg = 'Sorry, you don\'t have the permissions for this.'
-  if isinstance(error, commands.BadArgument):
-    error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
+#   if isinstance(error, commands.MissingRequiredArgument):
+#     error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
+#   if isinstance(error, commands.TooManyArguments):
+#     error_msg = 'You passed too many arguments. You can use `.help` for information'
+#   if isinstance(error, commands.Cooldown):
+#     error_msg = 'Please wait. You are on a cooldown.'
+#   # if isinstance(error, commands.CommandError):
+#   #   error_msg = 'There was an error with this command.'
+#   if isinstance(error, commands.MessageNotFound):
+#     error_msg = 'I couldn\'t find this message.'
+#   if isinstance(error, commands.ChannelNotFound):
+#     error_msg = 'I couldn\'t find this channel.'
+#   if isinstance(error, commands.UserInputError):
+#     error_msg = 'I couldn\'t find this user.'
+#   if isinstance(error, commands.ChannelNotFound):
+#     error_msg = 'I couldn\'t find this channel.'
+#   if isinstance(error, commands.NoPrivateMessage):
+#     error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
+#   if isinstance(error, commands.MissingPermissions):
+#     error_msg = 'Sorry, you don\'t have the role permissions for this.'
+#   if isinstance(error, commands.BotMissingPermissions):
+#     error_msg = 'Sorry, I don\'t have permissions to do this.'
+#   if isinstance(error, commands.ExtensionError):
+#     error_msg = 'I apologize, but I couldn\'t load the needed extension.'
+#   if isinstance(error, commands.CheckFailure):
+#     error_msg = 'Sorry, you don\'t have the permissions for this.'
+#   if isinstance(error, commands.BadArgument):
+#     error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
 
-  await ctx.send(f':x: **ERROR**\n{error_msg}')
+#   await ctx.send(f':x: **ERROR**\n{error_msg}')
 
 @client.command(name='stats', help='Get statistics about this bot.')
 async def stats(ctx):
@@ -238,6 +241,50 @@ async def image(ctx, style, user:discord.Member=None):
 
   await ctx.send(file=discord.File(filepath))
 
+@client.command(name='texttospeech', aliases=['tts', 'text2speech', 't2s'], help='Reads text in a voice channel.', usage='([en|de|fr]:) <text>')
+async def texttospeech(ctx, *args):
+  text = ' '.join(args)
+  if not text:
+    await ctx.send('There is no text...')
+    return
+
+  if args[0] in ['en:', 'de:', 'fr:']:
+    lang = args[0].split(':')[0]
+    text = ' '.join(args[1:])
+  else:
+    try:
+      lang = langdetect.detect(text)
+      if not lang in ['en', 'de', 'fr']:
+        raise Exception
+    except:
+      lang = 'en'
+    
+  tts = gtts.gTTS(text, lang=lang)
+  tts.save(f'{CWD}/temp/tts.mp3')
+  
+  try:
+    channel = ctx.author.voice.channel
+  except:
+    await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
+    return
+
+  if ctx.author.voice and ctx.author.voice.channel:
+    pass
+  else:
+    await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
+    return
+
+  try:
+    await channel.connect()
+  except:
+    pass
+
+  voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+  voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=f'{CWD}/temp/tts.mp3'))
+  voice.source = discord.PCMVolumeTransformer(voice.source)
+  voice.source.volume = 0.07
+
+
 @client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='Creates a temporary channel.', usage='[v|t] <time>(s) (x)')
 async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
   cname = f'⏳│{ctx.message.author.display_name[:13].lower()}-{timeout}'
@@ -366,28 +413,28 @@ def insert_returns(body):
         insert_returns(body[-1].body)
 
 
-@client.command(name='execute', aliases=['exe', 'exec', 'exc', 'eval'], help='Execute Python code. (Administrator only)', usage='<code>')
-@commands.has_permissions(administrator=True)
-async def execute(ctx, code):
-  fn_name = "_eval_expr"
-  cmd = cmd.strip("` ")
-  cmd = "\n".join(f"    {i}" for i in cmd.splitlines())
-  body = f"async def {fn_name}():\n{cmd}"
-  parsed = ast.parse(body)
-  body = parsed.body[0].body
-  insert_returns(body)
+# @client.command(name='execute', aliases=['exe', 'exec', 'exc', 'eval'], help='Execute Python code. (Administrator only)', usage='<code>')
+# @commands.has_permissions(administrator=True)
+# async def execute(ctx, code):
+#   fn_name = "_eval_expr"
+#   cmd = cmd.strip("` ")
+#   cmd = "\n".join(f"    {i}" for i in cmd.splitlines())
+#   body = f"async def {fn_name}():\n{cmd}"
+#   parsed = ast.parse(body)
+#   body = parsed.body[0].body
+#   insert_returns(body)
 
-  env = {
-      'bot': ctx.bot,
-      'discord': discord,
-      'commands': commands,
-      'ctx': ctx,
-      '__import__': __import__
-  }
-  exec(compile(parsed, filename="<ast>", mode="exec"), env)
+#   env = {
+#       'bot': ctx.bot,
+#       'discord': discord,
+#       'commands': commands,
+#       'ctx': ctx,
+#       '__import__': __import__
+#   }
+#   exec(compile(parsed, filename="<ast>", mode="exec"), env)
 
-  result = (await eval(f"{fn_name}()", env))
-  await ctx.send(result)
+#   result = (await eval(f"{fn_name}()", env))
+#   await ctx.send(result)
 
 """============================================================================="""
 
@@ -498,7 +545,7 @@ async def playsong(ctx, *args):
 
   try:
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-    voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '/' + filename + '.' + filetype))
+    voice.play(discord.FFmpegPCMAudio(options='-loglevel panic', executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '/' + filename + '.' + filetype))
     voice.source = discord.PCMVolumeTransformer(voice.source)
     voice.source.volume = 0.07
   except Exception as e:
