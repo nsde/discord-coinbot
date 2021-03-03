@@ -2,6 +2,7 @@ gtts
 pillow
 pytube
 pyyaml
+mojang
 discord
 meme_get
 langdetect

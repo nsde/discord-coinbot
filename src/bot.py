@@ -8,6 +8,7 @@ import gtts #pip install gtts | for translating
 import pytube #pip install pytube | for downloading YouTube videos and reading their data
 import random
 import shutil
+import mojang # pip install mojang | API for Minecraft
 #pip install PyNaCl
 import discord #pip install discord
 import asyncio
@@ -144,6 +145,7 @@ async def user(ctx):
 async def quit(ctx):
   await ctx.send('Terminating Bot...')
   await client.close()
+  exit()
 
 @client.command(name='translate', aliases=['tl'], help='Translate a text!', usage='<to_lang> <text>')
 async def translate(ctx, *args):
@@ -194,7 +196,30 @@ async def price(ctx, *args):
 
   await ctx.send(embed=embed)
 
-# Commands
+@client.command(name='minecraft', aliases=['mc', 'minecraftinfo', 'mcinfo'], help='Get information about a player.', usage='<playername>')
+async def minecraft(ctx, name):
+  uuid = mojang.MojangAPI.get_uuid(name)
+  if not uuid:
+    await ctx.send(':x: Invalid user.')
+    return
+  else:
+    skin = mojang.MojangAPI.get_profile(uuid).skin_url
+
+  drop = mojang.MojangAPI.get_drop_timestamp(name)
+
+  if not drop:
+    drop = 'Not dropping.'
+  else:
+    drop = drop - time.time()
+    drop = f'Dropping in: {drop} Seconds'
+
+  embed = discord.Embed(title="Author of the message:", colour=discord.Colour(0x3e038c))
+  embed.set_thumbnail(url=skin)
+  embed.add_field(name='Name', value=name, inline=False)
+  embed.add_field(name='UUID', value=uuid, inline=False)
+  embed.add_field(name='Drop status', value=drop, inline=False)
+  await ctx.send(embed=embed)
+
 @client.command(name='dailycoins', aliases=['dcoins'], help='Economy command to get daily coins.')
 async def dailycoins(ctx):
   if ctx.message.author not in daily['blocked']['coins']:
