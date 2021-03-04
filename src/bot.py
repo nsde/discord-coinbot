@@ -615,21 +615,14 @@ async def clear(ctx, amount : int):
 async def on_message(message):
   bridge_names = ['nv-bridge', '𝔫𝔳-𝔟𝔯𝔦𝔡𝔤𝔢', '𝖓𝖛-𝖇𝖗𝖎𝖉𝖌𝖊', '𝓷𝓿-𝓫𝓻𝓲𝓭𝓰𝓮', '𝓃𝓋-𝒷𝓇𝒾𝒹𝑔𝑒', '𝕟𝕧-𝕓𝕣𝕚𝕕𝕘𝕖', '𝘯𝘷-𝘣𝘳𝘪𝘥𝘨𝘦', '𝙣𝙫-𝙗𝙧𝙞𝙙𝙜𝙚', '𝚗𝚟-𝚋𝚛𝚒𝚍𝚐𝚎', '𝐧𝐯-𝐛𝐫𝐢𝐝𝐠𝐞', 'ᑎᐯ-ᗷᖇᎥᗪǤᗴ'] # channel names for bridges can be...
   if not message.author.bot:
-    print(0)
     for bridge_name in bridge_names:
       if bridge_name in message.channel.name:
-        print('4 ' + bridge_name + ' valid bn')
         for guild in client.guilds:
-          print('3 ' + guild.name)
           for textchannel in guild.text_channels:
             for bridge_name in bridge_names:
               if bridge_name in textchannel.name:
-                print('6 ' + bridge_name)
                 if message.channel.id != textchannel.id:
-                  print('7 from ' + message.channel.name + ' to ' + textchannel.name)
-                  print(textchannel.name.split('-')[-1] + '\tand\t' + message.channel.name.split('-')[-1])
                   if textchannel.name.split('-')[-1] == message.channel.name.split('-')[-1]:
-                    print(f'Sending {message.content} | {message.channel} > {textchannel.name}')
                     await textchannel.send(f'**[{message.guild.name}] {message.author}** » {message.content}')
   await client.process_commands(message)
   
