@@ -3,12 +3,7 @@ import time
 tic = time.perf_counter()
 # ===================================================================
 
-from skingrabber import skingrabber
-
-sg = skingrabber()
-
-response = sg.get_skin_rendered(user='onlixx')
-print(response)
+print(['hallo', 'test', '123'][:-1])
 
 # ===================================================================
 toc = time.perf_counter()

@@ -25,10 +25,10 @@ import youtubesearchpython as ysp #pip install youtube-search-python | for YouTu
 from discord.ext import commands #pip install discord.py | For an advanced version of the "normal" discord libary
 from PIL import Image, ImageFilter #pip install pillow | for image modification | sorry for important this that way, but see https://stackoverflow.com/questions/11911480/python-pil-has-no-attribute-image
 
-# Stuff
-CWD = os.getcwd()
+CWD = os.getcwd().replace('\\', '/')
+if CWD.split('/')[-1] == 'src':
+  CWD = '/'.join(CWD.split('/')[:-1])
 
-# Temp
 temp_path = CWD + '/temp'
 try:
   shutil.rmtree(temp_path)
@@ -37,25 +37,17 @@ except Exception as e:
 finally:
   os.mkdir(temp_path)
 
-# Set token
-def tokenError():
-  print('Please type in a valid bot token.\n\nThe token can be found at config/token.txt. Remember to not give anyone access to this secret file!')
-  token = ''
-  token = input('Token: ')
-  with open (CWD + '/config/token.txt', 'w') as f:
-    f.write(token)
-
 try:
   token = open(CWD + '/config/token.txt').read()
-  print('Token loaded. Length: ' + str(len(token)))
   if token == '':
-      tokenError()
-      sys.exit(-1)
-except:
-  tokenError()
+    print('ERROR - Token (config/token.txt) is empty.')
+    sys.exit(-1)
+  else:
+    print('Token loaded. Length: ' + str(len(token)))
+except Exception as e:
+  print('Error: ' + str(e))
   sys.exit(-1)
 
-# Load config
 with open(CWD + '/config/config.yml') as f:
   config = yaml.load(f, Loader=yaml.SafeLoader)
 
@@ -65,8 +57,6 @@ with open(CWD + '/config/config.yml') as f:
 
   def lang(x):
       return fixuml(random.choice(config['language'][x]))
-
-  # Def bot
   client = commands.Bot(command_prefix = config['main']['prefix'])
 
 with open(CWD + '/data/dailycoins.yml') as f:
@@ -219,9 +209,7 @@ async def minecraft(ctx, name):
 
   embed = discord.Embed(title=name, colour=discord.Colour(0x009fff))
   embed.set_thumbnail(url=skinrendered)
-  embed.add_field(name='Name', value=name, inline=False)
   embed.add_field(name='UUID', value=uuid, inline=False)
-  embed.add_field(name='Drop status', value=drop, inline=False)
   await ctx.send(embed=embed)
 
 @client.command(name='dailycoins', aliases=['dcoins'], help='Economy command to get daily coins.')
@@ -627,14 +615,22 @@ async def clear(ctx, amount : int):
 async def on_message(message):
   bridge_names = ['nv-bridge', '𝔫𝔳-𝔟𝔯𝔦𝔡𝔤𝔢', '𝖓𝖛-𝖇𝖗𝖎𝖉𝖌𝖊', '𝓷𝓿-𝓫𝓻𝓲𝓭𝓰𝓮', '𝓃𝓋-𝒷𝓇𝒾𝒹𝑔𝑒', '𝕟𝕧-𝕓𝕣𝕚𝕕𝕘𝕖', '𝘯𝘷-𝘣𝘳𝘪𝘥𝘨𝘦', '𝙣𝙫-𝙗𝙧𝙞𝙙𝙜𝙚', '𝚗𝚟-𝚋𝚛𝚒𝚍𝚐𝚎', '𝐧𝐯-𝐛𝐫𝐢𝐝𝐠𝐞', 'ᑎᐯ-ᗷᖇᎥᗪǤᗴ'] # channel names for bridges can be...
   if not message.author.bot:
+    print(0)
     for bridge_name in bridge_names:
-      if bridge_name in str(message.channel):
+      if bridge_name in message.channel.name:
+        print('4 ' + bridge_name + ' valid bn')
         for guild in client.guilds:
-          for channel in guild.text_channels:
+          print('3 ' + guild.name)
+          for textchannel in guild.text_channels:
             for bridge_name in bridge_names:
-              if bridge_name in channel.name:
-                if message.channel.name != channel.name:
-                  await channel.send(f'**[{message.guild.name}] {message.author}** » {message.content}')
+              if bridge_name in textchannel.name:
+                print('6 ' + bridge_name)
+                if message.channel.id != textchannel.id:
+                  print('7 from ' + message.channel.name + ' to ' + textchannel.name)
+                  print(textchannel.name.split('-')[-1] + '\tand\t' + message.channel.name.split('-')[-1])
+                  if textchannel.name.split('-')[-1] == message.channel.name.split('-')[-1]:
+                    print(f'Sending {message.content} | {message.channel} > {textchannel.name}')
+                    await textchannel.send(f'**[{message.guild.name}] {message.author}** » {message.content}')
   await client.process_commands(message)
   
 # Run
