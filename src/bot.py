@@ -4,13 +4,14 @@ import ast
 import sys
 import yaml #pip install pyyaml | for config files
 import time
-import gtts #pip install gtts | for translating
+import gtts #pip install gtts | for text to speech
+import string
 import pytube #pip install pytube | for downloading YouTube videos and reading their data
 import random
 import shutil
 import mojang # pip install mojang | API for Minecraft
-#pip install PyNaCl
-import discord #pip install discord
+#pip install PyNaCl | for voicechannel support
+import discord #pip install discord | for bot-system
 import asyncio
 import datetime
 import meme_get #pip install meme_get | for gags/jokes-commands
@@ -23,11 +24,13 @@ import deep_translator #pip install deep_translator | for translating-commands
 import youtubesearchpython as ysp #pip install youtube-search-python | for YouTube-Search
 
 from discord.ext import commands #pip install discord.py | For an advanced version of the "normal" discord libary
-from PIL import Image, ImageFilter #pip install pillow | for image modification | sorry for important this that way, but see https://stackoverflow.com/questions/11911480/python-pil-has-no-attribute-image
+from PIL import Image, ImageFilter #pip install pillow | for image modification | sorry for importing in this that way, but see https://stackoverflow.com/questions/11911480/python-pil-has-no-attribute-image
 
 CWD = os.getcwd().replace('\\', '/')
 if CWD.split('/')[-1] == 'src':
   CWD = '/'.join(CWD.split('/')[:-1])
+
+chatbot_history = ['']
 
 temp_path = CWD + '/temp'
 try:
@@ -412,22 +415,22 @@ async def templimit(ctx, limit=None):
     await ctx.send(':x: **ERROR:** Please join a voice channel to change its userlimit and try again.')
     return
 
-"""Copied from https://gist.github.com/nitros12/2c3c265813121492655bc95aa54da6b9"""
-"""============================================================================="""
-def insert_returns(body):
-    # insert return stmt if the last expression is a expression statement
-    if isinstance(body[-1], ast.Expr):
-        body[-1] = ast.Return(body[-1].value)
-        ast.fix_missing_locations(body[-1])
+# """Copied from https://gist.github.com/nitros12/2c3c265813121492655bc95aa54da6b9"""
+# """============================================================================="""
+# def insert_returns(body):
+#     # insert return stmt if the last expression is a expression statement
+#     if isinstance(body[-1], ast.Expr):
+#         body[-1] = ast.Return(body[-1].value)
+#         ast.fix_missing_locations(body[-1])
 
-    # for if statements, we insert returns into the body and the orelse
-    if isinstance(body[-1], ast.If):
-        insert_returns(body[-1].body)
-        insert_returns(body[-1].orelse)
+#     # for if statements, we insert returns into the body and the orelse
+#     if isinstance(body[-1], ast.If):
+#         insert_returns(body[-1].body)
+#         insert_returns(body[-1].orelse)
 
-    # for with blocks, again we insert returns into the body
-    if isinstance(body[-1], ast.With):
-        insert_returns(body[-1].body)
+#     # for with blocks, again we insert returns into the body
+#     if isinstance(body[-1], ast.With):
+#         insert_returns(body[-1].body)
 
 
 # @client.command(name='execute', aliases=['exe', 'exec', 'exc', 'eval'], help='Execute Python code. (Administrator only)', usage='<code>')
@@ -453,7 +456,7 @@ def insert_returns(body):
 #   result = (await eval(f"{fn_name}()", env))
 #   await ctx.send(result)
 
-"""============================================================================="""
+# """============================================================================="""
 
 @client.command(name='playsong', aliases=['play', 'psong', 'ps'], help='Search and play song on YouTube.', usage='<search>')
 async def playsong(ctx, *args):
@@ -606,6 +609,75 @@ async  def songname(ctx):
   except:
     await ctx.send('No song is currently playing.')
 
+@client.command(name='blockabl', help='Get information about blockabl.')
+async def blockabl():
+  pass
+
+@client.command(name='nitro', help='Generates a fake nitro gift link - just for fun.')
+async def nitro(ctx):
+  if random.randint(0, 20) != 0:
+    code_id = ''.join(random.choices(string.ascii_uppercase + string.digits + string.ascii_lowercase, k=16))
+    await ctx.send('http://discord.gift/' + code_id)
+  else:
+    await ctx.send('https://discordgift.site/1Kvj5Ept1TyfUuKS')
+ 
+chatbot_phrases = {
+  'hi': 'Hello! :wink:',
+  'hey': 'Hey! What\'s up? :wave:',
+  'hello': 'Hi :wave:',
+  'how are you': 'I\'m good, what about you? :+1:',
+  'what are you doing': 'I\'m chatting with you! :joy:',
+  'thank': 'You\'re welcome. :blush:',
+  'lmao': ':sweat_smile:',
+  'xd': ':grin:',
+  'lol': ':laughing:',
+}
+
+context_phrases = [
+  ['I\'m good, what about you? :+1:', 'good', 'I\'m glad to hear that!'],
+]
+
+intelligent_phrases = {
+  'wiki': 'Wikipedia Search'
+}
+
+@client.command(name='chatbot', aliases=['cb'], help='Get information about the chatbot.', usage='[info|phrases]')
+async def chatbot(ctx, *args):
+  if len(args) == 0:
+    await ctx.send(':x: Please give `info` or `phrases` as an argument.')
+    return
+
+  if args[0] == 'info':
+    await ctx.send('''
+    *Do **`.chatbot phrases`** to see all different input-possibilities.*
+
+    **Normal Phrases (NP)**\n> NPs react every single time with pretty much the same thing, no matter the situation and context.
+
+    **Context-Dependent Phrases (CDP)**\n> CDPs can react different at each situation. They can check the last messages and think of what to say now.
+
+    **Intelligent Phrases (IP)**\n> IPs can react with a scientific solution to a question. For example, they can calculate or search something on the internet.
+    ''')
+
+  cdp_list = []
+  for i in context_phrases:
+    cdp_list.append(i[0])
+
+  if args[0] == 'phrases':
+    await ctx.send(
+      f'''
+      __**ChatBot**__
+      *Do **`.chatbot info`** to see what the difference between the phrases are.*
+
+      __Normal Phrases__
+      `{'`, `'.join(chatbot_phrases.keys())}`
+
+      __Context-Dependent Phrases__
+      `{'`, `'.join(cdp_list)}`
+
+      __Intelligent Phrases__
+      `{'`, `'.join(intelligent_phrases.keys())}`
+      ''')
+
 @client.command(name='clear', aliases=['cls'], help='Clears the last x messages from a channel.', usage='<amount>')
 async def clear(ctx, amount : int):
   await ctx.channel.purge(limit=amount)
@@ -614,6 +686,7 @@ async def clear(ctx, amount : int):
 @client.event
 async def on_message(message):
   bridge_names = ['nv-bridge', '𝔫𝔳-𝔟𝔯𝔦𝔡𝔤𝔢', '𝖓𝖛-𝖇𝖗𝖎𝖉𝖌𝖊', '𝓷𝓿-𝓫𝓻𝓲𝓭𝓰𝓮', '𝓃𝓋-𝒷𝓇𝒾𝒹𝑔𝑒', '𝕟𝕧-𝕓𝕣𝕚𝕕𝕘𝕖', '𝘯𝘷-𝘣𝘳𝘪𝘥𝘨𝘦', '𝙣𝙫-𝙗𝙧𝙞𝙙𝙜𝙚', '𝚗𝚟-𝚋𝚛𝚒𝚍𝚐𝚎', '𝐧𝐯-𝐛𝐫𝐢𝐝𝐠𝐞', 'ᑎᐯ-ᗷᖇᎥᗪǤᗴ'] # channel names for bridges can be...
+  chatbot_names = ['nv-chatbot', '𝔫𝔳-𝔠𝔥𝔞𝔱𝔟𝔬𝔱', '𝖓𝖛-𝖈𝖍𝖆𝖙𝖇𝖔𝖙', '𝓷𝓿-𝓬𝓱𝓪𝓽𝓫𝓸𝓽', '𝓃𝓋-𝒸𝒽𝒶𝓉𝒷𝑜𝓉', '𝕟𝕧-𝕔𝕙𝕒𝕥𝕓𝕠𝕥', '𝘯𝘷-𝘤𝘩𝘢𝘵𝘣𝘰𝘵', '𝙣𝙫-𝙘𝙝𝙖𝙩𝙗𝙤𝙩', '𝚗𝚟-𝚌𝚑𝚊𝚝𝚋𝚘𝚝', '𝐧𝐯-𝐜𝐡𝐚𝐭𝐛𝐨𝐭', 'ᑎᐯ-ᑕᕼᗩ丅ᗷᗝ丅']
   if not message.author.bot:
     for bridge_name in bridge_names:
       if bridge_name in message.channel.name:
@@ -624,6 +697,28 @@ async def on_message(message):
                 if message.channel.id != textchannel.id:
                   if textchannel.name.split('-')[-1] == message.channel.name.split('-')[-1]:
                     await textchannel.send(f'**[{message.guild.name}] {message.author}** » {message.content}')
+    for chatbot_name in chatbot_names:
+      if chatbot_name in message.channel.name:
+
+        response = chatbot_history[-1]
+
+        phrase_num = 0
+        for phrase in context_phrases:
+          if response == phrase[0]:
+            if phrase[1] in message.content.lower():
+              response = phrase[2]
+              await message.channel.send(response)
+              chatbot_history.append(response)
+              break
+          phrase_num += 1
+
+        for phrase in chatbot_phrases.keys():
+          if phrase in message.content.lower():
+            response = chatbot_phrases[phrase]
+            await message.channel.send(response)
+            chatbot_history.append(response)
+            break
+
   await client.process_commands(message)
   
 # Run
