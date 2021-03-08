@@ -15,7 +15,11 @@ import mojang # pip install mojang | API for Minecraft
 import discord #pip install discord | for bot-system
 import asyncio
 import datetime
-import meme_get #pip install meme_get | for gags/jokes-commands
+import colorama
+try:
+  import meme_get #pip install meme_get | for gags/jokes-commands
+except:
+  os.system('pip install future')
 import langdetect #pip install langdetect | to detect langauges in a string
 import skingrabber #pip install skingrabber | to render skins
 import googlesearch #pip install google | to search something on the web
@@ -49,8 +53,11 @@ try:
   else:
     print('Token loaded. Length: ' + str(len(token)))
 except Exception as e:
-  print('Error: ' + str(e))
-  sys.exit(-1)
+  print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
+  token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
+  open(CWD + '/config/token.txt', 'w').write(token)
+finally:
+  print(colorama.Style.RESET_ALL)
 
 with open(CWD + '/config/config.yml') as f:
   config = yaml.load(f, Loader=yaml.SafeLoader)
@@ -728,5 +735,7 @@ async def on_message(message):
 try:
   client.run(token)
 except:
-  print('ERROR: Unable to run the client. Please check your bot token.')
-  sys.exit(0)
+  print(colorama.Fore.RED + 'Unable to run the client. Please check your bot token.')
+  sys.exit(-1)
+finally:
+  print(colorama.Style.RESET_ALL)
