@@ -6,9 +6,9 @@ mojang
 discord
 meme_get
 langdetect
-disocrd.py
+discord.py
 skingrabber
-googlesearch
 geizhalscrawler
 deep_translator
+googlesearch_python
 youtube-search-python
