@@ -39,6 +39,8 @@ If you get "ERROR: Could not build wheels for multidict, yarl which use PEP 517 
 
 Run the "main"-python file in /src and follow the instructions and you are *good to go*!
 
+## 🛠️ Usage
+Try running the bot from the root directory (meaning not "src"). If you are running on windows, I added a start.bat and setup.bat, they are self-explainitory.
 
 # 🔒 Security note
 This section will inform you about how you can safe your bot against black hat hackers/exploits etc.

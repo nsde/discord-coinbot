@@ -9,6 +9,7 @@ import string
 import pytube #pip install pytube | for downloading YouTube videos and reading their data
 import random
 import shutil
+import socket
 import mojang # pip install mojang | API for Minecraft
 #pip install PyNaCl | for voicechannel support
 import discord #pip install discord | for bot-system
@@ -123,7 +124,8 @@ async def ping(ctx):
   try:
     await ctx.send('> :loud_sound: **Audio latency:** ' + str(round(voice.latency * 1000, 2)) + 'ms')
   except:
-    await ctx.send('> :loud_sound: **Audio latency:** *[deactivated]*')
+    await ctx.send('> :loud_sound: **Audio latency:** *[inactive]*')
+  await ctx.send(f'> :gear: Host computer name: {socket.gethostname()}')
   
 @client.command(name='user', help='Get information about an user.')
 async def user(ctx):
@@ -307,8 +309,11 @@ async def texttospeech(ctx, *args):
 
 @client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='Creates a temporary channel.', usage='[v|t] <time>(s) (x)')
 async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
-  cname = f'⏳│{ctx.message.author.display_name[:13].lower()}-{timeout}'
+  def getChannelName(ctx, timeout):
+    return f'⏳│{ctx.message.author.display_name[:13].lower()}-{timeout}'
   
+  cname = getChannelName(ctx=ctx, timeout=timeout)
+
   if not afk_timer:
     afk_timer = True
   else:
@@ -363,6 +368,10 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
           if last_saved == message:
             # same message
             difference += 1
+            if timeout-difference <= 3:
+              cname = getChannelName(ctx=ctx, timeout='❗')
+              await channel.edit(name=cname)
+              await channel.send(':warn: 3 seconds left!')
           else:
             # new message
             difference = 0
@@ -389,6 +398,9 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
         await asyncio.sleep(1)     
         if len(channel.members) == 0:
           timer += 1
+          if timeout-timer <= 3:
+            cname = getChannelName(ctx=ctx, timeout='❗')
+            await channel.edit(name=cname)
         else:
           timer = 0
     else:
@@ -517,8 +529,6 @@ async def playsong(ctx, *args):
 
 # ==============================================================================================================
 
-  print('After embed')
-
   filetype = 'webm'
   filename = video_id
 
@@ -530,7 +540,6 @@ async def playsong(ctx, *args):
       await ctx.send(':x: **ERROR** Wait for the current playing music to end or use the \'stop\' command')
       return
 
-  print('After song overwrite check')
 
   try:
     channel = ctx.author.voice.channel
@@ -544,8 +553,6 @@ async def playsong(ctx, *args):
     await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
     return
   
-  print('Before client connect')
-
   try:
     await channel.connect()
   except:
@@ -553,15 +560,11 @@ async def playsong(ctx, *args):
 
   # Download
 
-  print('Before download')
-
   video_stream = pytube.YouTube(url).streams.filter(file_extension=filetype, only_audio=True).first()
 
   await ctx.send(f':arrow_down: Downloading...\n```{video_stream}```', delete_after=3)
 
   video_stream.download(output_path=temp_path, filename=filename)  
-
-  print('After download')
 
   try:
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
@@ -725,5 +728,5 @@ async def on_message(message):
 try:
   client.run(token)
 except:
-  print('ERROR: Unable to run the client. Did you input a invalid token?')
+  print('ERROR: Unable to run the client. Please check your bot token.')
   sys.exit(0)
