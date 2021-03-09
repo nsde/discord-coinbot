@@ -58,9 +58,13 @@ try:
   else:
     print('Token loaded. Length: ' + str(len(token)))
 except Exception as e:
-  print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
-  token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
-  open(CWD + '/config/token.txt', 'w').write(token)
+  try:
+    token = os.getenv('token')
+  except:
+    try:
+      print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
+      token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
+    o pen(CWD + '/config/token.txt', 'w').write(token)
 finally:
   print(colorama.Style.RESET_ALL)
 
