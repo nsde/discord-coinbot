@@ -747,18 +747,18 @@ async def on_message(message):
       if message.channel.topic:
         if counting_name in message.channel.topic:
           msg_count = 0
-          async for previous_message in message.channel.history(limit=2):
+          async for h_message in message.channel.history(limit=2):
             if msg_count == 1:
-              if message.author.id == previous_message.author.id:
+              if message.author.id == h_message.author.id:
                 await message.delete()
-                return
               try:
-                if int(previous_message.content) + 1 != int(message.content):
-                  await message.delete()
-                  return
+                if int(h_message.content) + 1 != int(message.content):
+                  try:
+                    await message.delete()
+                  except:
+                    pass
               except:
                 await message.delete()
-                return
               gold_reqs = [100, 200, 500, 900, 1000]
               iron_reqs = [69, 111, 420, 333, 555, 777, 999]              
               if int(message.content) in gold_reqs:
@@ -774,7 +774,7 @@ async def on_message(message):
               if int(message.content) == 1000:
                 await message.channel.purge(limit=1000) # clear channel
                 await message.channel.send('1')
-
+            msg_count += 1
   await client.process_commands(message)
   
 try:
