@@ -751,24 +751,30 @@ async def on_message(message):
             if msg_count == 1:
               if message.author.id == previous_message.author.id:
                 await message.delete()
+                return
               try:
-                gold_reqs = [100, 200, 500, 900, 1000]
-                iron_reqs = [111, 333, 555, 777, 999]              
-                if int(message.content) in gold_reqs:
-                  role = discord.utils.get(message.author.guild.roles, id=799603986163826708) # Gold
-                  await message.author.add_roles(role)
-                  await message.add_reaction('🎉')
-                  await message.add_reaction('🟡')
-                elif int(message.content) in iron_reqs:
-                  role = discord.utils.get(message.author.guild.roles, id=799603845982060574) # Iron
-                  await message.author.add_roles(role)
-                  await message.add_reaction('🎉')
-                  await message.add_reaction('⚪')
-                if int(message.content) == 1000:
-                  await message.channel.purge(limit=1000) # clear channel
-                  await message.channel.send('1')
+                if int(previous_message.content) + 1 != int(message.content):
+                  await message.delete()
+                  return
               except:
                 await message.delete()
+                return
+              gold_reqs = [100, 200, 500, 900, 1000]
+              iron_reqs = [69, 111, 420, 333, 555, 777, 999]              
+              if int(message.content) in gold_reqs:
+                role = discord.utils.get(message.author.guild.roles, id=799603986163826708) # Gold
+                await message.author.add_roles(role)
+                await message.add_reaction('🎉')
+                await message.add_reaction('🟡')
+              elif int(message.content) in iron_reqs:
+                role = discord.utils.get(message.author.guild.roles, id=799603845982060574) # Iron
+                await message.author.add_roles(role)
+                await message.add_reaction('🎉')
+                await message.add_reaction('⚪')
+              if int(message.content) == 1000:
+                await message.channel.purge(limit=1000) # clear channel
+                await message.channel.send('1')
+
   await client.process_commands(message)
   
 try:
