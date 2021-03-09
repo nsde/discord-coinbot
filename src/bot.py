@@ -15,11 +15,16 @@ import mojang # pip install mojang | API for Minecraft
 import discord #pip install discord | for bot-system
 import asyncio
 import datetime
-import colorama
+try:
+  import colorama #pip install colorama | for colored text
+except:
+  os.system('pip install colorama')
+  import colorama
 try:
   import meme_get #pip install meme_get | for gags/jokes-commands
 except:
   os.system('pip install future')
+  import meme_get
 import langdetect #pip install langdetect | to detect langauges in a string
 import skingrabber #pip install skingrabber | to render skins
 import googlesearch #pip install google | to search something on the web
@@ -689,6 +694,7 @@ async def chatbot(ctx, *args):
       ''')
 
 @client.command(name='clear', aliases=['cls'], help='Clears the last x messages from a channel.', usage='<amount>')
+@commands.has_permissions(manage_messages=True)
 async def clear(ctx, amount : int):
   await ctx.channel.purge(limit=amount)
   await ctx.send(f':white_check_mark: I deleted **{amount}** messages.', delete_after=3)
@@ -697,41 +703,60 @@ async def clear(ctx, amount : int):
 async def on_message(message):
   bridge_names = ['nv-bridge', '𝔫𝔳-𝔟𝔯𝔦𝔡𝔤𝔢', '𝖓𝖛-𝖇𝖗𝖎𝖉𝖌𝖊', '𝓷𝓿-𝓫𝓻𝓲𝓭𝓰𝓮', '𝓃𝓋-𝒷𝓇𝒾𝒹𝑔𝑒', '𝕟𝕧-𝕓𝕣𝕚𝕕𝕘𝕖', '𝘯𝘷-𝘣𝘳𝘪𝘥𝘨𝘦', '𝙣𝙫-𝙗𝙧𝙞𝙙𝙜𝙚', '𝚗𝚟-𝚋𝚛𝚒𝚍𝚐𝚎', '𝐧𝐯-𝐛𝐫𝐢𝐝𝐠𝐞', 'ᑎᐯ-ᗷᖇᎥᗪǤᗴ'] # channel names for bridges can be...
   chatbot_names = ['nv-chatbot', '𝔫𝔳-𝔠𝔥𝔞𝔱𝔟𝔬𝔱', '𝖓𝖛-𝖈𝖍𝖆𝖙𝖇𝖔𝖙', '𝓷𝓿-𝓬𝓱𝓪𝓽𝓫𝓸𝓽', '𝓃𝓋-𝒸𝒽𝒶𝓉𝒷𝑜𝓉', '𝕟𝕧-𝕔𝕙𝕒𝕥𝕓𝕠𝕥', '𝘯𝘷-𝘤𝘩𝘢𝘵𝘣𝘰𝘵', '𝙣𝙫-𝙘𝙝𝙖𝙩𝙗𝙤𝙩', '𝚗𝚟-𝚌𝚑𝚊𝚝𝚋𝚘𝚝', '𝐧𝐯-𝐜𝐡𝐚𝐭𝐛𝐨𝐭', 'ᑎᐯ-ᑕᕼᗩ丅ᗷᗝ丅']
+  counting_names = ['nv-counting']
   if not message.author.bot:
     for bridge_name in bridge_names:
-      if bridge_name in message.channel.name:
-        for guild in client.guilds:
-          for textchannel in guild.text_channels:
-            for bridge_name in bridge_names:
-              if bridge_name in textchannel.name:
-                if message.channel.id != textchannel.id:
-                  if textchannel.name.split('-')[-1] == message.channel.name.split('-')[-1]:
-                    await textchannel.send(f'**[{message.guild.name}] {message.author}** » {message.content}')
+      if message.channel.topic:
+        if bridge_name in message.channel.topic:
+          for guild in client.guilds:
+            for textchannel in guild.text_channels:
+              for bridge_name in bridge_names:
+                if textchannel.topic:
+                  if bridge_name in textchannel.topic:
+                    if message.channel.id != textchannel.id:
+                      if textchannel.topic.split('-')[-1] == message.channel.topic.split('-')[-1]:
+                        await textchannel.send(f'**[{message.guild.name}] {message.author}** » {message.content}')
+
     for chatbot_name in chatbot_names:
-      if chatbot_name in message.channel.name:
+      if message.channel.topic:
+        if chatbot_name in message.channel.topic:
 
-        response = chatbot_history[-1]
+          response = chatbot_history[-1]
 
-        phrase_num = 0
-        for phrase in context_phrases:
-          if response == phrase[0]:
-            if phrase[1] in message.content.lower():
-              response = phrase[2]
+          phrase_num = 0
+          for phrase in context_phrases:
+            if response == phrase[0]:
+              if phrase[1] in message.content.lower():
+                response = phrase[2]
+                await message.channel.send(response)
+                chatbot_history.append(response)
+                break
+            phrase_num += 1
+
+          for phrase in chatbot_phrases.keys():
+            if phrase in message.content.lower():
+              response = chatbot_phrases[phrase]
               await message.channel.send(response)
               chatbot_history.append(response)
               break
-          phrase_num += 1
-
-        for phrase in chatbot_phrases.keys():
-          if phrase in message.content.lower():
-            response = chatbot_phrases[phrase]
-            await message.channel.send(response)
-            chatbot_history.append(response)
-            break
+      
+    for counting_name in counting_names:
+      if message.channel.topic:
+        if counting_name in message.channel.topic:
+          msg_count = 0
+          async for previous_message in message.channel.history(limit=2):
+            if msg_count == 1:
+              if message.author.id == previous_message.author.id:
+                await message.delete()
+              try:
+                if int(previous_message.content) + 1 != int(message.content):
+                  await message.delete()
+              except:
+                await message.delete()
+            msg_count += 1
 
   await client.process_commands(message)
   
-# Run
 try:
   client.run(token)
 except:
