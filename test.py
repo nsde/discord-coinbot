@@ -3,22 +3,7 @@ import time
 tic = time.perf_counter()
 # ===================================================================
 
-import threading
-
-globals()['i'] = 0
-
-def zaehler_plus():
-    for _ in range(10000000):
-        globals()['i'] += 1
-
-plus_thread = threading.Thread(target=zaehler_plus)
-plus_thread.start()
-
-
-for _ in range(10000000):
-    globals()['i'] -= 1
-
-print(globals()['i'])
+print(66666 % 111)
 
 # ===================================================================
 toc = time.perf_counter()
