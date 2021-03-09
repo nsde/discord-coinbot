@@ -771,9 +771,6 @@ async def on_message(message):
                 await message.author.add_roles(role)
                 await message.add_reaction('🎉')
                 await message.add_reaction('⚪')
-              if int(message.content) == 1000:
-                await message.channel.purge(limit=1000) # clear channel
-                await message.channel.send('1')
             msg_count += 1
   await client.process_commands(message)
   
