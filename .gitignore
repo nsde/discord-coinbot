@@ -1,6 +1,7 @@
 token.txt
 temp/
 .google-cookie
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

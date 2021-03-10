@@ -3,8 +3,8 @@ main:
 
 currency:
   rarity_normal:
-    min: 50
-    max: 150
+    min: 500
+    max: 1500
 
   rarity_epic:
     min: 0
@@ -17,63 +17,4 @@ currency:
     alt_symbols:
       - ":dollar:"
       - ":money_with_wings:"
-      - ":moneybag:" 
-
-language:
-  dailycoins:
-    - Bitteschön, deine täglichen Coins.
-    - Hier, gönn' dir deine daily Coins.
-    - Gönn' dir deine täglichen Coins!
-  
-  dailychest:
-    - Sieh mal, was in deiner daily-Truhe drin ist.
-    - Schau, deine daily-Truhe.
-    - Gönn' dir deine Truhe!
-
-  dailyerror:
-    - Hmm... Du bist etwas zu gierig. Warte bis morgen, ok?
-    - Coins wachsen nicht auf Bäumen! Warte noch einen Tag.
-    - Hey, ich kann dir das ***noch*** nicht geben. Warte bitte bis morgen.
-  
-  coinbooster:
-    - Du hast einen **Coinbooster** gefunden!
-    - GG, du hast einen **Coinbooster** entdeckt!
-    - Nice, ein **Coinbooster**!
-
-  coinmultiplier:
-    - Nice, ein **Multiplier**!
-    - GG! Hier, ein **Multiplier**.
-    - Cool, du hast einen **Multiplier** gefunden!
-
-  epic:
-    - Du hast ein **episches** Item gefunden ^^
-    - GG! Du hast ein **episches** Item gefunden!
-    - NICE! Ein **episches** Item!
-
-  spam:
-    - Hey, komm' runter.
-    - Wir wissen, dass eine Tastatur viele aufregende Tasten hat, aber... bitte probiere das wo anders aus! xD
-    - Bitte sei ehrenvoll deiner Tastatur xD
-
-  useitem:
-    - Okay, du **aktivierst** dieses Item.
-    - Okay. Dieses Item ist nun **aktiv**.
-    - Ok. Dein Item ist jetzt **aktiviert**.
-
-  userror:
-    - Oh, du kannst leider dieses Item nicht benutzen.
-    - Hmm... Du kannst dieses Item nicht benutzen.
-    - Du kannst dieses Item nicht benutzen.
-
-  giveaway:
-    join:
-      - Nice, du bist nun beigetreten!
-      - Cool, viel Glück!
-      - Ok, du bist dabei.
-    
-    join_error:
-      - Huch, du kannst da nicht beitreten.
-      - Irgendwas ist hier schiefgelaufen...
-      - Du kannst leider nicht beitreten.
-  
-    
+      - ":moneybag:"

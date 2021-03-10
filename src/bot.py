@@ -71,16 +71,10 @@ with open(CWD + '/config/config.yml') as f:
   config = yaml.load(f, Loader=yaml.SafeLoader)
 
   def fixuml(x):
-      '''Fix wrong coding of äüö (German language only)'''
-      return x.replace('Ã¤','ä').replace('Ã¶','ö').replace('Ã¼', 'ü')
+    '''Fix wrong coding of äüö (German language only)'''
+    return x.replace('Ã¤','ä').replace('Ã¶','ö').replace('Ã¼', 'ü')
 
-  def lang(x):
-      return fixuml(random.choice(config['language'][x]))
   client = commands.Bot(command_prefix = config['main']['prefix'])
-
-with open(CWD + '/data/dailycoins.yml') as f:
-  daily = yaml.load(f, Loader=yaml.SafeLoader)
-
 
 @client.event
 async def on_ready():
@@ -140,8 +134,11 @@ async def ping(ctx):
     await ctx.send('> :loud_sound: **Audio latency:** ' + str(round(voice.latency * 1000, 2)) + 'ms')
   except:
     await ctx.send('> :loud_sound: **Audio latency:** *[inactive]*')
-  await ctx.send(f'> :gear: Host computer name: {socket.gethostname()}')
-  
+  if socket.gethostname().count('-') != 4:
+    await ctx.send(f'> :gear: Private computer name: {socket.gethostname()}')
+  else:
+    await ctx.send(f'> :gear: Heroku computer name: {socket.gethostname()}')
+
 @client.command(name='user', help='Get information about an user.')
 async def user(ctx):
   user = ctx.message.author
@@ -232,17 +229,16 @@ async def minecraft(ctx, name):
   embed.add_field(name='UUID', value=uuid, inline=False)
   await ctx.send(embed=embed)
 
-@client.command(name='dailycoins', aliases=['dcoins'], help='Economy command to get daily coins.')
+@client.command(name='dailycoins', aliases=['dcoins', 'dc', 'dailyrewards'], help='Economy command to get daily coins.')
 async def dailycoins(ctx):
-  if ctx.message.author not in daily['blocked']['coins']:
-      await ctx.send(lang('dailycoins') + '\n> +' + str(random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])) + ' ' + config['currency']['symbols']['currency_normal'])
-      daily['blocked']['coins'].append(ctx.message.author)
-      with open(CWD + '/config/daily.yml', 'w') as f:
-          daily_list = []
-          daily_list.append(daily)
-          yaml.dump(daily_list, f)
+  dailycoins_list = open(CWD + '/data/dailycoins.txt').readlines()
+  if str(ctx.message.author.id) not in dailycoins_list:
+    await ctx.send('**Here, enjoy your daily coins!**\n> +' + str(random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])) + ' ' + config['currency']['symbols']['currency_normal'])
+    dailycoins_list.append(str(ctx.message.author.id))
+    print('\n'.join(dailycoins_list))
+    open(CWD + '/config/daily.yml', 'w').write('\n'.join(dailycoins_list))
   else:
-      await ctx.send(config['currency']['symbols']['error'] + ' ' + lang('dailyerror'))
+    await ctx.send('Sorry, I can\'t give you daily coins because you already claimed them today.')
 
 @client.command(name='meme', help='Shows a random meme. Specify "load count" to a high number to get more unique memes.', usage='(<load_count>)')
 async def meme(ctx, load_count=None):
@@ -319,7 +315,7 @@ async def texttospeech(ctx, *args):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=f'{CWD}/temp/tts.mp3'))
   voice.source = discord.PCMVolumeTransformer(voice.source)
-  voice.source.volume = 0.07
+  voice.source.volume = 0.1
 
 
 @client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='Creates a temporary channel.', usage='[v|t] <time>(s) (x)')
@@ -758,7 +754,10 @@ async def on_message(message):
                   except:
                     pass
               except:
-                await message.delete()
+                try:
+                  await message.delete()
+                except:
+                  pass
               gold_reqs = [100, 200, 500, 900, 1000]
               iron_reqs = [69, 111, 420, 333, 555, 777, 999]              
               if int(message.content) in gold_reqs:
