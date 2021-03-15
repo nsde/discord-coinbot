@@ -13,6 +13,9 @@ This is basically an updated and improved version of **https://github.com/nsde/S
 
 > I'm not sure yet, but probably no.
 
+### Disclaimer
+The program contains a **`xmltodict.py`**. I DIDN'T CREATE IT. I just had problems with importing it, so I just decided to put it in here. The *xmltodict*-repo can be found at https://github.com/martinblech/xmltodict.
+
 # 🔨 Installation
 1. Execute in root dir: `pip install -r requirements.txt` to install the needed libaries.
 2  After that, create a file in "\config" called "token.txt". The content of the file has to be the bot token (see the section "Security" > "Token") for security information.

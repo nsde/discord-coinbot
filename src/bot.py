@@ -1,3 +1,7 @@
+'''Imports of self-made modules'''
+import padlet
+
+'''Regular imports'''
 import os
 import io
 import ast
@@ -10,10 +14,11 @@ import pytube #pip install pytube | for downloading YouTube videos and reading t
 import random
 import shutil
 import socket
-import mojang # pip install mojang | API for Minecraft
+import mojang #pip install mojang | API for Minecraft
 #pip install PyNaCl | for voicechannel support
 import discord #pip install discord | for bot-system
 import asyncio
+import requests #pip install requests | 
 import datetime
 try:
   import colorama #pip install colorama | for colored text
@@ -25,17 +30,22 @@ try:
 except:
   os.system('pip install future')
   import meme_get
+import xmltodict #pip install xmltodict | The name says it.
 import langdetect #pip install langdetect | to detect langauges in a string
 import skingrabber #pip install skingrabber | to render skins
 import googlesearch #pip install google | to search something on the web
 import geizhalscrawler #pip install geizhalscrawler | for product data (price, etc.)
 import deep_translator #pip install deep_translator | for translating-commands
 
+'''Imports with abbrevations'''
 import youtubesearchpython as ysp #pip install youtube-search-python | for YouTube-Search
 
+'''From-Imports'''
 from discord.ext import commands #pip install discord.py | For an advanced version of the "normal" discord libary
 from PIL import Image, ImageFilter #pip install pillow | for image modification | sorry for importing in this that way, but see https://stackoverflow.com/questions/11911480/python-pil-has-no-attribute-image
 
+'''Constants'''
+VERSION = '0.0.1'
 CWD = os.getcwd().replace('\\', '/')
 if CWD.split('/')[-1] == 'src':
   CWD = '/'.join(CWD.split('/')[:-1])
@@ -79,11 +89,14 @@ with open(CWD + '/config/config.yml') as f:
 @client.event
 async def on_ready():
   print(f'\nLogged in as {client.user}\n')
+  helpcmd = commands.HelpCommand
   await client.change_presence(activity=discord.Game(name='.help | visit bit.ly/nevi'))
 
-# @client.event
-# async def on_command_error(ctx, error):
-#   error_msg = 'Unknown error.'
+@client.event
+async def on_command_error(ctx, error):
+  error_msg = 'Unknown error.'
+  if isinstance(error, commands.CommandNotFound):
+    error_msg = 'This command does not exist. Use **`.info`** for information.'
 
 #   if isinstance(error, commands.MissingRequiredArgument):
 #     error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
@@ -91,8 +104,8 @@ async def on_ready():
 #     error_msg = 'You passed too many arguments. You can use `.help` for information'
 #   if isinstance(error, commands.Cooldown):
 #     error_msg = 'Please wait. You are on a cooldown.'
-#   # if isinstance(error, commands.CommandError):
-#   #   error_msg = 'There was an error with this command.'
+#    if isinstance(error, commands.CommandError):
+#     error_msg = 'There was an error with this command.'
 #   if isinstance(error, commands.MessageNotFound):
 #     error_msg = 'I couldn\'t find this message.'
 #   if isinstance(error, commands.ChannelNotFound):
@@ -114,7 +127,8 @@ async def on_ready():
 #   if isinstance(error, commands.BadArgument):
 #     error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
 
-#   await ctx.send(f':x: **ERROR**\n{error_msg}')
+  if error_msg != 'Unknown error.':
+    await ctx.send(f':x: **ERROR** - {error_msg}')
 
 @client.command(name='stats', help='Get statistics about this bot.')
 async def stats(ctx):
@@ -139,14 +153,34 @@ async def ping(ctx):
   else:
     await ctx.send(f'> :gear: Heroku computer name: {socket.gethostname()}')
 
+@client.command(name='info', help='Information, useful commands & links for this bot.')
+async def info(ctx):
+  embed = discord.Embed(title='NeoVision Bot Info', color=discord.Colour(0x0094FF), description='''
+  **Useful Commands**
+    `.commands`
+    `.ping`
+    `.help`
+
+  **Links**
+    [GitHub](https://bit.ly/nevi)
+    [Readme](https://github.com/nsde/neovision/blob/main/README.md)
+  ''')
+  icon = ''
+  embed.set_footer(text=f'Ping: {str(round(client.latency * 1000, 2))}ms', icon_url=icon)
+  
+  await ctx.send(embed=embed)
+
 @client.command(name='user', help='Get information about an user.')
 async def user(ctx):
   user = ctx.message.author
   mention = ctx.message.author.mention
   msg_id = ctx.message.author.id
-  await ctx.send(user)
+  await ctx.send('''
+  user
+  ''')
   await ctx.send(mention)
   await ctx.send(msg_id)
+  await ctx.send(member.avatar_url)
 
 @client.command(name='terminate', help='Stops the bot (administrator only)')
 @commands.has_permissions(administrator=True)
@@ -193,16 +227,36 @@ async def price(ctx, *args):
   product = obj.parse()
 
   embed = discord.Embed(title=f'**__{product.name[:100]}__**', colour=discord.Colour(0x2a5aff))
-  embed.set_footer(text='Data without guarantee. Country: ' + country.upper(), icon_url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fs3-eu-west-1.amazonaws.com%2Ftpd%2Flogos%2F46d31a8a000064000500a7c8%2F0x0.png&f=1&nofb=1')
+  icon = 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fs3-eu-west-1.amazonaws.com%2Ftpd%2Flogos%2F46d31a8a000064000500a7c8%2F0x0.png&f=1&nofb=1'
+  embed.set_footer(text='Data without guarantee. Country: ' + country.upper(), icon_url=icon)
   embed.add_field(name=f'__URL__', value=url, inline=False)
   try:
     embed.add_field(name=f'__Lowest price__', value=str(product.prices[0]) + product.price_currency , inline=True)
     embed.add_field(name=f'__AVG price__', value=str(round(sum(product.prices)/len(product.prices), 2)) + product.price_currency, inline=True)
   except:
     embed.add_field(name=f'__Error__', value='Price not avaiable', inline=True)
-
-
   await ctx.send(embed=embed)
+
+@client.command(name='padlet', help='Get posts from a padlet.com-page.', usage='<url>')
+async def getpadlet(ctx, url=None):
+  if not url:
+    url = 'https://padlet.com/onlix/ha' # my Homework-Padlet
+  padlet_posts = padlet.getpadlet(url, discord=True)
+
+  posts = []
+  for post in padlet_posts['posts']:
+    posts.append(post['title'] + post['items'])
+
+  title = padlet_posts['title']
+  posts = '\n'.join(posts[-4:])
+  await ctx.send(f'**__{title}__**{posts}')
+
+@client.command(name='counting', aliases=['ct'], help='Get information about the counting system.')
+async def counting(ctx):
+  await ctx.send(
+    f'''**__Counting Information__**
+    *For help on how to setup a counting channel, see the docs and the readme on the GitHub page.*
+    ''')
 
 @client.command(name='minecraft', aliases=['mc', 'minecraftinfo', 'mcinfo'], help='Get information about a player.', usage='<playername>')
 async def minecraft(ctx, name):
@@ -229,16 +283,44 @@ async def minecraft(ctx, name):
   embed.add_field(name='UUID', value=uuid, inline=False)
   await ctx.send(embed=embed)
 
+def getcoins(user):
+  for line in open(CWD + '/data/coins.txt').readlines():
+    if line.startswith(str(user.id)):
+      return int(line.split()[1])
+  open(CWD + '/data/coins.txt', 'a').write(f'\n{user} 0')
+  return 0
+
+def setcoins(user, amount):
+  for line in open(CWD + '/data/coins.txt').readlines():
+    if line.startswith(str(user.id)):
+      open(CWD + '/data/coins.txt', 'w').write(open(CWD + '/data/coins.txt').read().replace(line, f'{user} {amount}'))
+      return
+  open(CWD + '/data/coins.txt', 'a').write(f'\n{user} {amount}')
+
 @client.command(name='dailycoins', aliases=['dcoins', 'dc', 'dailyrewards'], help='Economy command to get daily coins.')
 async def dailycoins(ctx):
-  dailycoins_list = open(CWD + '/data/dailycoins.txt').readlines()
+  try:
+    dailycoins_list = open(CWD + '/data/dailycoins.txt').readlines()
+  except:
+    open(CWD + '/data/dailycoins.txt', 'w').write('')
+    dailycoins_list = open(CWD + '/data/dailycoins.txt').readlines()
+
   if str(ctx.message.author.id) not in dailycoins_list:
-    await ctx.send('**Here, enjoy your daily coins!**\n> +' + str(random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])) + ' ' + config['currency']['symbols']['currency_normal'])
+    amount = random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])
+    await ctx.send('**Here, enjoy your daily coins!**\n> +' + str(amount) + ' ' + config['currency']['symbols']['currency_normal'])
     dailycoins_list.append(str(ctx.message.author.id))
     print('\n'.join(dailycoins_list))
-    open(CWD + '/config/daily.yml', 'w').write('\n'.join(dailycoins_list))
+    open(CWD + '/data/dailycoins.txt', 'w').write('\n'.join(dailycoins_list))
+    setcoins(user=ctx.author, amount=getcoins(ctx.message.author) + amount)
   else:
-    await ctx.send('Sorry, I can\'t give you daily coins because you already claimed them today.')
+    await ctx.send(':x: Sorry, I can\'t give you daily coins because you already claimed them today.')
+
+@client.command(name='balance', aliases=['bal'], help='Get a user\'s account balance.')
+async def balance(ctx, user:discord.Member=None):
+  if not user:
+    user = ctx.author
+  
+  await ctx.send(f'Account balance of  \'{user}\': {getcoins(user)}')
 
 @client.command(name='meme', help='Shows a random meme. Specify "load count" to a high number to get more unique memes.', usage='(<load_count>)')
 async def meme(ctx, load_count=None):
@@ -259,9 +341,22 @@ async def image(ctx, style, user:discord.Member=None):
   if not user:
     user = ctx.author
   
-  styles = {'business': [103, 310, 43]}  # Syntax: {'style_name': [resize, x, y]}
+  styles = {
+    'business': [103, 310, 43],
+    'rip': [151, 284, 378], # Thank you for the pictures: https://pixabay.com/photos/waterfall-water-river-silent-5138793/ and https://pixabay.com/photos/tombstone-grave-cemetery-gravestone-3385623/
+    'wanted': [204, 156, 320], # Thank you for the pictures: https://pixabay.com/illustrations/wanted-poster-wanted-poster-west-1081663/
+    'future': [290, 96, 312],
+    'confusing': [290, 96, 312],
+    }
 
-  template = Image.open(f'{CWD}/data/images/{style}.png')
+  # Syntax: {'style_name': [resize_size, top_left_x, top_left_y]}. All 3 values represent the location of the profile-picture-square
+
+  try:
+    template = Image.open(f'{CWD}/data/images/{style}.png')
+  except:
+    style_list = ', '.join(styles.keys())
+    await ctx.send(f':x: There is no such image template. Avaiable style templates: {style_list}.')
+    return
   profile_pic = user.avatar_url_as(size=256)
   profile_pic_bytes = io.BytesIO(await profile_pic.read())
   profile_pic = Image.open(profile_pic_bytes)
@@ -438,8 +533,8 @@ async def templimit(ctx, limit=None):
     await ctx.send(':x: **ERROR:** Please join a voice channel to change its userlimit and try again.')
     return
 
-# """Copied from https://gist.github.com/nitros12/2c3c265813121492655bc95aa54da6b9"""
-# """============================================================================="""
+# '''Copied from https://gist.github.com/nitros12/2c3c265813121492655bc95aa54da6b9'''
+# '''============================================================================='''
 # def insert_returns(body):
 #     # insert return stmt if the last expression is a expression statement
 #     if isinstance(body[-1], ast.Expr):
@@ -479,7 +574,7 @@ async def templimit(ctx, limit=None):
 #   result = (await eval(f"{fn_name}()", env))
 #   await ctx.send(result)
 
-# """============================================================================="""
+# '''============================================================================='''
 
 @client.command(name='playsong', aliases=['play', 'psong', 'ps'], help='Search and play song on YouTube.', usage='<search>')
 async def playsong(ctx, *args):
@@ -520,8 +615,9 @@ async def playsong(ctx, *args):
   upload_date = data['uploadDate']
   description = data['description'][:100] + ' *[...]*'
 
-  easteregg_videos = ['dQw4w9WgXcQ', 'ub82Xb1C8os', 'iik25wqIuFo', 'YddwkMJG1Jo', '8ybW48rKBME', 'dRV6NaciZVk', 'QB7ACr7pUuE', 'll-mQPDCn-U', 'ehSiEHFY5v4', '-51AfyMqnpI',
-  'Tt7bzxurJ1I', 'fC7oUOUEEi4', 'O91DT1pR1ew']
+  easteregg_videos = ['dQw4w9WgXcQ', 'ub82Xb1C8os', 'iik25wqIuFo', 'YddwkMJG1Jo',
+  '8ybW48rKBME', 'dRV6NaciZVk', 'QB7ACr7pUuE', 'll-mQPDCn-U', 'ehSiEHFY5v4', '-51AfyMqnpI',
+  'Tt7bzxurJ1I', 'fC7oUOUEEi4', 'O91DT1pR1ew', 'bxqLsrlakK8', 'oHg5SJYRHA0']
 
   if video_id in easteregg_videos:
     description = 'No, not again.'
@@ -626,14 +722,6 @@ async  def songname(ctx):
 @client.command(name='blockabl', help='Get information about blockabl.')
 async def blockabl():
   pass
-
-@client.command(name='nitro', help='Generates a fake nitro gift link - just for fun.')
-async def nitro(ctx):
-  if random.randint(0, 20) != 0:
-    code_id = ''.join(random.choices(string.ascii_uppercase + string.digits + string.ascii_lowercase, k=16))
-    await ctx.send('http://discord.gift/' + code_id)
-  else:
-    await ctx.send('https://discordgift.site/1Kvj5Ept1TyfUuKS')
  
 chatbot_phrases = {
   'hi': 'Hello! :wink:',
