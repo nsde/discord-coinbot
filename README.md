@@ -1,17 +1,14 @@
 # 🤖 NeoVision Discord-Bot
-A Discord-Bot written in Python with features like coin/economy system, music, memes, temporary channels, server-bridge utilities and more!
+A Discord-Bot written in Python with features like coin/economy system, music, memes, temporary channels, server-bridge, general moderation utilities and more!
 
 [![huntr](https://cdn.huntr.dev/huntr_security_badge.svg)](https://huntr.dev)
+## [✨ Add to your server](https://discord.com/oauth2/authorize?client_id=795743605221621782&scope=bot)
+Click to add the bot to a Discord server of your choice (you need the corresponding permissions on the server). It's just 4 clicks (if there isn't any captcha or login screen)! Just select a server and click on go!
 
-## ℹ️ Information
-This is basically an updated and improved version of **https://github.com/nsde/SCD-Bot**.
-
-*"Why didn't I just update the SCD-Repo?"*, you might ask.
-> It's because the SCD-Bot was created for a gaming clan, but thgis one is a public bot.
-
-*"Are you going to update the SCD-Repo anytime soon?"*
-
-> I'm not sure yet, but probably no.
+## 💙 Support me & the bot
+My bot is free to use and I would really appreciate support :) Thanks <3
+### [🔼 Upvote on DBL](https://discordbotlist.com/bots/neovision)
+If would really support me if you could take 20 seconds and upvote & rate my bot on *DiscordBotList*. You need to log into DBL using Discord.
 
 ### Disclaimer
 The program contains a **`xmltodict.py`**. I DIDN'T CREATE IT. I just had problems with importing it, so I just decided to put it in here. The *xmltodict*-repo can be found at https://github.com/martinblech/xmltodict.
@@ -40,7 +37,7 @@ If you get "ERROR: Could not build wheels for multidict, yarl which use PEP 517 
 
 - alternatively, see: https://stackoverflow.com/a/64861883
 
-Run the "main"-python file in /src and follow the instructions and you are *good to go*!
+Run the setup.bat or start.bat (see *usage*) and follow the instructions.
 
 ## 🛠️ Usage
 Try running the bot from the root directory (meaning not "src"). If you are running on windows, I added a start.bat and setup.bat, they are self-explainitory.
@@ -57,14 +54,21 @@ The bot token is secret! Everyone with access to the token can execute everythin
 ## ✔️ Features
 Sorry if they aren't up to date. Keep in mind you can always use the command **`.help`** to get information about other commands. Use **`.command`**
 
-### Tempchannels
+How the syntax/scheme works:
+- **Symbols:**
+    - Values: `<value> <name>`
+    - Choices: `[option1_OR|option2_OR|option3...]`
+    - Optional arguments: `(optional) (argument)`
+- **Examples:** `[say|tell] (<name>) <text>` can be filled out as `say nsde Hello!` or `tell Hello`.
+
+### TempChannels
 Create channels (text or voice) deleting themselves after a specific amount of time of user inactivity.
 
 Inactivity means:
 - no user being in a **voice** channel
 - no message written in a **text** channel
 
-### Syntax:
+### Commands
 - `[tempcreate|tcc|tempc|tcreate] [t(ext)|v(oice)] <timeout>(s) (x)`
   Create a temporary channel. 
   > The channel name will be '⌛|<your_name>-<timeout>' by default.
@@ -97,3 +101,53 @@ Play music from YouTube.
 
 - `move`
   Move the bot to your channel.
+
+- `songname`
+  Get information about the song playing at the moment.
+
+## Server Bridge
+Connect different servers, so you don't have to post a funny meme in the meme-channel of every single server you joined over and over again! The setup is very simple.
+
+<img src="nv-bridge.png" alt="Server Bridge Picture" width="300"/>
+
+### Setup
+First, think of a topic for the channel and a bridge name, for example the topic *Minecraft* and bridge *mc*. Just change a channels description, so it contains the text `nv-bridge-<chatroom_name>` (e.g.: `Chat about Minecraft! nv-bridge-mc`). Now, all channels (no matter the server) with the same chatroom will be synced. It's as easy as that!
+
+Chatrooms make it so that you can have several bridge channels with different discussions and topics. Of course the messages of every single chatroom is synced.
+
+## ChatBot
+The chatbot can respond to simple questions and can have a small-talk with users.
+
+### Setup
+It's pretty simple: just change the description/topic of a text channel so it contains the text `nv-chatbot`, for example `ChatBot Channel. nv-chatbot`. That's it!
+
+### Commands
+- `chatbot [info|phrases]`
+    Display general information about how the ChatBot works (`info`) or a list all accepted phrases/inputs (`phrases`).
+
+## Counting
+Counting is a game where people can count up, but not twice in a row. The bot helps deleting wrong messages (everything which is not just counting up).
+
+### Setup
+It's, (like the whole bot) again really simle. Change the description/topic of a text channel to contain the text `nv-counting`, like `Counting channel! nv-counting`.
+
+### Example
+- Max: 1 ✅
+- Tim: 2 ✅
+- Max: 4 ❌
+- Max: 3 ✅
+- Max: hi❌
+- Tim: 4 ✅
+- Tim: 5 ❌
+-
+
+## Translator
+Nothing special, just a basic Google translator.
+
+### Commands
+- `[translate|tl] <to_language> <text>`
+    Displays the translated text.
+
+## TextToSpeech
+- `tts ([de:|fr:|en:|]) <text>`
+    Say a text in your voice channel.
