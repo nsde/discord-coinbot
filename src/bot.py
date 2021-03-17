@@ -533,49 +533,6 @@ async def templimit(ctx, limit=None):
     await ctx.send(':x: **ERROR:** Please join a voice channel to change its userlimit and try again.')
     return
 
-# '''Copied from https://gist.github.com/nitros12/2c3c265813121492655bc95aa54da6b9'''
-# '''============================================================================='''
-# def insert_returns(body):
-#     # insert return stmt if the last expression is a expression statement
-#     if isinstance(body[-1], ast.Expr):
-#         body[-1] = ast.Return(body[-1].value)
-#         ast.fix_missing_locations(body[-1])
-
-#     # for if statements, we insert returns into the body and the orelse
-#     if isinstance(body[-1], ast.If):
-#         insert_returns(body[-1].body)
-#         insert_returns(body[-1].orelse)
-
-#     # for with blocks, again we insert returns into the body
-#     if isinstance(body[-1], ast.With):
-#         insert_returns(body[-1].body)
-
-
-# @client.command(name='execute', aliases=['exe', 'exec', 'exc', 'eval'], help='Execute Python code. (Administrator only)', usage='<code>')
-# @commands.has_permissions(administrator=True)
-# async def execute(ctx, code):
-#   fn_name = "_eval_expr"
-#   cmd = cmd.strip("` ")
-#   cmd = "\n".join(f"    {i}" for i in cmd.splitlines())
-#   body = f"async def {fn_name}():\n{cmd}"
-#   parsed = ast.parse(body)
-#   body = parsed.body[0].body
-#   insert_returns(body)
-
-#   env = {
-#       'bot': ctx.bot,
-#       'discord': discord,
-#       'commands': commands,
-#       'ctx': ctx,
-#       '__import__': __import__
-#   }
-#   exec(compile(parsed, filename="<ast>", mode="exec"), env)
-
-#   result = (await eval(f"{fn_name}()", env))
-#   await ctx.send(result)
-
-# '''============================================================================='''
-
 @client.command(name='playsong', aliases=['play', 'psong', 'ps'], help='Search and play song on YouTube.', usage='<search>')
 async def playsong(ctx, *args):
   print('Start')
