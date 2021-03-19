@@ -2,7 +2,8 @@
 A Discord-Bot written in Python with features like coin/economy system, music, memes, temporary channels, server-bridge, general moderation utilities and more!
 
 ![last commit](https://img.shields.io/github/last-commit/nsde/neovision?style=flat-square)
-![commits this month](https://img.shields.io/github/commit-activity/m/nsde/neovision?style=flat-square)
+![commits this month](https://shields.io/github/commit-activity/m/nsde/neovision?label=commits+this+month&style=flat-square)
+![commits this week](https://shields.io/github/commit-activity/w/nsde/neovision?label=commits+this+week&style=flat-square)
 ![lines of code](https://img.shields.io/tokei/lines/github/nsde/neovision?label=total%20lines&style=flat-square)
 ![forks](https://img.shields.io/github/forks/nsde/neovision?style=flat-square)
 ![stars](https://img.shields.io/github/stars/nsde/neovision?style=flat-square)
