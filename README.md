@@ -1,3 +1,5 @@
+![cover](nv-cover-crop.jpg)
+
 # 🤖 NeoVision Discord-Bot
 A Discord-Bot written in Python with features like coin/economy system, music, memes, temporary channels, server-bridge, general moderation utilities and more!
 
