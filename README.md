@@ -4,6 +4,8 @@ A Discord-Bot written in Python with features like coin/economy system, music, m
 ![last commit](https://img.shields.io/github/last-commit/nsde/neovision?style=flat-square)
 ![commits this month](https://img.shields.io/github/commit-activity/m/nsde/neovision?style=flat-square)
 ![lines of code](https://img.shields.io/tokei/lines/github/nsde/neovision?label=total%20lines&style=flat-square)
+![forks](https://img.shields.io/github/forks/nsde/neovision?style=flat-square)
+![stars](https://img.shields.io/github/stars/nsde/neovision?style=flat-square)
 
 ## [✨ Add to your server](https://discord.com/oauth2/authorize?client_id=795743605221621782&scope=bot)
 Click to add the bot to a Discord server of your choice (you need the corresponding permissions on the server). It's just 4 clicks (if there isn't any captcha or login screen)! Just select a server and click on go!
