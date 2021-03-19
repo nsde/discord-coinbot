@@ -25,6 +25,7 @@ My bot is free to use and I would really appreciate support :) Thanks <3
  <a href="https://discord.com/oauth2/authorize?client_id=795743605221621782&scope=bot">
    <img src="https://github.com/nsde/neovision/blob/main/vote-bot.png" alt="Server Bridge Picture" width="300">
  </a>
+
 You would really support me if you took just 20 seconds to upvote & rate my bot on *DiscordBotList*. Log in using Discord and solve the Captcha if asked.
 
 # [✔️ Features and Commands](https://github.com/nsde/neovision/wiki/Features)
