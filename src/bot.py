@@ -22,12 +22,12 @@ import requests #pip install requests |
 import datetime
 try:
   import colorama #pip install colorama | for colored text
-except:
+except ImportError:
   os.system('pip install colorama')
   import colorama
 try:
   import meme_get #pip install meme_get | for gags/jokes-commands
-except:
+except ImportError:
   os.system('pip install future')
   import meme_get
 import xmltodict #pip install xmltodict | The name says it.
@@ -35,7 +35,11 @@ import langdetect #pip install langdetect | to detect langauges in a string
 import skingrabber #pip install skingrabber | to render skins
 import googlesearch #pip install google | to search something on the web
 import geizhalscrawler #pip install geizhalscrawler | for product data (price, etc.)
-import deep_translator #pip install deep_translator | for translating-commands
+try:
+  import deep_translator #pip install deep_translator | for translating-commands
+except:
+  print(colorama.Fore.RED + 'No internet connection.')
+  print(colorama.Style.RESET_ALL)
 
 '''Imports with abbrevations'''
 import youtubesearchpython as ysp #pip install youtube-search-python | for YouTube-Search
@@ -70,7 +74,7 @@ try:
 except Exception as e:
   try:
     token = os.getenv('token')
-  except:
+  except FileNotFoundError:
     print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
     token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
     open(CWD + '/config/token.txt', 'w').write(token)    
@@ -84,6 +88,7 @@ with open(CWD + '/config/config.yml') as f:
     '''Fix wrong coding of äüö (German language only)'''
     return x.replace('Ã¤','ä').replace('Ã¶','ö').replace('Ã¼', 'ü')
 
+  # intents = discord.Intents().all()
   client = commands.Bot(command_prefix = config['main']['prefix'])
 
 @client.event
@@ -92,43 +97,43 @@ async def on_ready():
   helpcmd = commands.HelpCommand
   await client.change_presence(activity=discord.Game(name='.help | visit bit.ly/nevi'))
 
-@client.event
-async def on_command_error(ctx, error):
-  error_msg = 'Unknown error.'
-  if isinstance(error, commands.CommandNotFound):
-    error_msg = 'This command does not exist. Use **`.info`** for information.'
+# @client.event
+# async def on_command_error(ctx, error):
+#   error_msg = 'Unknown error.'
+#   if isinstance(error, commands.CommandNotFound):
+#     error_msg = 'This command does not exist. Use **`.info`** for information.'
 
-#   if isinstance(error, commands.MissingRequiredArgument):
-#     error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
-#   if isinstance(error, commands.TooManyArguments):
-#     error_msg = 'You passed too many arguments. You can use `.help` for information'
-#   if isinstance(error, commands.Cooldown):
-#     error_msg = 'Please wait. You are on a cooldown.'
-#    if isinstance(error, commands.CommandError):
-#     error_msg = 'There was an error with this command.'
-#   if isinstance(error, commands.MessageNotFound):
-#     error_msg = 'I couldn\'t find this message.'
-#   if isinstance(error, commands.ChannelNotFound):
-#     error_msg = 'I couldn\'t find this channel.'
-#   if isinstance(error, commands.UserInputError):
-#     error_msg = 'I couldn\'t find this user.'
-#   if isinstance(error, commands.ChannelNotFound):
-#     error_msg = 'I couldn\'t find this channel.'
-#   if isinstance(error, commands.NoPrivateMessage):
-#     error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
-#   if isinstance(error, commands.MissingPermissions):
-#     error_msg = 'Sorry, you don\'t have the role permissions for this.'
-#   if isinstance(error, commands.BotMissingPermissions):
-#     error_msg = 'Sorry, I don\'t have permissions to do this.'
-#   if isinstance(error, commands.ExtensionError):
-#     error_msg = 'I apologize, but I couldn\'t load the needed extension.'
-#   if isinstance(error, commands.CheckFailure):
-#     error_msg = 'Sorry, you don\'t have the permissions for this.'
-#   if isinstance(error, commands.BadArgument):
-#     error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
+# #   if isinstance(error, commands.MissingRequiredArgument):
+# #     error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
+# #   if isinstance(error, commands.TooManyArguments):
+# #     error_msg = 'You passed too many arguments. You can use `.help` for information'
+# #   if isinstance(error, commands.Cooldown):
+# #     error_msg = 'Please wait. You are on a cooldown.'
+# #    if isinstance(error, commands.CommandError):
+# #     error_msg = 'There was an error with this command.'
+# #   if isinstance(error, commands.MessageNotFound):
+# #     error_msg = 'I couldn\'t find this message.'
+# #   if isinstance(error, commands.ChannelNotFound):
+# #     error_msg = 'I couldn\'t find this channel.'
+# #   if isinstance(error, commands.UserInputError):
+# #     error_msg = 'I couldn\'t find this user.'
+# #   if isinstance(error, commands.ChannelNotFound):
+# #     error_msg = 'I couldn\'t find this channel.'
+# #   if isinstance(error, commands.NoPrivateMessage):
+# #     error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
+# #   if isinstance(error, commands.MissingPermissions):
+# #     error_msg = 'Sorry, you don\'t have the role permissions for this.'
+# #   if isinstance(error, commands.BotMissingPermissions):
+# #     error_msg = 'Sorry, I don\'t have permissions to do this.'
+# #   if isinstance(error, commands.ExtensionError):
+# #     error_msg = 'I apologize, but I couldn\'t load the needed extension.'
+# #   if isinstance(error, commands.CheckFailure):
+# #     error_msg = 'Sorry, you don\'t have the permissions for this.'
+# #   if isinstance(error, commands.BadArgument):
+# #     error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
 
-  if error_msg != 'Unknown error.':
-    await ctx.send(f':x: **ERROR** - {error_msg}')
+#   if error_msg != 'Unknown error.':
+#     await ctx.send(f':x: **ERROR** - {error_msg}')
 
 @client.command(name='stats', help='Get statistics about this bot.')
 async def stats(ctx):
@@ -170,17 +175,71 @@ async def info(ctx):
   
   await ctx.send(embed=embed)
 
-@client.command(name='user', help='Get information about an user.')
-async def user(ctx):
-  user = ctx.message.author
-  mention = ctx.message.author.mention
-  msg_id = ctx.message.author.id
-  await ctx.send('''
-  user
-  ''')
-  await ctx.send(mention)
-  await ctx.send(msg_id)
-  await ctx.send(member.avatar_url)
+@client.command(name='user', aliases=['member', 'userinfo', 'memberinfo'], help='Get information about an user.', usage='<user>')
+async def user(ctx, *args):
+  args = list(args)
+  if isinstance(args, list):
+    member = ' '.join(args)
+
+  if not member:
+    member = ctx.message.author
+  else:
+    for user in ctx.guild.members:
+      if member.lower() in user.name.lower():
+        member = user
+        break
+   
+  print(type(member))
+
+  custom_status = '*[Not set]*'
+  activity = '*[Empty]*'
+
+  if member.activities:
+    for member_activity in member.activities:
+      if type(member_activity) is discord.CustomActivity:
+        custom_status = member_activity.name
+      elif type(member_activity) is discord.Activity:
+        activity = member_activity.name
+  
+  nick = '*[Not set]*'
+  if member.nick:
+    nick = member.nick
+
+  roles = []
+  for role in member.roles:
+    roles.append(role.mention)
+  roles = ' '.join(x.mention for x in member.roles)
+  # roles = 'l'
+
+  status = member.status
+  created = member.joined_at.strftime('%A, %B %d, %Y at %H:%M %p %Z')
+  joined = member.joined_at.strftime('%A, %B %d, %Y at %H:%M %p %Z')
+  highest_role = member.top_role.mention
+
+  status_icon = str(member.status).replace('dnd', ':no_entry:').replace('online', ':green_circle:').replace('idle', ':crescent_moon:').replace('offline', ':black_circle:')
+  info = f'''
+    **ID**
+      {member.id}
+    **Nickname**
+      {nick}
+    **Status**
+      {status}
+    **Custom Status**
+      {custom_status}
+    **Playing**
+      {activity}
+    **Created account**
+      {created}
+    **Joined guild**
+      {joined}
+    **Highest role**
+      {highest_role}
+    **Roles**
+      {roles}
+    '''
+  embed = discord.Embed(title=f'{status_icon} {member.name}#{member.discriminator}', color=member.top_role.color, description=info)
+  embed.set_thumbnail(url=member.avatar_url)
+  await ctx.send(embed=embed)
 
 @client.command(name='terminate', help='Stops the bot (administrator only)')
 @commands.has_permissions(administrator=True)
@@ -283,34 +342,37 @@ async def minecraft(ctx, name):
   embed.add_field(name='UUID', value=uuid, inline=False)
   await ctx.send(embed=embed)
 
+coins_file = CWD + '/data/coins.txt'
+
 def getcoins(user):
-  for line in open(CWD + '/data/coins.txt').readlines():
+  for line in open(coins_file).readlines():
     if line.startswith(str(user.id)):
       return int(line.split()[1])
-  open(CWD + '/data/coins.txt', 'a').write(f'\n{user} 0')
+  open(coins_file, 'a').write(f'\n{user} 0')
   return 0
 
 def setcoins(user, amount):
-  for line in open(CWD + '/data/coins.txt').readlines():
+  for line in open(coins_file).readlines():
     if line.startswith(str(user.id)):
-      open(CWD + '/data/coins.txt', 'w').write(open(CWD + '/data/coins.txt').read().replace(line, f'{user} {amount}'))
+      open(coins_file, 'w').write(open(coins_file.read().replace(line, f'{user} {amount}')))
       return
-  open(CWD + '/data/coins.txt', 'a').write(f'\n{user} {amount}')
+  open(coins_file, 'a').write(f'\n{user} {amount}')
 
 @client.command(name='dailycoins', aliases=['dcoins', 'dc', 'dailyrewards'], help='Economy command to get daily coins.')
 async def dailycoins(ctx):
+  dailycoins_file = CWD + '/data/dailycoins.txt'
   try:
-    dailycoins_list = open(CWD + '/data/dailycoins.txt').readlines()
+    dailycoins_list = open(dailycoins_file).readlines()
   except:
-    open(CWD + '/data/dailycoins.txt', 'w').write('')
-    dailycoins_list = open(CWD + '/data/dailycoins.txt').readlines()
+    open(dailycoins_file).write('')
+    dailycoins_list = open(dailycoins_file).readlines()
 
   if str(ctx.message.author.id) not in dailycoins_list:
     amount = random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])
     await ctx.send('**Here, enjoy your daily coins!**\n> +' + str(amount) + ' ' + config['currency']['symbols']['currency_normal'])
     dailycoins_list.append(str(ctx.message.author.id))
     print('\n'.join(dailycoins_list))
-    open(CWD + '/data/dailycoins.txt', 'w').write('\n'.join(dailycoins_list))
+    open(dailycoins_file, 'w').write('\n'.join(dailycoins_list))
     setcoins(user=ctx.author, amount=getcoins(ctx.message.author) + amount)
   else:
     await ctx.send(':x: Sorry, I can\'t give you daily coins because you already claimed them today.')
@@ -412,6 +474,7 @@ async def texttospeech(ctx, *args):
   voice.source = discord.PCMVolumeTransformer(voice.source)
   voice.source.volume = 0.1
 
+globals()['tempchannel_users'] = []
 
 @client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='Creates a temporary channel.', usage='[v|t] <time>(s) (x)')
 async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
@@ -425,12 +488,12 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
   else:
     afk_timer = False
 
-  await ctx.send(f'''
-  :wrench: Creating channel...
-  > **Type:** {ctype}
-  > **Timeout:** {timeout}
-  > **Channel name:** {cname}
-  ''', delete_after=3)
+  # await ctx.send(f'''
+  # :wrench: Creating channel...
+  # > **Type:** {ctype}
+  # > **Timeout:** {timeout}
+  # > **Channel name:** {cname}
+  # ''', delete_after=3)
 
   if not ctype:
     await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
@@ -450,13 +513,27 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
     timeout = int(timeout.replace('m', ''))
     timeout *= 60
 
+  if timeout > 600:
+    await ctx.send(':x: **ERROR:** The maximum timeout is 600 seconds (10 minutes).')
+    return
+
+  print(67)
+  print(str(globals()['tempchannel_users']))
+  print(ctx.author.id)
+
+  if ctx.author.id in globals()['tempchannel_users']:
+    await ctx.send(':x: **ERROR:** You can\'t create two tempchannels at once.')
+    return
+
   category = ctx.channel.category
 
+  print(637)
   if ctype[0] == 't':
     await ctx.send(f':white_check_mark: Created text channel ***#{cname}*** with timeout ***{timeout}***.')
     
     try:
       channel = await ctx.guild.create_text_channel(cname, category=category)
+      globals()['tempchannel_users'].append(ctx.author.id)
     except discord.errors.Forbidden as e:
       await ctx.send(f':x: **ERROR:** Sorry, I don\'t have the permissions for this. Error:\n{e}')
       return
@@ -494,6 +571,7 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
     try:
       channel = await ctx.guild.create_voice_channel(cname, category=category)
       await ctx.send(f':white_check_mark: Created voice channel ***#{cname}*** with timeout ***{timeout}***.')
+      globals()['tempchannel_users'].append(ctx.author.id)
     except discord.errors.Forbidden as e:
       await ctx.send(f':x: **ERROR:** Sorry, I don\'t have the permissions for this. Error:\n{e}')
       return
@@ -512,6 +590,14 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
     else:
       await asyncio.sleep(timeout)
     await channel.delete()
+    
+  if ctx.author.id in globals()['tempchannel_users']:
+    user_num = 0
+    for user in globals()['tempchannel_users']:
+      if ctx.author.id == user:
+        del globals()['tempchannel_users'][user_num]
+      user_num += 1
+
   else:
     await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
     return
@@ -747,7 +833,7 @@ async def clear(ctx, amount : int):
 async def on_message(message):
   bridge_names = ['nv-bridge', '𝔫𝔳-𝔟𝔯𝔦𝔡𝔤𝔢', '𝖓𝖛-𝖇𝖗𝖎𝖉𝖌𝖊', '𝓷𝓿-𝓫𝓻𝓲𝓭𝓰𝓮', '𝓃𝓋-𝒷𝓇𝒾𝒹𝑔𝑒', '𝕟𝕧-𝕓𝕣𝕚𝕕𝕘𝕖', '𝘯𝘷-𝘣𝘳𝘪𝘥𝘨𝘦', '𝙣𝙫-𝙗𝙧𝙞𝙙𝙜𝙚', '𝚗𝚟-𝚋𝚛𝚒𝚍𝚐𝚎', '𝐧𝐯-𝐛𝐫𝐢𝐝𝐠𝐞', 'ᑎᐯ-ᗷᖇᎥᗪǤᗴ'] # channel names for bridges can be...
   chatbot_names = ['nv-chatbot', '𝔫𝔳-𝔠𝔥𝔞𝔱𝔟𝔬𝔱', '𝖓𝖛-𝖈𝖍𝖆𝖙𝖇𝖔𝖙', '𝓷𝓿-𝓬𝓱𝓪𝓽𝓫𝓸𝓽', '𝓃𝓋-𝒸𝒽𝒶𝓉𝒷𝑜𝓉', '𝕟𝕧-𝕔𝕙𝕒𝕥𝕓𝕠𝕥', '𝘯𝘷-𝘤𝘩𝘢𝘵𝘣𝘰𝘵', '𝙣𝙫-𝙘𝙝𝙖𝙩𝙗𝙤𝙩', '𝚗𝚟-𝚌𝚑𝚊𝚝𝚋𝚘𝚝', '𝐧𝐯-𝐜𝐡𝐚𝐭𝐛𝐨𝐭', 'ᑎᐯ-ᑕᕼᗩ丅ᗷᗝ丅']
-  counting_names = ['nv-counting']
+  counting_names = ['nv-counting', 'nv-count']
   if not message.author.bot:
     for bridge_name in bridge_names:
       if message.channel.topic:
@@ -803,18 +889,35 @@ async def on_message(message):
                   await message.delete()
                 except:
                   pass
-              gold_reqs = [100, 200, 500, 900, 1000]
-              iron_reqs = [69, 111, 420, 333, 555, 777, 999]              
-              if int(message.content) in gold_reqs:
-                role = discord.utils.get(message.author.guild.roles, id=799603986163826708) # Gold
-                await message.author.add_roles(role)
-                await message.add_reaction('🎉')
-                await message.add_reaction('🟡')
-              elif int(message.content) in iron_reqs:
-                role = discord.utils.get(message.author.guild.roles, id=799603845982060574) # Iron
-                await message.author.add_roles(role)
-                await message.add_reaction('🎉')
-                await message.add_reaction('⚪')
+              if 'r1(' in message.channel.topic:
+                if not int(message.content) % 500:
+                  worked = False
+                  try:
+                    reward1_role_id = int(message.channel.topic.split('r1(')[1].split(')')[0])
+                    worked = True
+                  except:
+                    pass
+                  if worked:
+                    role = discord.utils.get(message.author.guild.roles, id=reward1_role_id)
+                    await message.author.add_roles(role)
+                    await message.add_reaction('🎉')
+                    await message.add_reaction('🟡')
+              if 'r2(' in message.channel.topic:
+                worked = False
+                try:
+                  reward2_role_id = int(message.channel.topic.split('r2(')[1].split(')')[0])
+                  worked = True
+                except:
+                  pass
+                if worked:
+                  for i in range(3, 10):
+                    i = int(i*'1')
+                    if int(message.content) % i == 0:
+                      role = discord.utils.get(message.author.guild.roles, id=reward2_role_id)
+                      await message.author.add_roles(role)
+                      await message.add_reaction('🎉')
+                      await message.add_reaction('⚪')
+
             msg_count += 1
   await client.process_commands(message)
   
