@@ -12,7 +12,7 @@ A Discord-Bot written in Python with features like coin/economy system, music, m
 Click to add the bot to a Discord server of your choice (you need the corresponding permissions on the server). It's just 4 clicks (if there isn't any captcha or login screen)! Just select a server and click on go!
 
 ### Featured servers using this bot
-![blockabl](https://img.shields.io/discord/682575075832234017?label=blockabl&style=flat-square)
+[![blockabl](https://img.shields.io/discord/682575075832234017?label=blockabl&style=flat-square)](https://dsc.gg/blck)
 
 ## 💙 Support me & the bot
 My bot is free to use and I would really appreciate support :) Thanks <3
