@@ -66,19 +66,24 @@ finally:
 
 try:
   token = open(CWD + '/config/token.txt').read()
-  if token == '':
-    print('ERROR - Token (config/token.txt) is empty.')
-    sys.exit(-1)
-  else:
-    print('Token loaded. Length: ' + str(len(token)))
 except Exception as e:
   try:
     token = os.getenv('token')
-  except FileNotFoundError:
+  except:
     print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
     token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
     open(CWD + '/config/token.txt', 'w').write(token)    
 finally:
+  print(colorama.Style.RESET_ALL)
+
+if not token:
+  print(colorama.Style.RESET_ALL)
+  print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
+  token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
+  print(colorama.Style.RESET_ALL)
+  open(CWD + '/config/token.txt', 'w').write(token)    
+else:
+  print(colorama.Fore.GREEN + 'Token loaded. Length: ' + str(len(token)))
   print(colorama.Style.RESET_ALL)
 
 with open(CWD + '/config/config.yml') as f:
@@ -93,7 +98,7 @@ with open(CWD + '/config/config.yml') as f:
 
 @client.event
 async def on_ready():
-  print(f'\nLogged in as {client.user}\n')
+  print(f'{colorama.Fore.GREEN}Logged in as {client.user}{colorama.Style.RESET_ALL}')
   helpcmd = commands.HelpCommand
   await client.change_presence(activity=discord.Game(name='.help | visit bit.ly/nevi'))
 
@@ -185,11 +190,13 @@ async def user(ctx, *args):
     member = ctx.message.author
   else:
     for user in ctx.guild.members:
-      if member.lower() in user.name.lower():
+      if member.lower() in user.name.lower() or member.lower() in str(user.nick).lower():
         member = user
         break
    
-  print(type(member))
+  if not isinstance(member, discord.Member):
+    await ctx.send(':x: Member not (at leat in this guild) found.')
+    return
 
   custom_status = '*[Not set]*'
   activity = '*[Empty]*'
@@ -209,10 +216,9 @@ async def user(ctx, *args):
   for role in member.roles:
     roles.append(role.mention)
   roles = ' '.join(x.mention for x in member.roles)
-  # roles = 'l'
 
   status = member.status
-  created = member.joined_at.strftime('%A, %B %d, %Y at %H:%M %p %Z')
+  created = member.created_at.strftime('%A, %B %d, %Y at %H:%M %p %Z')
   joined = member.joined_at.strftime('%A, %B %d, %Y at %H:%M %p %Z')
   highest_role = member.top_role.mention
 
@@ -926,5 +932,6 @@ try:
 except:
   print(colorama.Fore.RED + 'Unable to run the client. Please check your bot token.')
   sys.exit(-1)
+  pass
 finally:
   print(colorama.Style.RESET_ALL)
