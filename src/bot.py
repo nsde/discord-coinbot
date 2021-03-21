@@ -194,7 +194,7 @@ async def user(ctx, *args):
         member = user
         break
    
-  if not isinstance(member, discord.Member):
+  if isinstance(member, str):
     await ctx.send(':x: Member not (at leat in this guild) found.')
     return
 
