@@ -34,7 +34,7 @@ import xmltodict #pip install xmltodict | The name says it.
 import langdetect #pip install langdetect | to detect langauges in a string
 import skingrabber #pip install skingrabber | to render skins
 import googlesearch #pip install google | to search something on the web
-import geizhalscrawler #pip install geizhalscrawler | for product data (price, etc.)
+# import geizhalscrawler #pip install geizhalscrawler | for product data (price, etc.)
 try:
   import deep_translator #pip install deep_translator | for translating-commands
 except:
@@ -254,6 +254,26 @@ async def quit(ctx):
   await client.close()
   exit()
 
+@client.command(name='timer', help='Create a timer.', usage='<time> [s|m|h] (<message>)')
+async def timer(ctx, time, unit, message='Time\'s up!'):
+  time = int(time)
+  oldtime = time # time without unit calculation to seconds
+  if unit == 's':
+    pass
+  elif unit == 'm':
+    time *= 60
+  elif unit == 'h':
+    time *= 3600
+  else:
+    await ctx.send(':x: **ERROR**: Invalid unit.\nUnit can be \'s\' for seconds, \'m\' for minutes or \'h\' for hours.')
+    return
+  if time > 10000:
+    await ctx.send(':x: **ERROR**: Timer can\'t be longer than 10000 seconds.')
+    return
+  await ctx.send(f':white_check_mark: Creating a timer for **{oldtime}{unit}** with message \"**{message}**\"...\nYou will get mentioned/pinged.')
+  await asyncio.sleep(time)
+  await ctx.send(f'{ctx.author.mention} **{message}** (**{oldtime}{unit}** passed.)')
+
 @client.command(name='translate', aliases=['tl'], help='Translate a text!', usage='<to_lang> <text>')
 async def translate(ctx, *args):
   to_lang = args[0].lower()
@@ -261,46 +281,46 @@ async def translate(ctx, *args):
   translated = deep_translator.GoogleTranslator(source='auto', target=to_lang).translate(text)
   await ctx.send(translated)
 
-@client.command(name='price', aliases=['bestprice'], help='Get price information about a product on the internet.', usage='<country_code> <product>')
-async def price(ctx, *args):
-  await ctx.send('*Please wait...*', delete_after=3)
+# @client.command(name='price', aliases=['bestprice'], help='Get price information about a product on the internet.', usage='<country_code> <product>')
+# async def price(ctx, *args):
+#   await ctx.send('*Please wait...*', delete_after=3)
 
-  country = args[0].lower()
-  countries = ['at', 'eu', 'de', 'uk', 'pl']
-  country_list = '` or `'.join(countries)
-  if not country in countries:
-    await ctx.send(
-      f':x: **ERROR** Invalid country code argument. Country code can be: `{country_list}`')
-    return
+#   country = args[0].lower()
+#   countries = ['at', 'eu', 'de', 'uk', 'pl']
+#   country_list = '` or `'.join(countries)
+#   if not country in countries:
+#     await ctx.send(
+#       f':x: **ERROR** Invalid country code argument. Country code can be: `{country_list}`')
+#     return
 
-  product = ' '.join(args[1:])
+#   product = ' '.join(args[1:])
 
-  query = 'site:geizhals.eu ' + product
+#   query = 'site:geizhals.eu ' + product
 
-  try:
-    for result in googlesearch.search(query, tld=country.lower(), num=1, stop=1, pause=2):
-      url = result
-  except:
-    await ctx.send(':x: **ERROR** Sorry, there was an error while searching for the product. Try another country or product name.')
-    return
+#   try:
+#     for result in googlesearch.search(query, tld=country.lower(), num=1, stop=1, pause=2):
+#       url = result
+#   except:
+#     await ctx.send(':x: **ERROR** Sorry, there was an error while searching for the product. Try another country or product name.')
+#     return
 
-  try:
-    obj = geizhalscrawler.Geizhals(url, country.upper())
-  except:
-    await ctx.send(':x: **ERROR** Sorry, the bot is being **rate-limited**. ¯\_(ツ)_/¯\nThis means we have to wait...\nIn the meanwhile, listen to this instead:\n*[https://youtu.be/BezpUnoZObw]*')
-    return
-  product = obj.parse()
+#   try:
+#     obj = geizhalscrawler.Geizhals(url, country.upper())
+#   except:
+#     await ctx.send(':x: **ERROR** Sorry, the bot is being **rate-limited**. ¯\_(ツ)_/¯\nThis means we have to wait...\nIn the meanwhile, listen to this instead:\n*[https://youtu.be/BezpUnoZObw]*')
+#     return
+#   product = obj.parse()
 
-  embed = discord.Embed(title=f'**__{product.name[:100]}__**', colour=discord.Colour(0x2a5aff))
-  icon = 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fs3-eu-west-1.amazonaws.com%2Ftpd%2Flogos%2F46d31a8a000064000500a7c8%2F0x0.png&f=1&nofb=1'
-  embed.set_footer(text='Data without guarantee. Country: ' + country.upper(), icon_url=icon)
-  embed.add_field(name=f'__URL__', value=url, inline=False)
-  try:
-    embed.add_field(name=f'__Lowest price__', value=str(product.prices[0]) + product.price_currency , inline=True)
-    embed.add_field(name=f'__AVG price__', value=str(round(sum(product.prices)/len(product.prices), 2)) + product.price_currency, inline=True)
-  except:
-    embed.add_field(name=f'__Error__', value='Price not avaiable', inline=True)
-  await ctx.send(embed=embed)
+#   embed = discord.Embed(title=f'**__{product.name[:100]}__**', colour=discord.Colour(0x2a5aff))
+#   icon = 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fs3-eu-west-1.amazonaws.com%2Ftpd%2Flogos%2F46d31a8a000064000500a7c8%2F0x0.png&f=1&nofb=1'
+#   embed.set_footer(text='Data without guarantee. Country: ' + country.upper(), icon_url=icon)
+#   embed.add_field(name=f'__URL__', value=url, inline=False)
+#   try:
+#     embed.add_field(name=f'__Lowest price__', value=str(product.prices[0]) + product.price_currency , inline=True)
+#     embed.add_field(name=f'__AVG price__', value=str(round(sum(product.prices)/len(product.prices), 2)) + product.price_currency, inline=True)
+#   except:
+#     embed.add_field(name=f'__Error__', value='Price not avaiable', inline=True)
+#   await ctx.send(embed=embed)
 
 @client.command(name='padlet', help='Get posts from a padlet.com-page.', usage='<url>')
 async def getpadlet(ctx, url=None):
