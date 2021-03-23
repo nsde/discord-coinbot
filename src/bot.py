@@ -1,11 +1,21 @@
+try:
+  import colorama #pip install colorama | for colored text
+except ImportError:
+  os.system('pip install colorama')
+  import colorama
+print(colorama.Fore.MAGENTA)
+
 '''Imports of self-made modules'''
 import padlet
+
+'''Local imports'''
 
 '''Regular imports'''
 import os
 import io
 import ast
 import sys
+import bs4 #pip install beautifulsoup4 | for web scrapers
 import yaml #pip install pyyaml | for config files
 import time
 import gtts #pip install gtts | for text to speech
@@ -18,13 +28,8 @@ import mojang #pip install mojang | API for Minecraft
 #pip install PyNaCl | for voicechannel support
 import discord #pip install discord | for bot-system
 import asyncio
-import requests #pip install requests | 
+import requests #pip install requests | for getting html of a website
 import datetime
-try:
-  import colorama #pip install colorama | for colored text
-except ImportError:
-  os.system('pip install colorama')
-  import colorama
 try:
   import meme_get #pip install meme_get | for gags/jokes-commands
 except ImportError:
@@ -99,7 +104,7 @@ with open(CWD + '/config/config.yml') as f:
 @client.event
 async def on_ready():
   print(f'{colorama.Fore.GREEN}Logged in as {client.user}{colorama.Style.RESET_ALL}')
-  helpcmd = commands.HelpCommand
+  # helpcmd = commands.HelpCommand
   await client.change_presence(activity=discord.Game(name='.help | visit bit.ly/nevi'))
 
 # @client.event
@@ -336,6 +341,28 @@ async def getpadlet(ctx, url=None):
   posts = '\n'.join(posts[-4:])
   await ctx.send(f'**__{title}__**{posts}')
 
+@client.command(name='randomizer', aliases=['random', 'rd'], help='Random things!', usage='[thing|wiki|item]')
+async def randomizer(ctx, *args):
+  random_type = args[0]
+
+  if random_type == 'thing' or random_type == 'item':
+    request = requests.get('https://www.wikidata.org/wiki/Special:Random')
+    soup = bs4.BeautifulSoup(request.text, 'html.parser')
+
+    title = str(soup.find_all(class_='wikibase-title-label')[0]).split('>')[1].split('<')[0]
+    info = str(soup.find_all(class_='wikibase-entitytermsview-heading-description')[0]).split('>')[1].split('<')[0]
+    url = request.url
+    footer = 'Thanks to WikiData and its contributors!'
+  elif random_type == 'wiki':
+    pass
+  else:
+    await ctx.send(':x: **ERROR:** This is not a valid random thing type. Use `.help randomizer` for usage help.')
+    return
+
+  embed = discord.Embed(title=title, colour=discord.Colour(0x009fff), description=info, url=url)
+  embed.set_footer(text=footer)
+  await ctx.send(embed=embed)
+
 @client.command(name='counting', aliases=['ct'], help='Get information about the counting system.')
 async def counting(ctx):
   await ctx.send(
@@ -383,6 +410,17 @@ def setcoins(user, amount):
       open(coins_file, 'w').write(open(coins_file.read().replace(line, f'{user} {amount}')))
       return
   open(coins_file, 'a').write(f'\n{user} {amount}')
+
+@client.command(name='tictactoe', aliases=['ttt'], help='Play tic tac toe!')
+async def dailycoins(ctx):
+  content = '''
+  :black_large_square::black_large_square::black_large_square:
+  :black_large_square::blue_square::black_large_square:
+  :black_large_square::black_large_square::black_large_square:
+  '''
+  embed = discord.Embed(title='TicTacToe', colour=discord.Colour(0x20b1d5), description=content)
+  # embed.add_field(name='', value='', inline=True)
+  await ctx.send(embed=embed)
 
 @client.command(name='dailycoins', aliases=['dcoins', 'dc', 'dailyrewards'], help='Economy command to get daily coins.')
 async def dailycoins(ctx):
@@ -543,17 +581,12 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
     await ctx.send(':x: **ERROR:** The maximum timeout is 600 seconds (10 minutes).')
     return
 
-  print(67)
-  print(str(globals()['tempchannel_users']))
-  print(ctx.author.id)
-
   if ctx.author.id in globals()['tempchannel_users']:
     await ctx.send(':x: **ERROR:** You can\'t create two tempchannels at once.')
     return
 
   category = ctx.channel.category
 
-  print(637)
   if ctype[0] == 't':
     await ctx.send(f':white_check_mark: Created text channel ***#{cname}*** with timeout ***{timeout}***.')
     
@@ -643,7 +676,6 @@ async def templimit(ctx, limit=None):
       Keep in mind that users with certain permissions can bypass this restriction.''')
   else:
     await ctx.send(':x: **ERROR:** Please join a voice channel to change its userlimit and try again.')
-    return
 
 @client.command(name='playsong', aliases=['play', 'psong', 'ps'], help='Search and play song on YouTube.', usage='<search>')
 async def playsong(ctx, *args):
@@ -738,7 +770,7 @@ async def playsong(ctx, *args):
 
   video_stream = pytube.YouTube(url).streams.filter(file_extension=filetype, only_audio=True).first()
 
-  await ctx.send(f':arrow_down: Downloading...\n```{video_stream}```', delete_after=3)
+  await ctx.send(f':arrow_down: **Downloading...**\n`{video_stream}`', delete_after=3)
 
   video_stream.download(output_path=temp_path, filename=filename)  
 
@@ -746,10 +778,10 @@ async def playsong(ctx, *args):
     voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
     voice.play(discord.FFmpegPCMAudio(options='-loglevel panic', executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '/' + filename + '.' + filetype))
     voice.source = discord.PCMVolumeTransformer(voice.source)
-    voice.source.volume = 0.07
+    voice.source.volume = 0.1
   except Exception as e:
     print(f'Couldn\'t play the song. I believe FFMPEG has not been installed correctly.\n{e}')
-    await ctx.send(f'x: **CLIENT ERROR** An error occured on the system hosting this bot.\n{e}')
+    await ctx.send(f':x: **CLIENT ERROR** An error occured on the system hosting this bot.\nThis could be because the host system doesn\'t have FFMPEG installed correctly.\n`{e}`')
 
   print('After playing start')
 

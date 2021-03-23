@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-"Makes working with XML feel like you are working with JSON"
+"""Thanks to "martinblech" for **`XMLtoDict`**: https://github.com/martinblech/xmltodict."""
+
+"""Makes working with XML feel like you are working with JSON"""
 
 try:
     from defusedexpat import pyexpat as expat

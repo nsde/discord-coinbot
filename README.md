@@ -32,6 +32,7 @@ You would really support me if you took just 20 seconds to upvote & rate my bot 
 # [🔧 How to Fork](https://github.com/nsde/neovision/wiki/How-To-Fork)
 
 
-## ❗ Credit
-The program contains a **`xmltodict.py`**. I DIDN'T CREATE IT. I just had problems with importing it, so I just decided to put it in here. The *xmltodict*-repo can be found at https://github.com/martinblech/xmltodict.
+## ❗ Credit (code by others & co)
+- Thanks to "martinblech" for **`XMLtoDict`**: https://github.com/martinblech/xmltodict.
+- Thanks to "Mekolaos" for **`AternosOnDiscord`**: https://github.com/Mekolaos/Aternos-On-Discord
 
