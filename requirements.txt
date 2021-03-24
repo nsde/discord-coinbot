@@ -1,9 +1,11 @@
+pytube==10.4.1
+
+
 gtts
 idna
 yarl
 attrs
 pillow
-pytube==10.4.1
 pyyaml
 mojang
 discord
@@ -15,8 +17,10 @@ meme_get
 selenium
 multidict
 wikipedia
+dateparser
 langdetect
 discord.py
+markdownify
 skingrabber
 async-timeout
 python-dotenv

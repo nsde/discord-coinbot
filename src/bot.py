@@ -1,3 +1,5 @@
+'''A Discord-Bot written in Python with features like coin/economy system, music, memes, temporary channels, server-bridge, general moderation utilities and more!'''
+
 try:
   import colorama #pip install colorama | for colored text
 except ImportError:
@@ -5,10 +7,8 @@ except ImportError:
   import colorama
 print(colorama.Fore.MAGENTA)
 
-'''Imports of self-made modules'''
-import padlet
-
 '''Local imports'''
+import padlet #self-made
 
 '''Regular imports'''
 import os
@@ -37,6 +37,7 @@ except ImportError:
   import meme_get
 import wikipedia #pip install wikipedia | Wikipedia scraping
 import xmltodict #pip install xmltodict | The name says it.
+import dateparser #pip install dateparser | Converts human readable text to datetime.datetime
 import langdetect #pip install langdetect | to detect langauges in a string
 import skingrabber #pip install skingrabber | to render skins
 import googlesearch #pip install google | to search something on the web
@@ -328,19 +329,40 @@ async def translate(ctx, *args):
 #     embed.add_field(name=f'__Error__', value='Price not avaiable', inline=True)
 #   await ctx.send(embed=embed)
 
-@client.command(name='padlet', help='Get posts from a padlet.com-page.', usage='<url>')
-async def getpadlet(ctx, url=None):
-  if not url:
-    url = 'https://padlet.com/onlix/ha' # my Homework-Padlet
-  padlet_posts = padlet.getpadlet(url, discord=True)
+@client.command(name='padlet', help='Get posts from a padlet.com-page.', usage='[<url>|<shortcut>] (<show_the_last_?_posts>)')
+async def getpadlet(ctx, value, posts=10):
+  shortcuts = {
+    'ha': 'https://padlet.com/onlix/ha',
+    '9a': 'https://padlet.com/bkessen/yb85s2hcioj2',
+    '9b': 'https://padlet.com/petrakraayvanger/p2seaqfncyyi',
+    'latein': 'https://padlet.com/kirstenlauschke/qea97sv1mlqi'
+    } # shortcuts, so me and my friends don't have to write down the whole url
+  
+  if value in shortcuts.keys():
+    url = shortcuts[value]
+  else:
+    url = value
+  try:
+    padlet_page = padlet.getpadlet(url, discord=True)
+  except:
+    await ctx.send(':x: **ERROR:** Couldn\'t load this Padlet. Please check the URL.')
+    return
 
-  posts = []
-  for post in padlet_posts['posts']:
-    posts.append(post['title'] + post['items'])
-
-  title = padlet_posts['title']
-  posts = '\n'.join(posts[-4:])
-  await ctx.send(f'**__{title}__**{posts}')
+  embed = discord.Embed(title=padlet_page['title'], colour=discord.Colour(0x009fff), url=url, description=padlet_page['description'], timestamp=padlet_page['last_edit'])
+  embed.set_thumbnail(url=padlet_page['icon'])
+  embed.set_footer(text='Padlet created by: ' + padlet_page['author'] + ' | Last update: ')
+  for post in padlet_page['posts'][-posts:]:
+    title = post['title']
+    if post['items']:
+      if isinstance(post['items'], str):
+        content = post['items'][:200]
+      else:
+        content = post['items'][:3]
+    else:
+      content = '*[Empty]*'
+    print(title, content)
+    embed.add_field(name=title, value=content, inline=False)
+  await ctx.send(embed=embed)
 
 @client.command(name='randomizer', aliases=['random', 'rd'], help='Random things!', usage='[thing|wiki|item]')
 async def randomizer(ctx, *args):
