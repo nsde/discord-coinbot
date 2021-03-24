@@ -14,6 +14,7 @@ pymongo
 meme_get
 selenium
 multidict
+wikipedia
 langdetect
 discord.py
 skingrabber

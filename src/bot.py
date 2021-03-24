@@ -35,6 +35,7 @@ try:
 except ImportError:
   os.system('pip install future')
   import meme_get
+import wikipedia #pip install wikipedia | Wikipedia scraping
 import xmltodict #pip install xmltodict | The name says it.
 import langdetect #pip install langdetect | to detect langauges in a string
 import skingrabber #pip install skingrabber | to render skins
@@ -350,16 +351,81 @@ async def randomizer(ctx, *args):
     soup = bs4.BeautifulSoup(request.text, 'html.parser')
 
     title = str(soup.find_all(class_='wikibase-title-label')[0]).split('>')[1].split('<')[0]
+    if title == 'No label defined':
+      title = '[No title avaiable]'
+    
     info = str(soup.find_all(class_='wikibase-entitytermsview-heading-description')[0]).split('>')[1].split('<')[0]
+    if info == 'No description defined':
+      info = '[No description avaiable]'
     url = request.url
     footer = 'Thanks to WikiData and its contributors!'
+
   elif random_type == 'wiki':
+    request = requests.get('https://en.wikipedia.org/wiki/Special:Random')
+    soup = bs4.BeautifulSoup(request.text, 'html.parser')
+
+    title = str(soup.find_all(class_='firstHeading')[0]).split('>')[1].split('<')[0]
+
+    try:
+      pic = 'https:' +str(soup.find_all(class_='image')[0]).split('src=\"')[1].split('\"')[0]
+    except:
+      pass    
+
+    url = request.url
+    try:
+      info = wikipedia.page(title=url.split('/wiki/')[1]).summary[:500]
+    except:
+      info = '[No description avaiable]'
+    footer = 'Thanks to Wikipedia and its contributors!'
     pass
   else:
     await ctx.send(':x: **ERROR:** This is not a valid random thing type. Use `.help randomizer` for usage help.')
     return
 
+  embed = discord.Embed(title=title, colour=discord.Colour(0x009fff), description=info, url=url, )
+  try:
+    embed.set_thumbnail(url=pic)
+  except:
+    pass
+  embed.set_footer(text=footer)
+  await ctx.send(embed=embed)
+
+@client.command(name='wiki', aliases=['wikipedia'], help='View a Wikipedia page.', usage='<page>')
+async def wiki(ctx, *args):
+  page = ' '.join(args)
+
+  try:
+    wikipage = wikipedia.page(wikipedia.search(page, results=10)[0])
+  except:
+    if wikipedia.search(page, results=10):
+      await ctx.send(':x: **ERROR:** Sorry, I couldn\'t find any page with this title.\nMaybe you are looking for:\n**`' + '`**, **`'.join(list(wikipedia.search(page, results=10))) + '`**')
+      return
+    else:
+      await ctx.send(':x: **ERROR:** Sorry, I couldn\'t find any page with this title.')
+
+  title = wikipage.title
+  url = wikipage.url
+
+  try:
+    for picture in wikipage.images:
+      if picture.endswith('jpg') or picture.endswith('png'):
+        pic = picture
+        break
+  except:
+    pass    
+
+  try:
+    info = wikipedia.summary(title)[:500] + ' *[...]*'
+  except:
+    info = '[No description avaiable]'
+  footer =  'Categories: ' + ', '.join(wikipage.categories[:3][:50])
+
   embed = discord.Embed(title=title, colour=discord.Colour(0x009fff), description=info, url=url)
+
+  try:
+    embed.set_thumbnail(url=pic)
+  except:
+    pass
   embed.set_footer(text=footer)
   await ctx.send(embed=embed)
 
@@ -367,10 +433,10 @@ async def randomizer(ctx, *args):
 async def counting(ctx):
   await ctx.send(
     f'''**__Counting Information__**
-    *For help on how to setup a counting channel, see the docs and the readme on the GitHub page.*
+    *For help on how to setup a counting channel, see the wiki on the GitHub page.*
     ''')
 
-@client.command(name='minecraft', aliases=['mc', 'minecraftinfo', 'mcinfo'], help='Get information about a player.', usage='<playername>')
+@client.command(name='minecraft', aliases=['mc', 'minecraftinfo', 'mcinfo'], help='Get information about a player or server.', usage='<playername>')
 async def minecraft(ctx, name):
   uuid = mojang.MojangAPI.get_uuid(name)
   if not uuid:
