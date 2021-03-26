@@ -36,5 +36,5 @@ You would really support me if you took just 20 seconds to upvote & rate my bot 
 
 ## ❗ Credit (code by others & co)
 - Thanks to "martinblech" for **`XMLtoDict`**: https://github.com/martinblech/xmltodict.
-- Thanks to "Mekolaos" for **`AternosOnDiscord`**: https://github.com/Mekolaos/Aternos-On-Discord
+
 
