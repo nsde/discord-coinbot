@@ -31,6 +31,8 @@ You would really support me if you took just 20 seconds to upvote & rate my bot 
 # [✔️ Features and Commands](https://github.com/nsde/neovision/wiki/Features)
 # [🔧 How to Fork](https://github.com/nsde/neovision/wiki/How-To-Fork)
 
+**Notice:** Python 3.9 is tested and NOT WORKING (as of March 2021). Please use 3.7.9 (which is the version I'm using).
+
 
 ## ❗ Credit (code by others & co)
 - Thanks to "martinblech" for **`XMLtoDict`**: https://github.com/martinblech/xmltodict.

@@ -31,10 +31,11 @@ import asyncio
 import requests #pip install requests | for getting html of a website
 import datetime
 try:
-  import meme_get #pip install meme_get | for gags/jokes-commands
+  import meme_get #pip install meme_get | for meme-commands
 except ImportError:
   os.system('pip install future')
   import meme_get
+import mcstatus #pip install mcstatus | see "mojang"
 import wikipedia #pip install wikipedia | Wikipedia scraping
 import xmltodict #pip install xmltodict | The name says it.
 import dateparser #pip install dateparser | Converts human readable text to datetime.datetime
@@ -458,30 +459,51 @@ async def counting(ctx):
     *For help on how to setup a counting channel, see the wiki on the GitHub page.*
     ''')
 
-@client.command(name='minecraft', aliases=['mc', 'minecraftinfo', 'mcinfo'], help='Get information about a player or server.', usage='<playername>')
-async def minecraft(ctx, name):
-  uuid = mojang.MojangAPI.get_uuid(name)
+@client.command(name='minecraft', aliases=['mc', 'minecraftinfo', 'mcinfo'], help='Get information about a player or server.', usage='<player|server>')
+async def minecraft(ctx, value):
+  value = value.lower()
+  uuid = mojang.MojangAPI.get_uuid(value)
+
   if not uuid:
-    await ctx.send(':x: Invalid user.')
-    return
+    server = mcstatus.MinecraftServer.lookup(f'{value}')
+    try:
+      status = server.status()
+    except:
+      await ctx.send(':x: **ERROR:** Invalid user/server.')
+      return
+
+    color = discord.Colour(0x009fff)
+
+    # players = ' '.join(server.query().players.names)
+    playercount = str(status.players.online) + ' players'
+    
+    if status.players.online == 0:
+      color = discord.Colour(0xff0000)
+
+    embed = discord.Embed(title=value, colour=color)
+    embed.set_thumbnail(url='https://i.ibb.co/1GLrmKC/pack.png')
+    embed.add_field(name='Ping', value=f'{status.latency}ms', inline=False)
+    embed.add_field(name='Online', value=f'{playercount}')
+    # embed.add_field(name='Players', value=f'{players}', inline=False)
+    await ctx.send(embed=embed)
+
   else:
     skin = mojang.MojangAPI.get_profile(uuid).skin_url
+    skinrender = skingrabber.skingrabber()
+    skinrendered = skinrender.get_skin_rendered(user=value)
 
-  skinrender = skingrabber.skingrabber()
-  skinrendered = skinrender.get_skin_rendered(user=name)
+    drop = mojang.MojangAPI.get_drop_timestamp(value)
 
-  drop = mojang.MojangAPI.get_drop_timestamp(name)
+    if not drop:
+      drop = 'Not dropping.'
+    else:
+      drop = drop - time.time()
+      drop = f'Dropping in: {drop} Seconds'
 
-  if not drop:
-    drop = 'Not dropping.'
-  else:
-    drop = drop - time.time()
-    drop = f'Dropping in: {drop} Seconds'
-
-  embed = discord.Embed(title=name, colour=discord.Colour(0x009fff))
-  embed.set_thumbnail(url=skinrendered)
-  embed.add_field(name='UUID', value=uuid, inline=False)
-  await ctx.send(embed=embed)
+    embed = discord.Embed(title=value, colour=discord.Colour(0x009fff))
+    embed.set_thumbnail(url=skinrendered)
+    embed.add_field(name='UUID', value=uuid, inline=False)
+    await ctx.send(embed=embed)
 
 coins_file = CWD + '/data/coins.txt'
 
