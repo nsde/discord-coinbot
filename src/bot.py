@@ -106,9 +106,33 @@ with open(CWD + '/config/config.yml') as f:
 
 @client.event
 async def on_ready():
-  print(f'{colorama.Fore.GREEN}Logged in as {client.user}{colorama.Style.RESET_ALL}')
+  print(f'{colorama.Fore.GREEN}Ready. User: {client.user}{colorama.Style.RESET_ALL}.')
   # helpcmd = commands.HelpCommand
   await client.change_presence(activity=discord.Game(name='.help | visit bit.ly/nevi'))
+
+@client.event
+async def on_disconnect():
+  print(f'{colorama.Fore.YELLOW}Disconnected.{colorama.Style.RESET_ALL}')
+
+@client.event
+async def on_reaction_add(reaction, user):
+  pass
+
+@client.event
+async def on_reaction_remove(reaction, user):
+  pass
+
+@client.event
+async def on_private_channel_create(channel):
+  await channel.send('Hello there! :wave:')
+  await asyncio.sleep(1.5)
+  await channel.send('Please keep in mind that commands don\'t work in here.')
+  await asyncio.sleep(2.5)
+  await channel.send('But you can write me for help & support!')
+  await asyncio.sleep(2)
+  await channel.send('Don\'t worry, the messages will be redirected to a human ;)')
+  await asyncio.sleep(3)
+  await channel.send('Bye! <3')
 
 # @client.event
 # async def on_command_error(ctx, error):
@@ -175,7 +199,7 @@ async def ping(ctx):
 async def info(ctx):
   embed = discord.Embed(title='NeoVision Bot Info', color=discord.Colour(0x0094FF), description='''
   **Useful Commands**
-    `.commands`
+    `.info`
     `.ping`
     `.help`
 
@@ -186,6 +210,9 @@ async def info(ctx):
   icon = ''
   embed.set_footer(text=f'Ping: {str(round(client.latency * 1000, 2))}ms', icon_url=icon)
   
+  if not ctx.guild:
+    await ctx.author.send(embed=embed)
+    return
   await ctx.send(embed=embed)
 
 @client.command(name='user', aliases=['member', 'userinfo', 'memberinfo'], help='Get information about an user.', usage='<user>')
@@ -1002,18 +1029,27 @@ async def on_message(message):
   bridge_names = ['nv-bridge', '𝔫𝔳-𝔟𝔯𝔦𝔡𝔤𝔢', '𝖓𝖛-𝖇𝖗𝖎𝖉𝖌𝖊', '𝓷𝓿-𝓫𝓻𝓲𝓭𝓰𝓮', '𝓃𝓋-𝒷𝓇𝒾𝒹𝑔𝑒', '𝕟𝕧-𝕓𝕣𝕚𝕕𝕘𝕖', '𝘯𝘷-𝘣𝘳𝘪𝘥𝘨𝘦', '𝙣𝙫-𝙗𝙧𝙞𝙙𝙜𝙚', '𝚗𝚟-𝚋𝚛𝚒𝚍𝚐𝚎', '𝐧𝐯-𝐛𝐫𝐢𝐝𝐠𝐞', 'ᑎᐯ-ᗷᖇᎥᗪǤᗴ'] # channel names for bridges can be...
   chatbot_names = ['nv-chatbot', '𝔫𝔳-𝔠𝔥𝔞𝔱𝔟𝔬𝔱', '𝖓𝖛-𝖈𝖍𝖆𝖙𝖇𝖔𝖙', '𝓷𝓿-𝓬𝓱𝓪𝓽𝓫𝓸𝓽', '𝓃𝓋-𝒸𝒽𝒶𝓉𝒷𝑜𝓉', '𝕟𝕧-𝕔𝕙𝕒𝕥𝕓𝕠𝕥', '𝘯𝘷-𝘤𝘩𝘢𝘵𝘣𝘰𝘵', '𝙣𝙫-𝙘𝙝𝙖𝙩𝙗𝙤𝙩', '𝚗𝚟-𝚌𝚑𝚊𝚝𝚋𝚘𝚝', '𝐧𝐯-𝐜𝐡𝐚𝐭𝐛𝐨𝐭', 'ᑎᐯ-ᑕᕼᗩ丅ᗷᗝ丅']
   counting_names = ['nv-counting', 'nv-count']
+
   if not message.author.bot:
-    for bridge_name in bridge_names:
-      if message.channel.topic:
-        if bridge_name in message.channel.topic:
-          for guild in client.guilds:
-            for textchannel in guild.text_channels:
-              for bridge_name in bridge_names:
-                if textchannel.topic:
-                  if bridge_name in textchannel.topic:
-                    if message.channel.id != textchannel.id:
-                      if textchannel.topic.split('-')[-1] == message.channel.topic.split('-')[-1]:
-                        await textchannel.send(f'**[{message.guild.name}] {message.author}** » {message.content}')
+    if not isinstance(message.channel, discord.DMChannel):
+      for bridge_name in bridge_names:
+        if message.channel.topic:
+          if bridge_name in message.channel.topic:
+            for guild in client.guilds:
+              for textchannel in guild.text_channels:
+                for bridge_name in bridge_names:
+                  if textchannel.topic:
+                    if bridge_name in textchannel.topic:
+                      if message.channel.id != textchannel.id:
+                        if textchannel.topic.split('-')[-1] == message.channel.topic.split('-')[-1]:
+                          await textchannel.send(f'**[{message.guild.name}] {message.author}** » {message.content}')
+                          return
+    else:
+      support_users = [657900196189044736]
+      for user_id in support_users:
+        user = await client.fetch_user(user_id)
+        await user.send(f'**[{message.author.id}] {message.author}** » {message.content}')
+        return
 
     for chatbot_name in chatbot_names:
       if message.channel.topic:
@@ -1070,6 +1106,7 @@ async def on_message(message):
                     await message.author.add_roles(role)
                     await message.add_reaction('🎉')
                     await message.add_reaction('🟡')
+                    return
               if 'r2(' in message.channel.topic:
                 worked = False
                 try:
@@ -1085,6 +1122,7 @@ async def on_message(message):
                       await message.author.add_roles(role)
                       await message.add_reaction('🎉')
                       await message.add_reaction('⚪')
+                      return
 
             msg_count += 1
   await client.process_commands(message)
