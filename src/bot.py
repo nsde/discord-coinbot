@@ -1035,16 +1035,22 @@ async def clear(ctx, amount: int):
 async def anonymbox(ctx, action=None):
   if action == 'setup':
     channel = ctx.channel
-    await channel.edit(topic=f'Send anonym messages! Just DM the \'NeoVision\'-Bot with \'.anonymbox {channel.id} (message)\'.')
-    await ctx.send(':white_check_mark: Changed the channel\'s description.')
+    text = f'Send anonym messages! Just DM the \'NeoVision\'-Bot with \'.anonymbox {channel.id} (message)\'. nv-anonymbox'
+    try:
+      await channel.edit(topic=text)
+      await ctx.send(':white_check_mark: Changed the channel\'s description.')
+    except:
+      await ctx.send(f'''
+Oops! I don\'t have the permission to edit the channel\'s description.\nYou can copy & paste this text then:
+      ***{text}***''')
   else:
     await ctx.send(f'''
     **AnonymBox**
-    AnonymBox means that users can DM
-    me and an anonymous message will be
-    posted in an specific AnonomBox-channel.
+AnonymBox means that users can DM
+me and an anonymous message will be
+posted in an specific AnonomBox-channel.
 
-    To set up such one, do **`.ab setup`**.
+To set up such one, do **`.ab setup`**.
     ''')
 
 @client.event
