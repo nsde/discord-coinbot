@@ -282,12 +282,12 @@ async def user(ctx, *args):
   embed.set_thumbnail(url=member.avatar_url)
   await ctx.send(embed=embed)
 
-@client.command(name='terminate', help='Stops the bot (administrator only)')
-@commands.has_permissions(administrator=True)
-async def quit(ctx):
-  await ctx.send('Terminating Bot...')
-  await client.close()
-  exit()
+# @client.command(name='terminate', help='Stops the bot (administrator only)')
+# @commands.has_permissions(administrator=True)
+# async def quit(ctx):
+#   await ctx.send('Terminating Bot...')
+#   await client.close()
+#   exit()
 
 @client.command(name='timer', help='Create a timer.', usage='<time> [s|m|h] (<message>)')
 async def timer(ctx, time, unit, message='Time\'s up!'):
@@ -534,6 +534,17 @@ async def minecraft(ctx, value):
 
 coins_file = CWD + '/data/coins.txt'
 
+@client.command(name='tictactoe', aliases=['ttt'], help='Play tic tac toe!')
+async def dailycoins(ctx):
+  content = '''
+  :black_large_square::black_large_square::black_large_square:
+  :black_large_square::blue_square::black_large_square:
+  :black_large_square::black_large_square::black_large_square:
+  '''
+  embed = discord.Embed(title='TicTacToe', colour=discord.Colour(0x20b1d5), description=content)
+  # embed.add_field(name='', value='', inline=True)
+  await ctx.send(embed=embed)
+
 def getcoins(user):
   for line in open(coins_file).readlines():
     if line.startswith(str(user.id)):
@@ -547,17 +558,6 @@ def setcoins(user, amount):
       open(coins_file, 'w').write(open(coins_file.read().replace(line, f'{user} {amount}')))
       return
   open(coins_file, 'a').write(f'\n{user} {amount}')
-
-@client.command(name='tictactoe', aliases=['ttt'], help='Play tic tac toe!')
-async def dailycoins(ctx):
-  content = '''
-  :black_large_square::black_large_square::black_large_square:
-  :black_large_square::blue_square::black_large_square:
-  :black_large_square::black_large_square::black_large_square:
-  '''
-  embed = discord.Embed(title='TicTacToe', colour=discord.Colour(0x20b1d5), description=content)
-  # embed.add_field(name='', value='', inline=True)
-  await ctx.send(embed=embed)
 
 @client.command(name='dailycoins', aliases=['dcoins', 'dc', 'dailyrewards'], help='Economy command to get daily coins.')
 async def dailycoins(ctx):
@@ -807,10 +807,13 @@ async def templimit(ctx, limit=None):
   if limit < 2:
     limit = len(channel.members)
   if ctx.author.voice and ctx.author.voice.channel:
-    await channel.edit(user_limit=limit)
-    await ctx.send(f'''
-      :white_check_mark: New user limit for ***{channel.name}*** is **{limit}**.
-      Keep in mind that users with certain permissions can bypass this restriction.''')
+    if ctx.message.author.display_name in channel.name:
+      await channel.edit(user_limit=limit)
+      await ctx.send(f'''
+        :white_check_mark: New user limit for ***{channel.name}*** is **{limit}**.
+        Keep in mind that users with certain permissions can bypass this restriction.''')
+    else:
+      await ctx.send('Lol, You little hacker, not this time!')
   else:
     await ctx.send(':x: **ERROR:** Please join a voice channel to change its userlimit and try again.')
 
@@ -828,7 +831,6 @@ async def playsong(ctx, *args):
     return
 
   print('Before video check')
-
 
   url = result['link']
 
@@ -855,7 +857,7 @@ async def playsong(ctx, *args):
 
   easteregg_videos = ['dQw4w9WgXcQ', 'ub82Xb1C8os', 'iik25wqIuFo', 'YddwkMJG1Jo',
   '8ybW48rKBME', 'dRV6NaciZVk', 'QB7ACr7pUuE', 'll-mQPDCn-U', 'ehSiEHFY5v4', '-51AfyMqnpI',
-  'Tt7bzxurJ1I', 'fC7oUOUEEi4', 'O91DT1pR1ew', 'bxqLsrlakK8', 'oHg5SJYRHA0']
+  'Tt7bzxurJ1I', 'fC7oUOUEEi4', 'O91DT1pR1ew', 'bxqLsrlakK8', 'oHg5SJYRHA0'] # Rickrolls
 
   if video_id in easteregg_videos:
     description = 'No, not again.'
@@ -923,7 +925,7 @@ async def playsong(ctx, *args):
   print('After playing start')
 
 
-@client.command(name='pausesong', aliases=['pause', 'resume'], help='Pauses or resumes a song.')
+@client.command(name='pausesong', aliases=['pause', 'resume', 'resumesong'], help='Pauses or resumes a song.')
 async def pause(ctx):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   if voice.is_playing():
@@ -950,8 +952,9 @@ async def stopsong(ctx):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   voice.stop()
 
-@client.command(name='songname', aliases=['musicname', 'sn'], help='What song is currently being played?')
-async  def songname(ctx):
+@client.command(name='songname', aliases=['musicname', 'sn', 'mn'], help='What song is currently being played?')
+async def songname(ctx):
+  embed = globals()['embed']
   try:
     await ctx.send(f'Currently playing:', embed=embed)
   except:
@@ -975,6 +978,10 @@ chatbot_phrases = {
 
 context_phrases = [
   ['I\'m good, what about you? :+1:', 'good', 'I\'m glad to hear that!'],
+  ['I\'m good, what about you? :+1:', 'fine', 'I\'m glad to hear that!'],
+  ['I\'m good, what about you? :+1:', 'nice', 'I\'m glad to hear that!'],
+  ['I\'m good, what about you? :+1:', 'great', 'I\'m glad to hear that!'],
+
 ]
 
 intelligent_phrases = {
@@ -1020,15 +1027,34 @@ async def chatbot(ctx, *args):
 
 @client.command(name='clear', aliases=['cls'], help='Clears the last x messages from a channel.', usage='<amount>')
 @commands.has_permissions(manage_messages=True)
-async def clear(ctx, amount : int):
+async def clear(ctx, amount: int):
   await ctx.channel.purge(limit=amount)
   await ctx.send(f':white_check_mark: I deleted **{amount}** messages.', delete_after=3)
 
+@client.command(name='anonymbox', aliases=['ab'], help='Information about the AnonymBox-System')
+async def anonymbox(ctx, action=None):
+  if action == 'setup':
+    channel = ctx.channel
+    await channel.edit(topic=f'Send anonym messages! Just DM the \'NeoVision\'-Bot with \'.anonymbox {channel.id} (message)\'.')
+    await ctx.send(':white_check_mark: Changed the channel\'s description.')
+  else:
+    await ctx.send(f'''
+    **AnonymBox**
+    AnonymBox means that users can DM
+    me and an anonymous message will be
+    posted in an specific AnonomBox-channel.
+
+    To set up such one, do **`.ab setup`**.
+    ''')
+
 @client.event
 async def on_message(message):
+  '''Used for e.g. counting system, chatbot system & bridge system'''
+
   bridge_names = ['nv-bridge', '𝔫𝔳-𝔟𝔯𝔦𝔡𝔤𝔢', '𝖓𝖛-𝖇𝖗𝖎𝖉𝖌𝖊', '𝓷𝓿-𝓫𝓻𝓲𝓭𝓰𝓮', '𝓃𝓋-𝒷𝓇𝒾𝒹𝑔𝑒', '𝕟𝕧-𝕓𝕣𝕚𝕕𝕘𝕖', '𝘯𝘷-𝘣𝘳𝘪𝘥𝘨𝘦', '𝙣𝙫-𝙗𝙧𝙞𝙙𝙜𝙚', '𝚗𝚟-𝚋𝚛𝚒𝚍𝚐𝚎', '𝐧𝐯-𝐛𝐫𝐢𝐝𝐠𝐞', 'ᑎᐯ-ᗷᖇᎥᗪǤᗴ'] # channel names for bridges can be...
   chatbot_names = ['nv-chatbot', '𝔫𝔳-𝔠𝔥𝔞𝔱𝔟𝔬𝔱', '𝖓𝖛-𝖈𝖍𝖆𝖙𝖇𝖔𝖙', '𝓷𝓿-𝓬𝓱𝓪𝓽𝓫𝓸𝓽', '𝓃𝓋-𝒸𝒽𝒶𝓉𝒷𝑜𝓉', '𝕟𝕧-𝕔𝕙𝕒𝕥𝕓𝕠𝕥', '𝘯𝘷-𝘤𝘩𝘢𝘵𝘣𝘰𝘵', '𝙣𝙫-𝙘𝙝𝙖𝙩𝙗𝙤𝙩', '𝚗𝚟-𝚌𝚑𝚊𝚝𝚋𝚘𝚝', '𝐧𝐯-𝐜𝐡𝐚𝐭𝐛𝐨𝐭', 'ᑎᐯ-ᑕᕼᗩ丅ᗷᗝ丅']
   counting_names = ['nv-counting', 'nv-count']
+  anonymbox_names = ['nv-anonymbox']
 
   if not message.author.bot:
     if not isinstance(message.channel, discord.DMChannel):
@@ -1045,11 +1071,20 @@ async def on_message(message):
                           await textchannel.send(f'**[{message.guild.name}] {message.author}** » {message.content}')
                           return
     else:
-      support_users = [657900196189044736]
-      for user_id in support_users:
-        user = await client.fetch_user(user_id)
-        await user.send(f'**[{message.author.id}] {message.author}** » {message.content}')
+      if message.content.startswith('.anonymbox '):
+        channel_id = message.content.split()[1]
+        text = ' '.join(message.content.split()[2:])
+        channel = client.get_channel(int(channel_id))
+        for name in anonymbox_names:
+          if name in channel.topic:
+            await channel.send(text)
         return
+      else:
+        support_users = [657900196189044736] # Supporter IDs that can help the users
+        for user_id in support_users:
+          user = await client.fetch_user(user_id)
+          await user.send(f'**[{message.author.id}] {message.author}** » {message.content}')
+          return
 
     for chatbot_name in chatbot_names:
       if message.channel.topic:
