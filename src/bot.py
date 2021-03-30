@@ -124,15 +124,7 @@ async def on_reaction_remove(reaction, user):
 
 @client.event
 async def on_private_channel_create(channel):
-  await channel.send('Hello there! :wave:')
-  await asyncio.sleep(1.5)
-  await channel.send('Please keep in mind that commands don\'t work in here.')
-  await asyncio.sleep(2.5)
-  await channel.send('But you can write me for help & support!')
-  await asyncio.sleep(2)
-  await channel.send('Don\'t worry, the messages will be redirected to a human ;)')
-  await asyncio.sleep(3)
-  await channel.send('Bye! <3')
+  await channel.send('*Do **`.help`** for information about the DM system.*', delete_after=5)
 
 # @client.event
 # async def on_command_error(ctx, error):
@@ -1085,12 +1077,35 @@ async def on_message(message):
           if name in channel.topic:
             await channel.send(text)
         return
-      else:
-        support_users = [657900196189044736] # Supporter IDs that can help the users
-        for user_id in support_users:
-          user = await client.fetch_user(user_id)
-          await user.send(f'**[{message.author.id}] {message.author}** » {message.content}')
-          return
+      elif message.content.startswith('.support '):
+          text = ' '.join(message.content.split()[1:])
+          support_users = [657900196189044736] # Supporter IDs that can help the users
+          if not message.author.id in support_users: # So supporters don't get spammed by their own messages lmao
+            for user_id in support_users:
+              user = await client.fetch_user(user_id)
+              await user.send(f'**[{message.author.id}] {message.author}** » {message.content}')
+              return
+
+      elif message.content.startswith('.help '):
+        await channel.trigger_typing()
+        await asyncio.sleep(1)
+        await channel.send('Hello there! :wave:')
+
+        await channel.trigger_typing()
+        await asyncio.sleep(1.5)
+        await channel.send('Please keep in mind that commands don\'t work in here.')
+
+        await channel.trigger_typing()
+        await asyncio.sleep(2.5)
+        await channel.trigger_typing() 
+        await channel.send('But you can write me for help & support!')
+
+        await asyncio.sleep(2)
+        await channel.send('Don\'t worry, the messages will be redirected to a human ;)')
+
+        await channel.trigger_typing()
+        await asyncio.sleep(3)
+        await channel.send('Bye! <3')
 
     for chatbot_name in chatbot_names:
       if message.channel.topic:
