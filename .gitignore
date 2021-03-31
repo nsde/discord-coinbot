@@ -1,3 +1,6 @@
+SECRET_database.txt
+SECRET_token.txt
+
 token.txt
 temp/
 .google-cookie

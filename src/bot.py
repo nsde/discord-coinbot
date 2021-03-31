@@ -1,5 +1,6 @@
 '''A Discord-Bot written in Python with features like coin/economy system, music, memes, temporary channels, server-bridge, general moderation utilities and more!'''
 
+import os
 try:
   import colorama #pip install colorama | for colored text
 except ImportError:
@@ -8,10 +9,12 @@ except ImportError:
 print(colorama.Fore.MAGENTA)
 
 '''Local imports'''
-import padlet #self-made
+try:
+  import padlet # self-made
+except ImportError:
+  print('Ignoring padlet module because of ImportError')
 
 '''Regular imports'''
-import os
 import io
 import ast
 import sys
@@ -31,14 +34,27 @@ import asyncio
 import requests #pip install requests | for getting html of a website
 import datetime
 try:
+  import pymongo #pip install pymongo | for the database
+except ImportError:
+  print('Ignoring pymongo module because of ImportError')
+try:
   import meme_get #pip install meme_get | for meme-commands
 except ImportError:
   os.system('pip install future')
   import meme_get
-import mcstatus #pip install mcstatus | see "mojang"
-import wikipedia #pip install wikipedia | Wikipedia scraping
+try:
+  import mcstatus #pip install mcstatus | see "mojang"
+except ImportError:
+  print('Ignoring mcstatus module because of ImportError')
+try:
+  import wikipedia #pip install wikipedia | Wikipedia scraping
+except ImportError:
+  print('Ignoring wikipedia module because of ImportError')
 import xmltodict #pip install xmltodict | The name says it.
-import dateparser #pip install dateparser | Converts human readable text to datetime.datetime
+try:
+  import dateparser #pip install dateparser | Converts human readable text to datetime.datetime
+except ImportError:
+  print('Ignoring padlet module because of ImportError')
 import langdetect #pip install langdetect | to detect langauges in a string
 import skingrabber #pip install skingrabber | to render skins
 import googlesearch #pip install google | to search something on the web
@@ -73,14 +89,14 @@ finally:
   os.mkdir(temp_path)
 
 try:
-  token = open(CWD + '/config/token.txt').read()
+  token = open(CWD + '/config/SECRET_token.txt').read()
 except Exception as e:
   try:
     token = os.getenv('token')
   except:
     print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
     token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
-    open(CWD + '/config/token.txt', 'w').write(token)    
+    open(CWD + '/config/SECRET_token.txt', 'w').write(token)    
 finally:
   print(colorama.Style.RESET_ALL)
 
@@ -89,7 +105,7 @@ if not token:
   print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
   token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
   print(colorama.Style.RESET_ALL)
-  open(CWD + '/config/token.txt', 'w').write(token)    
+  open(CWD + '/config/SECRET_token.txt', 'w').write(token)    
 else:
   print(colorama.Fore.GREEN + 'Token loaded. Length: ' + str(len(token)))
   print(colorama.Style.RESET_ALL)
@@ -103,6 +119,27 @@ with open(CWD + '/config/config.yml') as f:
 
   # intents = discord.Intents().all()
   client = commands.Bot(command_prefix = config['main']['prefix'])
+
+try:
+  database = pymongo.MongoClient(open(CWD + '/config/SECRET_database.txt'))
+except:
+  try:
+    database = pymongo.MongoClient(open(CWD + os.getenv('database')))
+  except:
+    print(f'''{colorama.Fore.RED}
+Oops! There was an problem loading the MondoDB database.
+Please set up a database and a cluster at 'mongodb.com', create a user, remember its password,
+connect with the application 'Python' -> '3.6 or higher', replace the <password> in the string
+with the user you just set up and copy the final string. Sorry - It's quite difficult to set up,
+but it's needed for coin/economy/leveling & other systems to work!
+    {colorama.Style.RESET_ALL}''')
+
+    print(colorama.Fore.YELLOW)
+    dbstring = input(colorama.Fore.BLUE + 'Please type in the database string or press enter to skip: ')
+    open(CWD + '/config/SECRET_database.txt', 'w').write(dbstring)
+    if dbstring:
+      print('Please restart the program!')
+    print(colorama.Style.RESET_ALL)
 
 @client.event
 async def on_ready():
@@ -274,13 +311,6 @@ async def user(ctx, *args):
   embed.set_thumbnail(url=member.avatar_url)
   await ctx.send(embed=embed)
 
-# @client.command(name='terminate', help='Stops the bot (administrator only)')
-# @commands.has_permissions(administrator=True)
-# async def quit(ctx):
-#   await ctx.send('Terminating Bot...')
-#   await client.close()
-#   exit()
-
 @client.command(name='timer', help='Create a timer.', usage='<time> [s|m|h] (<message>)')
 async def timer(ctx, time, unit, message='Time\'s up!'):
   time = int(time)
@@ -307,47 +337,6 @@ async def translate(ctx, *args):
   text = ' '.join(args[1:])
   translated = deep_translator.GoogleTranslator(source='auto', target=to_lang).translate(text)
   await ctx.send(translated)
-
-# @client.command(name='price', aliases=['bestprice'], help='Get price information about a product on the internet.', usage='<country_code> <product>')
-# async def price(ctx, *args):
-#   await ctx.send('*Please wait...*', delete_after=3)
-
-#   country = args[0].lower()
-#   countries = ['at', 'eu', 'de', 'uk', 'pl']
-#   country_list = '` or `'.join(countries)
-#   if not country in countries:
-#     await ctx.send(
-#       f':x: **ERROR** Invalid country code argument. Country code can be: `{country_list}`')
-#     return
-
-#   product = ' '.join(args[1:])
-
-#   query = 'site:geizhals.eu ' + product
-
-#   try:
-#     for result in googlesearch.search(query, tld=country.lower(), num=1, stop=1, pause=2):
-#       url = result
-#   except:
-#     await ctx.send(':x: **ERROR** Sorry, there was an error while searching for the product. Try another country or product name.')
-#     return
-
-#   try:
-#     obj = geizhalscrawler.Geizhals(url, country.upper())
-#   except:
-#     await ctx.send(':x: **ERROR** Sorry, the bot is being **rate-limited**. ¯\_(ツ)_/¯\nThis means we have to wait...\nIn the meanwhile, listen to this instead:\n*[https://youtu.be/BezpUnoZObw]*')
-#     return
-#   product = obj.parse()
-
-#   embed = discord.Embed(title=f'**__{product.name[:100]}__**', colour=discord.Colour(0x2a5aff))
-#   icon = 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fs3-eu-west-1.amazonaws.com%2Ftpd%2Flogos%2F46d31a8a000064000500a7c8%2F0x0.png&f=1&nofb=1'
-#   embed.set_footer(text='Data without guarantee. Country: ' + country.upper(), icon_url=icon)
-#   embed.add_field(name=f'__URL__', value=url, inline=False)
-#   try:
-#     embed.add_field(name=f'__Lowest price__', value=str(product.prices[0]) + product.price_currency , inline=True)
-#     embed.add_field(name=f'__AVG price__', value=str(round(sum(product.prices)/len(product.prices), 2)) + product.price_currency, inline=True)
-#   except:
-#     embed.add_field(name=f'__Error__', value='Price not avaiable', inline=True)
-#   await ctx.send(embed=embed)
 
 @client.command(name='padlet', help='Get posts from a padlet.com-page.', usage='[<url>|<shortcut>] (<show_the_last_?_posts>)')
 async def getpadlet(ctx, value, posts=10):
