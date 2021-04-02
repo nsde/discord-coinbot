@@ -125,7 +125,7 @@ try:
   database = pymongo.MongoClient(open(CWD + '/config/SECRET_database.txt'))
 except:
   try:
-    database = pymongo.MongoClient(open(CWD + os.getenv('database')))
+    database = pymongo.MongoClient(os.getenv('database')
   except:
     print(f'''{colorama.Fore.RED}
 Oops! There was an problem loading the MondoDB database.
