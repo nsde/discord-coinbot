@@ -22,6 +22,7 @@ import bs4 #pip install beautifulsoup4 | for web scrapers
 import yaml #pip install pyyaml | for config files
 import time
 import gtts #pip install gtts | for text to speech
+import covid #pip install covid | for coronavirus data
 import string
 import pytube #pip install pytube | for downloading YouTube videos and reading their data
 import random
@@ -132,7 +133,7 @@ Please set up a database and a cluster at 'mongodb.com', create a user, remember
 connect with the application 'Python' -> '3.6 or higher', replace the <password> in the string
 with the user you just set up and copy the final string. Sorry - It's quite difficult to set up,
 but it's needed for coin/economy/leveling & other systems to work!
-    {colorama.Style.RESET_ALL}''')
+{colorama.Style.RESET_ALL}''')
 
     print(colorama.Fore.YELLOW)
     dbstring = input(colorama.Fore.BLUE + 'Please type in the database string or press enter to skip: ')
@@ -338,6 +339,36 @@ async def translate(ctx, *args):
   translated = deep_translator.GoogleTranslator(source='auto', target=to_lang).translate(text)
   await ctx.send(translated)
 
+@client.command(name='coronavirus', aliases=['covid', 'covid19', 'corona'], help='Display information about the novel coronavirus.', usage='(<country>)')
+async def coronavirus(ctx, country=''):
+  covid_data = covid.Covid(source='worldometers')
+  if country:
+    country = country.lower()
+    embed = discord.Embed(title=f'Coronavirus in {country}', color=discord.Colour(0xff0000))
+    try:
+      infected = covid_data.get_status_by_country_name(country)['active']
+      total = covid_data.get_status_by_country_name(country)['confirmed']
+      recovered = covid_data.get_status_by_country_name(country)['recovered']
+      deaths = covid_data.get_status_by_country_name(country)['deaths']
+    except:
+      await ctx.send(':x: Oops! Invalid country name. Example: \'usa\' or \'germany\'')
+  else:
+    embed = discord.Embed(title='Coronavirus Dashboard', color=discord.Colour(0xff0000))
+
+    infected = covid_data.get_total_active_cases()
+    total = covid_data.get_total_confirmed_cases()
+    recovered = covid_data.get_total_recovered()
+    deaths = covid_data.get_total_deaths()
+
+  embed.set_thumbnail(url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fhealthcare-in-europe.com%2Fmedia%2Fstory_section_text%2F16113%2Fimage-01-2019-ncov_hires.jpg&f=1&nofb=1')
+  embed.add_field(name='🦠 Currently infected', value='{:,}'.format(int(infected)), inline=False)
+  embed.add_field(name='😷 Total Cases', value='{:,}'.format(int(total)), inline=False)
+  embed.add_field(name='🏥 Total Recovered', value='{:,}'.format(int(recovered)), inline=False)
+  embed.add_field(name='💀 Total Deaths', value='{:,}'.format(int(deaths)), inline=False)
+  embed.set_footer(text='Data by worldometer.info', icon_url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F692017015872167940%2F1fnJPzxM.png&f=1&nofb=1')
+  
+  await ctx.send(embed=embed)
+
 @client.command(name='padlet', help='Get posts from a padlet.com-page.', usage='[<url>|<shortcut>] (<show_the_last_?_posts>)')
 async def getpadlet(ctx, value, posts=10):
   shortcuts = {
@@ -420,6 +451,7 @@ async def randomizer(ctx, *args):
     pass
   embed.set_footer(text=footer)
   await ctx.send(embed=embed)
+
 
 @client.command(name='wiki', aliases=['wikipedia'], help='View a Wikipedia page.', usage='<page>')
 async def wiki(ctx, *args):

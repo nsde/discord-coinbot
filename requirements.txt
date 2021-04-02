@@ -4,6 +4,7 @@ gtts
 idna
 yarl
 attrs
+covid
 pillow
 pyyaml
 mojang
