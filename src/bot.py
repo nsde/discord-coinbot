@@ -136,6 +136,7 @@ but it's needed for coin/economy/leveling & other systems to work!
 {colorama.Style.RESET_ALL}''')
 
     print(colorama.Fore.YELLOW)
+    pass
     dbstring = input(colorama.Fore.BLUE + 'Please type in the database string or press enter to skip: ')
     open(CWD + '/config/SECRET_database.txt', 'w').write(dbstring)
     if dbstring:
