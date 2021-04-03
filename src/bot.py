@@ -137,11 +137,11 @@ but it's needed for coin/economy/leveling & other systems to work!
 
     print(colorama.Fore.YELLOW)
     pass
-    dbstring = input(colorama.Fore.BLUE + 'Please type in the database string or press enter to skip: ')
-    open(CWD + '/config/SECRET_database.txt', 'w').write(dbstring)
-    if dbstring:
-      print('Please restart the program!')
-    print(colorama.Style.RESET_ALL)
+    # dbstring = input(colorama.Fore.BLUE + 'Please type in the database string or press enter to skip: ')
+    # open(CWD + '/config/SECRET_database.txt', 'w').write(dbstring)
+    # if dbstring:
+    #   print('Please restart the program!')
+    # print(colorama.Style.RESET_ALL)
 
 @client.event
 async def on_ready():
