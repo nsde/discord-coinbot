@@ -366,7 +366,7 @@ async def coronavirus(ctx, country=''):
   embed.add_field(name='😷 Total Cases', value='{:,}'.format(int(total)), inline=False)
   embed.add_field(name='🏥 Total Recovered', value='{:,}'.format(int(recovered)), inline=False)
   embed.add_field(name='💀 Total Deaths', value='{:,}'.format(int(deaths)), inline=False)
-  embed.set_footer(text='Data by worldometer.info', icon_url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F692017015872167940%2F1fnJPzxM.png&f=1&nofb=1')
+  embed.set_footer(text='Data by worldometers.info', icon_url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F692017015872167940%2F1fnJPzxM.png&f=1&nofb=1')
   
   await ctx.send(embed=embed)
 
