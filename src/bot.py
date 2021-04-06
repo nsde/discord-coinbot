@@ -314,7 +314,12 @@ async def user(ctx, *args):
   await ctx.send(embed=embed)
 
 @client.command(name='timer', help='Create a timer.', usage='<time> [s|m|h] (<message>)')
-async def timer(ctx, time, unit, message='Time\'s up!'):
+async def timer(ctx, time, unit, *message):
+  if not message:
+    message = 'Time\'s up!'
+  else:
+    message = ' '.join(message)
+
   time = int(time)
   oldtime = time # time without unit calculation to seconds
   if unit == 's':
