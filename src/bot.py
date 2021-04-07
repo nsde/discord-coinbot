@@ -231,7 +231,7 @@ async def info(ctx):
   **Links**
     [:desktop: GitHub source code](https://bit.ly/nevi)
     [:scroll: Information and help](https://github.com/nsde/neovision/blob/main/README.md)
-    [:white_check_mark: Invite to other servers)(https://discord.com/oauth2/authorize?client_id=795743605221621782&scope=bot&permissions=8)
+    [:white_check_mark: Invite to other servers](https://discord.com/oauth2/authorize?client_id=795743605221621782&scope=bot&permissions=8)
     [:blue_heart: Vote on Top.GG](https://top.gg/bot/795743605221621782/vote)
     [:purple_heart: Vote on DBL](https://discordbotlist.com/bots/neovision/upvote)
   ''')
