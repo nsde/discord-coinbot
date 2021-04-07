@@ -1,4 +1,4 @@
-![cover](readme_images/nv-cover-crop.jpg)
+![cover](https://raw.githubusercontent.com/nsde/neovision/main/readme_images/nv-cover-crop.jpg)
 
 # 🤖 NeoVision Discord-Bot
 A Discord-Bot written in Python with features like coin/economy system, music, memes, temporary channels, server-bridge, general moderation utilities and more!
@@ -10,8 +10,8 @@ A Discord-Bot written in Python with features like coin/economy system, music, m
 ![forks](https://img.shields.io/github/forks/nsde/neovision?style=flat-square)
 ![stars](https://img.shields.io/github/stars/nsde/neovision?style=flat-square)
 
- <a href="https://discord.com/oauth2/authorize?client_id=795743605221621782&scope=bot">
-    <img src="readme_images/add-to-dc.png" alt="Add to Discord" width="300">
+ <a href="https://discord.com/oauth2/authorize?client_id=795743605221621782&scope=bot&permissions=8">
+    <img src="https://raw.githubusercontent.com/nsde/neovision/main/readme_images/add-to-dc.png" alt="Add to Discord" width="300">
  </a>
 
 Click to add the bot to a Discord server of your choice (you need the corresponding permissions on the server). It's just 4 clicks (if there isn't any captcha or login screen)! Just select a server and click on go!
@@ -22,8 +22,8 @@ Click to add the bot to a Discord server of your choice (you need the correspond
 ## 💙 Support me & the bot
 My bot is free to use and I would really appreciate support :) Thanks <3
 
- <a href="https://discord.com/oauth2/authorize?client_id=795743605221621782&scope=bot">
-   <img src="readme_images/vote-bot.png" alt="Vote for this bot" width="300">
+ <a href="https://discord.ly/neovision">
+   <img src="https://raw.githubusercontent.com/nsde/neovision/main/readme_images/vote-bot.png" alt="Vote for this bot" width="300">
  </a>
 
 You would really support me if you took just 20 seconds to upvote & rate my bot on *DiscordBotList*. Log in using Discord and solve the Captcha if asked.
@@ -36,5 +36,3 @@ You would really support me if you took just 20 seconds to upvote & rate my bot 
 
 ## ❗ Credit (code by others & co)
 - Thanks to "martinblech" for **`XMLtoDict`**: https://github.com/martinblech/xmltodict.
-
-

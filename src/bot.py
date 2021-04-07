@@ -6,6 +6,7 @@ try:
 except ImportError:
   os.system('pip install colorama')
   import colorama
+colorama.init(autoreset=True)
 print(colorama.Fore.MAGENTA)
 
 '''Local imports'''
@@ -64,7 +65,6 @@ try:
   import deep_translator #pip install deep_translator | for translating-commands
 except:
   print(colorama.Fore.RED + 'No internet connection.')
-  print(colorama.Style.RESET_ALL)
 
 '''Imports with abbrevations'''
 import youtubesearchpython as ysp #pip install youtube-search-python | for YouTube-Search
@@ -98,18 +98,14 @@ except Exception as e:
     print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
     token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
     open(CWD + '/config/SECRET_token.txt', 'w').write(token)    
-finally:
-  print(colorama.Style.RESET_ALL)
+
 
 if not token:
-  print(colorama.Style.RESET_ALL)
   print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
   token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
-  print(colorama.Style.RESET_ALL)
   open(CWD + '/config/SECRET_token.txt', 'w').write(token)    
 else:
   print(colorama.Fore.GREEN + 'Token loaded. Length: ' + str(len(token)))
-  print(colorama.Style.RESET_ALL)
 
 with open(CWD + '/config/config.yml') as f:
   config = yaml.load(f, Loader=yaml.SafeLoader)
@@ -132,8 +128,7 @@ Oops! There was an problem loading the MondoDB database.
 Please set up a database and a cluster at 'mongodb.com', create a user, remember its password,
 connect with the application 'Python' -> '3.6 or higher', replace the <password> in the string
 with the user you just set up and copy the final string. Sorry - It's quite difficult to set up,
-but it's needed for coin/economy/leveling & other systems to work!
-{colorama.Style.RESET_ALL}''')
+but it's needed for coin/economy/leveling & other systems to work!''')
 
     print(colorama.Fore.YELLOW)
     pass
@@ -141,17 +136,16 @@ but it's needed for coin/economy/leveling & other systems to work!
     # open(CWD + '/config/SECRET_database.txt', 'w').write(dbstring)
     # if dbstring:
     #   print('Please restart the program!')
-    # print(colorama.Style.RESET_ALL)
 
 @client.event
 async def on_ready():
-  print(f'{colorama.Fore.GREEN}Ready. User: {client.user}{colorama.Style.RESET_ALL}.')
+  print(f'{colorama.Fore.GREEN}Ready. User: {client.user}.')
   # helpcmd = commands.HelpCommand
   await client.change_presence(activity=discord.Game(name='.help | visit bit.ly/nevi'))
 
 @client.event
 async def on_disconnect():
-  print(f'{colorama.Fore.YELLOW}Disconnected.{colorama.Style.RESET_ALL}')
+  print(f'{colorama.Fore.YELLOW}Disconnected.')
 
 @client.event
 async def on_reaction_add(reaction, user):
@@ -235,8 +229,11 @@ async def info(ctx):
     `.help`
 
   **Links**
-    [GitHub](https://bit.ly/nevi)
-    [Readme](https://github.com/nsde/neovision/blob/main/README.md)
+    [:desktop: GitHub source code](https://bit.ly/nevi)
+    [:scroll: Information and help](https://github.com/nsde/neovision/blob/main/README.md)
+    [:white_check_mark: Invite to other servers)(https://discord.com/oauth2/authorize?client_id=795743605221621782&scope=bot&permissions=8)
+    [:blue_heart: Vote on Top.GG](https://top.gg/bot/795743605221621782/vote)
+    [:purple_heart: Vote on DBL](https://discordbotlist.com/bots/neovision/upvote)
   ''')
   icon = ''
   embed.set_footer(text=f'Ping: {str(round(client.latency * 1000, 2))}ms', icon_url=icon)
@@ -1216,5 +1213,3 @@ except:
   print(colorama.Fore.RED + 'Unable to run the client. Please check your bot token.')
   sys.exit(-1)
   pass
-finally:
-  print(colorama.Style.RESET_ALL)
