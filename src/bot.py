@@ -115,7 +115,10 @@ with open(CWD + '/config/config.yml') as f:
     return x.replace('Ã¤','ä').replace('Ã¶','ö').replace('Ã¼', 'ü')
 
   # intents = discord.Intents().all()
-  client = commands.Bot(command_prefix = config['main']['prefix'])
+  intents = discord.Intents.default()
+  intents.members = True
+
+  client = commands.Bot(command_prefix = config['main']['prefix'], intents=intents)
 
 try:
   database = pymongo.MongoClient(open(CWD + '/config/SECRET_database.txt'))
@@ -154,6 +157,46 @@ async def on_reaction_add(reaction, user):
 @client.event
 async def on_reaction_remove(reaction, user):
   pass
+
+@client.event
+async def on_member_join(member):
+  for channel in member.guild.channels:
+    if isinstance(channel, discord.TextChannel):
+      if 'nv-join' in str(channel.topic):
+        if 'nv-join(' in str(channel.topic):
+          text = str(channel.topic).split('nv-join(')[1].split(')')[0].replace('%MENTION%', member.mention).replace('%NAME%', member.name).replace('%ID%', str(member.id))
+        else:
+          text = f'Welcome to the server, {member.mention}!'
+        embed = discord.Embed(
+          title=f'Member joined',
+          colour=0x00EB00,
+          description=text,
+          timestamp=member.created_at
+          )
+        embed.set_thumbnail(url=member.avatar_url)
+        embed.set_footer(text=f'ID: {member.id} ~ Account created: ')
+        await channel.send(f'{member.mention}', embed=embed)
+        return
+
+@client.event
+async def on_member_remove(member):
+  for channel in member.guild.channels:
+    if isinstance(channel, discord.TextChannel):
+      if 'nv-leave' in str(channel.topic):
+        if 'nv-leave(' in str(channel.topic):
+          text = str(channel.topic).split('nv-leave(')[1].split(')')[0].replace('%MENTION%', member.mention).replace('%NAME%', member.name).replace('%ID%', str(member.id))
+        else:
+          text = f'Oh no, {member.mention} left the server...'
+        embed = discord.Embed(
+          title=f'Member left',
+          colour=0xfc2626,
+          description=text,
+          timestamp=member.joined_at
+          )
+        embed.set_thumbnail(url=member.avatar_url)
+        embed.set_footer(text=f'ID: {member.id} ~ Server joined: ')
+        await channel.send(f'{member.mention}', embed=embed)
+        return
 
 @client.event
 async def on_private_channel_create(channel):
@@ -1161,7 +1204,10 @@ async def on_message(message):
           async for h_message in message.channel.history(limit=2):
             if msg_count == 1:
               if message.author.id == h_message.author.id:
-                await message.delete()
+                try:
+                  await message.delete()
+                except:
+                  pass
               try:
                 if int(h_message.content) + 1 != int(message.content):
                   try:
