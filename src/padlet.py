@@ -4,8 +4,6 @@ import xmltodict #pip install xmltodict, remove the xmltodict.py in this directo
 import dateparser
 import markdownify #pip install markdownify
 
-from bs4 import BeautifulSoup
-
 def format_discord(text):
     '''Format a text so it's easily readable on Discord (optimized for Discord message embeds!).'''
     if not text:

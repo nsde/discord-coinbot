@@ -14,6 +14,7 @@ try:
   import padlet # self-made
 except ImportError:
   print('Ignoring padlet module because of ImportError')
+import github # self-made
 
 '''Regular imports'''
 import io
@@ -80,6 +81,7 @@ if CWD.split('/')[-1] == 'src':
   CWD = '/'.join(CWD.split('/')[:-1])
 
 chatbot_history = ['']
+bot_started_at = datetime.datetime.now()
 
 temp_path = CWD + '/temp'
 try:
@@ -118,7 +120,7 @@ with open(CWD + '/config/config.yml') as f:
   intents = discord.Intents.default()
   intents.members = True
 
-  client = commands.Bot(command_prefix = config['main']['prefix'], intents=intents)
+  client = commands.Bot(command_prefix=commands.when_mentioned_or(config['main']['prefix']), intents=intents)
 
 try:
   database = pymongo.MongoClient(open(CWD + '/config/SECRET_database.txt'))
@@ -246,40 +248,51 @@ async def stats(ctx):
 
 @client.command(name='ping', help='Get statistics about the connection and latency.')
 async def ping(ctx):
-  old = time.mktime(ctx.channel.last_message.created_at.timetuple())
-  new = datetime.datetime.timestamp(datetime.datetime.now())
-
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
 
-  await ctx.send('**__Ping Stats__**')
-  await ctx.send('> :desktop: **Client:** ' + str(round(client.latency * 1000, 2)) + 'ms')
-  # await ctx.send('> :chart_with_upwards_trend: **Response time:** ' + str(round(((new - old) - 3000 ) * 1, 2)) + 'ms')
+  embed = discord.Embed(title='NeoVision Stats', color=discord.Colour(0x0094FF), timestamp=bot_started_at)
+  embed.add_field(name=':desktop: Ping', value=str(round(client.latency * 1000, 2)) + 'ms')
   try:
-    await ctx.send('> :loud_sound: **Audio latency:** ' + str(round(voice.latency * 1000, 2)) + 'ms')
+    embed.add_field(name=':loud_sound: Voice client', value=str(round(voice.latency * 1000, 2)) + 'ms')
   except:
-    await ctx.send('> :loud_sound: **Audio latency:** *[inactive]*')
+    embed.add_field(name=':loud_sound: Voice client', value='*[inactive]*')
   if socket.gethostname().count('-') != 4:
-    await ctx.send(f'> :gear: Private computer name: {socket.gethostname()}')
+    embed.add_field(name=f':gear: Private host name', value=f'{socket.gethostname()}', inline=False)
   else:
-    await ctx.send(f'> :gear: Heroku computer name: {socket.gethostname()}')
+    embed.add_field(name=f':gear: Heroku host name', value=f'{socket.gethostname()}', inline=False)
+  
+  embed.set_footer(text='Bot started at: ')
+  await ctx.send(embed=embed)
 
 @client.command(name='info', help='Information, useful commands & links for this bot.')
 async def info(ctx):
-  embed = discord.Embed(title='NeoVision Bot Info', color=discord.Colour(0x0094FF), description='''
-  **Useful Commands**
+  url = 'https://github.com/nsde/neovision'
+  github_data = github.getlastcommit(url)
+
+  number = github_data['number']
+  time = github_data['time']
+  readable = github_data['time_readable']
+  title = github_data['title']
+
+  embed = discord.Embed(title='NeoVision Bot Info', color=discord.Colour(0x0094FF), description=f'''
+  __**Useful Commands**__
     `.info`
     `.ping`
     `.help`
 
-  **Links**
+  __**Links**__
     [:desktop: GitHub source code](https://bit.ly/nevi)
     [:scroll: Information and help](https://github.com/nsde/neovision/blob/main/README.md)
     [:white_check_mark: Invite to other servers](https://discord.com/oauth2/authorize?client_id=795743605221621782&scope=bot&permissions=8)
     [:blue_heart: Vote on Top.GG](https://top.gg/bot/795743605221621782/vote)
     [:purple_heart: Vote on DBL](https://discordbotlist.com/bots/neovision/upvote)
-  ''')
-  icon = ''
-  embed.set_footer(text=f'Ping: {str(round(client.latency * 1000, 2))}ms', icon_url=icon)
+  
+  __**Version (GitHub)**__
+    **Total updates:** {number}
+    **Last update:** {readable}
+    **Last update info:** {title}
+  ''', timestamp=time)
+  embed.set_footer(text=f'Ping: {str(round(client.latency * 1000, 2))}ms ~ Last update: ')
   
   if not ctx.guild:
     await ctx.author.send(embed=embed)
@@ -387,6 +400,7 @@ async def translate(ctx, *args):
 
 @client.command(name='coronavirus', aliases=['covid', 'covid19', 'corona'], help='Display information about the novel coronavirus.', usage='(<country>)')
 async def coronavirus(ctx, country=''):
+  await ctx.send('🦠 **Loading coronavirus data... This will take ca. 5 seconds**', delete_after=5)
   covid_data = covid.Covid(source='worldometers')
   if country:
     country = country.lower()
@@ -592,17 +606,6 @@ async def minecraft(ctx, value):
     await ctx.send(embed=embed)
 
 coins_file = CWD + '/data/coins.txt'
-
-@client.command(name='tictactoe', aliases=['ttt'], help='Play tic tac toe!')
-async def dailycoins(ctx):
-  content = '''
-  :black_large_square::black_large_square::black_large_square:
-  :black_large_square::blue_square::black_large_square:
-  :black_large_square::black_large_square::black_large_square:
-  '''
-  embed = discord.Embed(title='TicTacToe', colour=discord.Colour(0x20b1d5), description=content)
-  # embed.add_field(name='', value='', inline=True)
-  await ctx.send(embed=embed)
 
 def getcoins(user):
   for line in open(coins_file).readlines():
@@ -876,7 +879,7 @@ async def templimit(ctx, limit=None):
   else:
     await ctx.send(':x: **ERROR:** Please join a voice channel to change its userlimit and try again.')
 
-@client.command(name='playsong', aliases=['play', 'psong', 'ps'], help='Search and play song on YouTube.', usage='<search>')
+@client.command(name='playsong', aliases=['play', 'psong', 'song', 'music', 'playmusic' 'ps', 'p'], help='Search and play song on YouTube.', usage='<search>')
 async def playsong(ctx, *args):
   print('Start')
 
@@ -900,16 +903,14 @@ async def playsong(ctx, *args):
   views = data['viewCount']['text']
 
   if int(views) > 1000000000:
-    views = str(round(int(views)/1000000000, 1)) + 'b'
+    views = str(round(int(views)/1000000000, 1)) + 'B'
 
   elif int(views) > 1000000:
-    views = str(round(int(views)/1000000, 1)) + 'm'
+    views = str(round(int(views)/1000000, 1)) + 'M'
 
   elif int(views) > 1000:
-    views = str(round(int(views)/1000, 1)) + 'k'
+    views = str(round(int(views)/1000, 1)) + 'K'
   
-  views = views.replace('.', ',')
-
   channel = data['channel']['name']
   upload_date = data['uploadDate']
   description = data['description'][:100] + ' *[...]*'
@@ -967,19 +968,28 @@ async def playsong(ctx, *args):
   # Download
 
   video_stream = pytube.YouTube(url).streams.filter(file_extension=filetype, only_audio=True).first()
+  filepath = pytube.YouTube(url).streams.filter(file_extension=filetype, only_audio=True).first().url
 
-  await ctx.send(f':arrow_down: **Downloading...**\n`{video_stream}`', delete_after=3)
+  await ctx.send(f':arrow_down: **Downloading & playing...**\n`{video_stream}`', delete_after=3)
 
-  video_stream.download(output_path=temp_path, filename=filename)  
+  # video_stream.download(output_path=temp_path, filename=filename)  
 
   try:
-    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-    voice.play(discord.FFmpegPCMAudio(options='-loglevel panic', executable='C:/ffmpeg/ffmpeg.exe', source=temp_path + '/' + filename + '.' + filetype))
+    voice_channel = ctx.author.voice.channel
+    voice = ctx.channel.guild.voice_client
+    if voice is None:
+        voice = await voice_channel.connect()
+    elif voice.channel != voice_channel:
+        voice.move_to(voice_channel)
+        
+    # filepath = temp_path + '/' + filename + '.' + filetype
+
+    voice.play(discord.FFmpegPCMAudio(options='-loglevel panic', executable='C:/ffmpeg/ffmpeg.exe', source=filepath))
     voice.source = discord.PCMVolumeTransformer(voice.source)
     voice.source.volume = 0.1
   except Exception as e:
     print(f'Couldn\'t play the song. I believe FFMPEG has not been installed correctly.\n{e}')
-    await ctx.send(f':x: **CLIENT ERROR** An error occured on the system hosting this bot.\nThis could be because the host system doesn\'t have FFMPEG installed correctly.\n`{e}`')
+    await ctx.send(f':x: **CLIENT ERROR:** An error occured on the __system hosting this bot__.\nThis could be because the host system doesn\'t have FFMPEG installed correctly.\n`{e}`')
 
   print('After playing start')
 

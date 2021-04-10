@@ -8,6 +8,7 @@ covid
 pillow
 pyyaml
 mojang
+PyNaCl
 discord
 aiohttp
 chardet
