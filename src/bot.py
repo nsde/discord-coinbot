@@ -10,6 +10,7 @@ colorama.init(autoreset=True)
 print(colorama.Fore.MAGENTA)
 
 '''Local imports'''
+import bbb #self-made
 try:
   import padlet # self-made
 except ImportError:
@@ -24,6 +25,7 @@ import bs4 #pip install beautifulsoup4 | for web scrapers
 import yaml #pip install pyyaml | for config files
 import time
 import gtts #pip install gtts | for text to speech
+import math
 import covid #pip install covid | for coronavirus data
 import string
 import pytube #pip install pytube | for downloading YouTube videos and reading their data
@@ -164,7 +166,7 @@ async def on_member_join(member):
           text = f'Welcome to the server, {member.mention}!'
         embed = discord.Embed(
           title=f'Member joined',
-          colour=0x00EB00,
+          Color=0x00EB00,
           description=text,
           timestamp=member.created_at
           )
@@ -184,7 +186,7 @@ async def on_member_remove(member):
           text = f'Oh no, {member.mention} left the server...'
         embed = discord.Embed(
           title=f'Member left',
-          colour=0xfc2626,
+          Color=0xfc2626,
           description=text,
           timestamp=member.joined_at
           )
@@ -237,13 +239,21 @@ async def on_private_channel_create(channel):
 
 @client.command(name='stats', help='Get statistics about this bot.')
 async def stats(ctx):
-  await ctx.send(f':heart: A big **thank you** for **{len(client.guilds)}** servers using my bot!')
+  embed = discord.Embed(
+    title='Thank you so much! <3',
+    description='Here are some stats for this bot:',
+    color=discord.Color(0x0094FF),
+  )
+  embed.add_field(name='Servers', value=f'{len(client.guilds)}')
+  embed.add_field(name='Members', value=f'{len(client.users)}')
+  embed.set_footer(text='<3')
+  await ctx.send(embed=embed)
 
 @client.command(name='ping', help='Get statistics about the connection and latency.')
 async def ping(ctx):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
 
-  embed = discord.Embed(title='NeoVision Stats', color=discord.Colour(0x0094FF), timestamp=bot_started_at)
+  embed = discord.Embed(title='NeoVision Stats', color=discord.Color(0x0094FF), timestamp=bot_started_at)
   embed.add_field(name=':desktop: Ping', value=str(round(client.latency * 1000, 2)) + 'ms')
   try:
     embed.add_field(name=':loud_sound: Voice client', value=str(round(voice.latency * 1000, 2)) + 'ms')
@@ -265,7 +275,7 @@ async def info(ctx):
   number = github_data['number']
   time = github_data['time']
   if not time:
-    time = '***?***'
+    time = datetime.datetime.now()
   readable = github_data['time_readable']
   if not readable:
     readable = '***?***'
@@ -273,7 +283,7 @@ async def info(ctx):
   if not title:
     title = '***?***'
 
-  embed = discord.Embed(title='NeoVision Bot Info', color=discord.Colour(0x0094FF), description=f'''
+  embed = discord.Embed(title='NeoVision Bot Info', color=discord.Color(0x0094FF), description=f'''
   __**Useful Commands**__
     `.info`
     `.ping`
@@ -290,13 +300,27 @@ async def info(ctx):
     **Total updates:** {number}
     **Last update:** {readable}
     **Last update info:** {title}
+
+  __**Bot Account**__
+    **Account:** {client.user}
+    **ID:** {client.user.id}
+    **Verified:** {client.user.verified}
+    **Created:** {client.user.created_at.strftime('%A, %B %d, %Y at %H:%M %p %Z')}
   ''', timestamp=time)
+  embed.set_thumbnail(url=client.user.avatar_url)
   embed.set_footer(text=f'Ping: {str(round(client.latency * 1000, 2))}ms ~ Last update: ')
   
   if not ctx.guild:
     await ctx.author.send(embed=embed)
     return
   await ctx.send(embed=embed)
+
+@client.command(name='dm', aliases=['directmessage'], help='Sends you a DM.')
+async def dm(ctx):
+  embed = discord.Embed(title='DM incoming!', color=discord.Color(0x0094FF), description='I will try to DM you.')
+  await ctx.send(embed=embed)
+  embed = discord.Embed(title='Hey it\'s me!', color=discord.Color(0x0094FF), description='Hello!')
+  await ctx.author.send(embed=embed)
 
 @client.command(name='user', aliases=['member', 'userinfo', 'memberinfo'], help='Get information about an user.', usage='<user>')
 async def user(ctx, *args):
@@ -365,6 +389,23 @@ async def user(ctx, *args):
   embed.set_thumbnail(url=member.avatar_url)
   await ctx.send(embed=embed)
 
+@client.command(name='calc', aliases=['calculate', 'eval'], help='Get all emojis this bot can access.')
+async def calc(ctx, *args):
+  expression = ' '.join(args).replace('^', '**').replace('pi', str(round(math.pi, 5)))
+  try:
+    result = eval(expression)
+    color = discord.Color(0x0094FF)
+  except Exception as e:
+    result = f'ERROR - {e}'
+    color = discord.Color(0xff0000)
+
+  embed = discord.Embed(
+    title=' '.join(args).replace('pi', 'π'),
+    color=color,
+    description=f'''```\n{result}```'''
+    )
+  await ctx.send(embed=embed)
+
 @client.command(name='timer', help='Create a timer.', usage='<time> [s|m|h] (<message>)')
 async def timer(ctx, time, unit, *message):
   if not message:
@@ -403,7 +444,7 @@ async def coronavirus(ctx, country=''):
   covid_data = covid.Covid(source='worldometers')
   if country:
     country = country.lower()
-    embed = discord.Embed(title=f'Coronavirus in {country}', color=discord.Colour(0xff0000))
+    embed = discord.Embed(title=f'Coronavirus in {country}', color=discord.Color(0xff0000))
     try:
       infected = covid_data.get_status_by_country_name(country)['active']
       total = covid_data.get_status_by_country_name(country)['confirmed']
@@ -412,7 +453,7 @@ async def coronavirus(ctx, country=''):
     except:
       await ctx.send(':x: Oops! Invalid country name. Example: \'usa\' or \'germany\'')
   else:
-    embed = discord.Embed(title='Coronavirus Dashboard', color=discord.Colour(0xff0000))
+    embed = discord.Embed(title='Coronavirus Dashboard', color=discord.Color(0xff0000))
 
     infected = covid_data.get_total_active_cases()
     total = covid_data.get_total_confirmed_cases()
@@ -447,7 +488,7 @@ async def getpadlet(ctx, value, posts=10):
     await ctx.send(':x: **ERROR:** Couldn\'t load this Padlet. Please check the URL.')
     return
 
-  embed = discord.Embed(title=padlet_page['title'], colour=discord.Colour(0x009fff), url=url, description=padlet_page['description'], timestamp=padlet_page['last_edit'])
+  embed = discord.Embed(title=padlet_page['title'], color=discord.Color(0x009fff), url=url, description=padlet_page['description'], timestamp=padlet_page['last_edit'])
   embed.set_thumbnail(url=padlet_page['icon'])
   embed.set_footer(text='Padlet created by: ' + padlet_page['author'] + ' | Last update: ')
   for post in padlet_page['posts'][-posts:]:
@@ -462,6 +503,24 @@ async def getpadlet(ctx, value, posts=10):
     print(title, content)
     embed.add_field(name=title, value=content, inline=False)
   await ctx.send(embed=embed)
+
+@client.command(name='bigbluebutton', aliases=['bbb'], help='Display information about a video conference.', usage='<url>')
+async def bigbluebutton(ctx, url):
+  if 'presentation' in url:
+    slides = '\n'.join(bbb.getslides(url))
+    embed = discord.Embed(title='Presentation slides', Color=discord.Color(0x009fff), url=url, description=f'{slides}')
+    await ctx.send(embed=embed)
+  else:
+    conf = bbb.getconference(url)
+    owner = conf['owner']
+    confid = conf['id']
+    room = conf['room']
+    hostid = conf['host_id']
+
+    embed = discord.Embed(title=f'{owner}', Color=discord.Color(0x009fff), url=url, description=f'Room {room}\nHost {hostid}')
+    embed.set_thumbnail(url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.socallinuxexpo.org%2Fscale9x%2Fsites%2Fsocallinuxexpo.org.scale9x%2Ffiles%2Fimagecache%2Fsmall_plus%2Flogos%2Fbigbluebutton.png&f=1&nofb=1')
+    embed.set_footer(text=f'{confid}')
+    await ctx.send(embed=embed)
 
 @client.command(name='randomizer', aliases=['random', 'rd'], help='Random things!', usage='[thing|wiki|item]')
 async def randomizer(ctx, *args):
@@ -503,7 +562,7 @@ async def randomizer(ctx, *args):
     await ctx.send(':x: **ERROR:** This is not a valid random thing type. Use `.help randomizer` for usage help.')
     return
 
-  embed = discord.Embed(title=title, colour=discord.Colour(0x009fff), description=info, url=url, )
+  embed = discord.Embed(title=title, Color=discord.Color(0x009fff), description=info, url=url, )
   try:
     embed.set_thumbnail(url=pic)
   except:
@@ -542,7 +601,7 @@ async def wiki(ctx, *args):
     info = '[No description avaiable]'
   footer =  'Categories: ' + ', '.join(wikipage.categories[:3][:50])
 
-  embed = discord.Embed(title=title, colour=discord.Colour(0x009fff), description=info, url=url)
+  embed = discord.Embed(title=title, Color=discord.Color(0x009fff), description=info, url=url)
 
   try:
     embed.set_thumbnail(url=pic)
@@ -571,15 +630,15 @@ async def minecraft(ctx, value):
       await ctx.send(':x: **ERROR:** Invalid user/server.')
       return
 
-    color = discord.Colour(0x009fff)
+    color = discord.Color(0x009fff)
 
     # players = ' '.join(server.query().players.names)
     playercount = str(status.players.online) + ' players'
     
     if status.players.online == 0:
-      color = discord.Colour(0xff0000)
+      color = discord.Color(0xff0000)
 
-    embed = discord.Embed(title=value, colour=color)
+    embed = discord.Embed(title=value, Color=color)
     embed.set_thumbnail(url='https://i.ibb.co/1GLrmKC/pack.png')
     embed.add_field(name='Ping', value=f'{status.latency}ms', inline=False)
     embed.add_field(name='Online', value=f'{playercount}')
@@ -599,7 +658,7 @@ async def minecraft(ctx, value):
       drop = drop - time.time()
       drop = f'Dropping in: {drop} Seconds'
 
-    embed = discord.Embed(title=value, colour=discord.Colour(0x009fff))
+    embed = discord.Embed(title=value, Color=discord.Color(0x009fff))
     embed.set_thumbnail(url=skinrendered)
     embed.add_field(name='UUID', value=uuid, inline=False)
     await ctx.send(embed=embed)
@@ -632,7 +691,7 @@ async def dailycoins(ctx):
 
     embed = discord.Embed(
       title='DailyCoins',
-      colour=discord.Colour(0xdb9d20),
+      Color=discord.Color(0xdb9d20),
       description='**Here, enjoy your daily coins!**\n> +' + str(amount) + ' ' + config['currency']['symbols']['currency_normal']
       )
 
@@ -974,7 +1033,7 @@ async def playsong(ctx, *args):
 
   print('Before embed')
 
-  embed = discord.Embed(title=title, colour=discord.Colour(0x20b1d5), url=url, description=description)
+  embed = discord.Embed(title=title, Color=discord.Color(0x20b1d5), url=url, description=description)
   # embed.set_thumbnail(url=thumbnail)
   embed.add_field(name='__Channel__', value=channel, inline=True)
   # embed.add_field(name='__Duration__', value=duration], inline=True)
