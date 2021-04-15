@@ -135,13 +135,6 @@ connect with the application 'Python' -> '3.6 or higher', replace the <password>
 with the user you just set up and copy the final string. Sorry - It's quite difficult to set up,
 but it's needed for coin/economy/leveling & other systems to work!''')
 
-    print(colorama.Fore.YELLOW)
-    pass
-    # dbstring = input(colorama.Fore.BLUE + 'Please type in the database string or press enter to skip: ')
-    # open(CWD + '/config/SECRET_database.txt', 'w').write(dbstring)
-    # if dbstring:
-    #   print('Please restart the program!')
-
 @client.event
 async def on_ready():
   print(f'{colorama.Fore.GREEN}Ready. User: {client.user}.')
@@ -271,8 +264,14 @@ async def info(ctx):
 
   number = github_data['number']
   time = github_data['time']
+  if not time:
+    time = '***?***'
   readable = github_data['time_readable']
+  if not readable:
+    readable = '***?***'
   title = github_data['title']
+  if not title:
+    title = '***?***'
 
   embed = discord.Embed(title='NeoVision Bot Info', color=discord.Colour(0x0094FF), description=f'''
   __**Useful Commands**__
@@ -608,6 +607,8 @@ async def minecraft(ctx, value):
 coins_file = CWD + '/data/coins.txt'
 
 def getcoins(user):
+  global database
+  coin_db = database['users']
   for line in open(coins_file).readlines():
     if line.startswith(str(user.id)):
       return int(line.split()[1])
@@ -615,6 +616,7 @@ def getcoins(user):
   return 0
 
 def setcoins(user, amount):
+  global database
   for line in open(coins_file).readlines():
     if line.startswith(str(user.id)):
       open(coins_file, 'w').write(open(coins_file.read().replace(line, f'{user} {amount}')))
@@ -623,22 +625,22 @@ def setcoins(user, amount):
 
 @client.command(name='dailycoins', aliases=['dcoins', 'dc', 'dailyrewards'], help='Economy command to get daily coins.')
 async def dailycoins(ctx):
-  dailycoins_file = CWD + '/data/dailycoins.txt'
-  try:
-    dailycoins_list = open(dailycoins_file).readlines()
-  except:
-    open(dailycoins_file).write('')
-    dailycoins_list = open(dailycoins_file).readlines()
-
-  if str(ctx.message.author.id) not in dailycoins_list:
+  global database
+  dailycoins_db = database['dailycoins']
+  if not dailycoins_db.find_one({'id': ctx.message.author.id}):
     amount = random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])
-    await ctx.send('**Here, enjoy your daily coins!**\n> +' + str(amount) + ' ' + config['currency']['symbols']['currency_normal'])
-    dailycoins_list.append(str(ctx.message.author.id))
-    print('\n'.join(dailycoins_list))
-    open(dailycoins_file, 'w').write('\n'.join(dailycoins_list))
+
+    embed = discord.Embed(
+      title='DailyCoins',
+      colour=discord.Colour(0xdb9d20),
+      description='**Here, enjoy your daily coins!**\n> +' + str(amount) + ' ' + config['currency']['symbols']['currency_normal']
+      )
+
+    await ctx.send(embed=embed)
+    
     setcoins(user=ctx.author, amount=getcoins(ctx.message.author) + amount)
   else:
-    await ctx.send(':x: Sorry, I can\'t give you daily coins because you already claimed them today.')
+    await ctx.send('https://youtu.be/RC8ksHG6FhQ')
 
 @client.command(name='balance', aliases=['bal'], help='Get a user\'s account balance.')
 async def balance(ctx, user:discord.Member=None):
@@ -693,6 +695,54 @@ async def image(ctx, style, user:discord.Member=None):
   template.save(filepath)
 
   await ctx.send(file=discord.File(filepath))
+
+@client.command(name='sendembed', aliases=['embed'], help='Send an embed.', usage='For usage, see the docs.')
+async def sendembed(ctx, *args):
+  args = ' '.join(args)
+  if not args.replace(' ', ''):
+    await ctx.send('**Example embed:**\nhttps://i.ibb.co/JRp48Z8/image.png')
+    return
+
+  try:
+    title = args.split('title(')[1].split(')')[0]
+  except:
+    title = None
+  try:
+    description = args.split('description(')[1].split(')')[0]
+  except:
+    description = None
+  try:
+    color = int(args.split('color(')[1].split(')')[0])
+  except:
+    color = 0x20b1d5
+  try:
+    content = args.split('content(')[1].split(')')[0]
+  except:
+    content = None
+  try:
+    timestamp = dateparser.parse((args.split('timestamp(')[1].split(')')[0]))
+  except:
+    timestamp = datetime.datetime.now()
+  try:
+    url = args.split('url(')[1].split(')')[0]
+  except:
+    url = None
+  try:
+    thumbnail = args.split('thumbnail(')[1].split(')')[0]
+  except:
+    thumbnail = None
+  try:
+    footer = args.split('footer(')[1].split(')')[0]
+  except:
+    footer = None
+
+  embed = discord.Embed(title=title, url=url, description=description, color=discord.Color(color), timestamp=timestamp)
+  if thumbnail:
+    embed.set_thumbnail(url=thumbnail)
+  if footer:
+    embed.set_footer(text=footer)
+  
+  await ctx.send(content=content, embed=embed)
 
 @client.command(name='texttospeech', aliases=['tts', 'text2speech', 't2s'], help='Reads text in a voice channel.', usage='([en|de|fr]:) <text>')
 async def texttospeech(ctx, *args):

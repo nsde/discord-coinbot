@@ -13,10 +13,22 @@ def getsoup(url):
 def getlastcommit(url):
     soup = getsoup(url)
     lastcommit = {}
-    lastcommit['time'] = dateparser.parse(str(soup.find('relative-time', class_='no-wrap')).split('datetime="')[1].split('"')[0])
-    lastcommit['time_readable'] = str(soup.find('relative-time', class_='no-wrap')).split('">')[1].split('<')[0]
-    lastcommit['title'] = str(soup.find(class_='d-none d-sm-inline')).split('title="')[1].split('"')[0]
-    lastcommit['number'] = str(soup.find('li', class_='ml-0 ml-md-3')).split('<strong>')[1].split('<')[0]
+    try:
+        lastcommit['time'] = dateparser.parse(str(soup.find('relative-time', class_='no-wrap')).split('datetime="')[1].split('"')[0])
+    except:
+        lastcommit['time'] = ''
+    try:
+        lastcommit['time_readable'] = str(soup.find('relative-time', class_='no-wrap')).split('">')[1].split('<')[0]
+    except:
+        lastcommit['time_readable'] = ''
+    try:
+        lastcommit['title'] = str(soup.find(class_='d-none d-sm-inline')).split('title="')[1].split('"')[0]
+    except:
+        lastcommit['title'] = ''
+    try:
+        lastcommit['number'] = str(soup.find('li', class_='ml-0 ml-md-3')).split('<strong>')[1].split('<')[0]
+    except:
+        lastcommit['number'] = ''
     return lastcommit
 
 if __name__ == '__main__':
