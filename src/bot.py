@@ -199,43 +199,43 @@ async def on_member_remove(member):
 async def on_private_channel_create(channel):
   await channel.send('*Do **`.help`** for information about the DM system.*', delete_after=5)
 
-# @client.event
-# async def on_command_error(ctx, error):
-#   error_msg = 'Unknown error.'
-#   if isinstance(error, commands.CommandNotFound):
-#     error_msg = 'This command does not exist. Use **`.info`** for information.'
+@client.event
+async def on_command_error(ctx, error):
+  error_msg = 'Unknown error.'
+  if isinstance(error, commands.CommandNotFound):
+    error_msg = 'This command does not exist. Use **`.info`** for information.'
+  if isinstance(error, commands.MissingRequiredArgument):
+    error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
+  if isinstance(error, commands.TooManyArguments):
+    error_msg = 'You passed too many arguments. You can use `.help` for information'
+  if isinstance(error, commands.Cooldown):
+    error_msg = 'Please wait. You are on a cooldown.'
+  # if isinstance(error, commands.CommandError):
+  #   error_msg = 'There was an error with this command.'
+  if isinstance(error, commands.MessageNotFound):
+    error_msg = 'I couldn\'t find this message.'
+  if isinstance(error, commands.ChannelNotFound):
+    error_msg = 'I couldn\'t find this channel.'
+  if isinstance(error, commands.UserInputError):
+    error_msg = 'I couldn\'t find this user.'
+  if isinstance(error, commands.ChannelNotFound):
+    error_msg = 'I couldn\'t find this channel.'
+  if isinstance(error, commands.NoPrivateMessage):
+    error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
+  if isinstance(error, commands.MissingPermissions):
+    error_msg = 'Sorry, you don\'t have the role permissions for this.'
+  if isinstance(error, commands.BotMissingPermissions):
+    error_msg = 'Sorry, I don\'t have permissions to do this.'
+  if isinstance(error, commands.ExtensionError):
+    error_msg = 'I apologize, but I couldn\'t load the needed extension.'
+  if isinstance(error, commands.CheckFailure):
+    error_msg = 'Sorry, you don\'t have the permissions for this.'
+  if isinstance(error, commands.BadArgument):
+    error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
 
-# #   if isinstance(error, commands.MissingRequiredArgument):
-# #     error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
-# #   if isinstance(error, commands.TooManyArguments):
-# #     error_msg = 'You passed too many arguments. You can use `.help` for information'
-# #   if isinstance(error, commands.Cooldown):
-# #     error_msg = 'Please wait. You are on a cooldown.'
-# #    if isinstance(error, commands.CommandError):
-# #     error_msg = 'There was an error with this command.'
-# #   if isinstance(error, commands.MessageNotFound):
-# #     error_msg = 'I couldn\'t find this message.'
-# #   if isinstance(error, commands.ChannelNotFound):
-# #     error_msg = 'I couldn\'t find this channel.'
-# #   if isinstance(error, commands.UserInputError):
-# #     error_msg = 'I couldn\'t find this user.'
-# #   if isinstance(error, commands.ChannelNotFound):
-# #     error_msg = 'I couldn\'t find this channel.'
-# #   if isinstance(error, commands.NoPrivateMessage):
-# #     error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
-# #   if isinstance(error, commands.MissingPermissions):
-# #     error_msg = 'Sorry, you don\'t have the role permissions for this.'
-# #   if isinstance(error, commands.BotMissingPermissions):
-# #     error_msg = 'Sorry, I don\'t have permissions to do this.'
-# #   if isinstance(error, commands.ExtensionError):
-# #     error_msg = 'I apologize, but I couldn\'t load the needed extension.'
-# #   if isinstance(error, commands.CheckFailure):
-# #     error_msg = 'Sorry, you don\'t have the permissions for this.'
-# #   if isinstance(error, commands.BadArgument):
-# #     error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
-
-#   if error_msg != 'Unknown error.':
-#     await ctx.send(f':x: **ERROR** - {error_msg}')
+  if error_msg != 'Unknown error.':
+    await ctx.send(f':x: **ERROR** - {error_msg}')
+    raise error
 
 @client.command(name='stats', help='Get statistics about this bot.')
 async def stats(ctx):
@@ -844,7 +844,6 @@ async def texttospeech(ctx, *args):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=f'{CWD}/temp/tts.mp3'))
   voice.source = discord.PCMVolumeTransformer(voice.source)
-  voice.source.volume = 0.1
 
 globals()['tempchannel_users'] = []
 
@@ -1039,6 +1038,7 @@ async def playsong(ctx, *args):
   # embed.add_field(name='__Duration__', value=duration], inline=True)
   embed.add_field(name='__Views__', value=views, inline=True)
   embed.add_field(name='__Uploaded__', value=upload_date, inline=True)
+  embed.set_thumbnail(url=url)
   
   globals()['embed'] = embed
   await ctx.send(embed=embed)
@@ -1095,13 +1095,12 @@ async def playsong(ctx, *args):
 
     voice.play(discord.FFmpegPCMAudio(options='-loglevel panic', executable='C:/ffmpeg/ffmpeg.exe', source=filepath))
     voice.source = discord.PCMVolumeTransformer(voice.source)
-    voice.source.volume = 0.1
+
   except Exception as e:
     print(f'Couldn\'t play the song. I believe FFMPEG has not been installed correctly.\n{e}')
     await ctx.send(f':x: **CLIENT ERROR:** An error occured on the __system hosting this bot__.\nThis could be because the host system doesn\'t have FFMPEG installed correctly.\n`{e}`')
 
   print('After playing start')
-
 
 @client.command(name='pausesong', aliases=['pause', 'resume', 'resumesong'], help='Pauses or resumes a song.')
 async def pause(ctx):
@@ -1111,7 +1110,7 @@ async def pause(ctx):
   else:
     voice.resume()
 
-@client.command(name='move', help='Move the voice client to another channel.')
+@client.command(name='move', aliases=['connect', 'join', 'voice'], help='Move the voice client to another channel.')
 async def move(ctx):
   channel = ctx.author.voice.channel
   try:
@@ -1125,7 +1124,22 @@ async def move(ctx):
     await ctx.send(f':x: **ERROR** Couldn\'t move the voice client to your channel. Please join a voice channel and try again. Error:\n{e}')
     return
 
-@client.command(name='stopsong', aliases=['stop', 'xs'], help='Stops a song without leaving.')
+@client.command(name='volume')
+async def volume(ctx, number=None):
+  voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+  voice.source = discord.PCMVolumeTransformer(voice.source)
+
+  if not number:
+    number = voice.source.volume
+  else:
+    number = voice.source.volume = float(number)
+  
+  embed=discord.Embed(
+    title='Voice volume',
+    color=discord.Color(0x0094FF),
+    description=f'**Current volume:** {number}')
+
+@client.command(name='stopsong', aliases=['stop', 'skip'], help='Stops a song without leaving.')
 async def stopsong(ctx):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   voice.stop()
@@ -1368,8 +1382,9 @@ async def on_message(message):
                       await message.add_reaction('🎉')
                       await message.add_reaction('⚪')
                       return
-
             msg_count += 1
+    if '@someone' in message.content:
+      await message.channel.send(f'Here\'s ***@someone:*** {random.choice(message.guild.members)}')
   await client.process_commands(message)
   
 try:
