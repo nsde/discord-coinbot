@@ -14,7 +14,7 @@ import bbb #self-made
 try:
   import padlet # self-made
 except ImportError:
-  print('Ignoring padlet module because of ImportError')
+  print(colorama.Fore.YELLOW + 'Ignoring padlet module because of ImportError')
 import github # self-made
 
 '''Regular imports'''
@@ -41,7 +41,8 @@ import datetime
 try:
   import pymongo #pip install pymongo | for the database
 except ImportError:
-  print('Ignoring pymongo module because of ImportError')
+  print(colorama.Fore.YELLOW + 'Ignoring pymongo module because of ImportError')
+import hypixel
 try:
   import meme_get #pip install meme_get | for meme-commands
 except ImportError:
@@ -50,16 +51,16 @@ except ImportError:
 try:
   import mcstatus #pip install mcstatus | see "mojang"
 except ImportError:
-  print('Ignoring mcstatus module because of ImportError')
+  print(colorama.Fore.YELLOW + 'Ignoring mcstatus module because of ImportError')
 try:
   import wikipedia #pip install wikipedia | Wikipedia scraping
 except ImportError:
-  print('Ignoring wikipedia module because of ImportError')
+  print(colorama.Fore.YELLOW + 'Ignoring wikipedia module because of ImportError')
 import xmltodict #pip install xmltodict | The name says it.
 try:
   import dateparser #pip install dateparser | Converts human readable text to datetime.datetime
 except ImportError:
-  print('Ignoring padlet module because of ImportError')
+  print(colorama.Fore.YELLOW + 'Ignoring padlet module because of ImportError')
 import langdetect #pip install langdetect | to detect langauges in a string
 import skingrabber #pip install skingrabber | to render skins
 import googlesearch #pip install google | to search something on the web
@@ -67,6 +68,7 @@ import googlesearch #pip install google | to search something on the web
 try:
   import deep_translator #pip install deep_translator | for translating-commands
 except:
+  print(colorama.Fore.YELLOW + 'Ignoring deep_translator module because of ImportError')
   print(colorama.Fore.RED + 'No internet connection.')
 
 '''Imports with abbrevations'''
@@ -199,55 +201,67 @@ async def on_member_remove(member):
 async def on_private_channel_create(channel):
   await channel.send('*Do **`.help`** for information about the DM system.*', delete_after=5)
 
-@client.event
-async def on_command_error(ctx, error):
-  error_msg = 'Unknown error.'
-  if isinstance(error, commands.CommandNotFound):
-    error_msg = 'This command does not exist. Use **`.info`** for information.'
-  if isinstance(error, commands.MissingRequiredArgument):
-    error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
-  if isinstance(error, commands.TooManyArguments):
-    error_msg = 'You passed too many arguments. You can use `.help` for information'
-  if isinstance(error, commands.Cooldown):
-    error_msg = 'Please wait. You are on a cooldown.'
-  # if isinstance(error, commands.CommandError):
-  #   error_msg = 'There was an error with this command.'
-  if isinstance(error, commands.MessageNotFound):
-    error_msg = 'I couldn\'t find this message.'
-  if isinstance(error, commands.ChannelNotFound):
-    error_msg = 'I couldn\'t find this channel.'
-  if isinstance(error, commands.UserInputError):
-    error_msg = 'I couldn\'t find this user.'
-  if isinstance(error, commands.ChannelNotFound):
-    error_msg = 'I couldn\'t find this channel.'
-  if isinstance(error, commands.NoPrivateMessage):
-    error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
-  if isinstance(error, commands.MissingPermissions):
-    error_msg = 'Sorry, you don\'t have the role permissions for this.'
-  if isinstance(error, commands.BotMissingPermissions):
-    error_msg = 'Sorry, I don\'t have permissions to do this.'
-  if isinstance(error, commands.ExtensionError):
-    error_msg = 'I apologize, but I couldn\'t load the needed extension.'
-  if isinstance(error, commands.CheckFailure):
-    error_msg = 'Sorry, you don\'t have the permissions for this.'
-  if isinstance(error, commands.BadArgument):
-    error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
+# @client.event
+# async def on_command_error(ctx, error):
+#   error_msg = 'Unknown error.'
+#   if isinstance(error, commands.CommandNotFound):
+#     error_msg = 'This command does not exist. Use **`.info`** for information.'
+#   if isinstance(error, commands.MissingRequiredArgument):
+#     error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
+#   if isinstance(error, commands.TooManyArguments):
+#     error_msg = 'You passed too many arguments. You can use `.help` for information'
+#   if isinstance(error, commands.Cooldown):
+#     error_msg = 'Please wait. You are on a cooldown.'
+#   # if isinstance(error, commands.CommandError):
+#   #   error_msg = 'There was an error with this command.'
+#   if isinstance(error, commands.MessageNotFound):
+#     error_msg = 'I couldn\'t find this message.'
+#   if isinstance(error, commands.ChannelNotFound):
+#     error_msg = 'I couldn\'t find this channel.'
+#   if isinstance(error, commands.UserInputError):
+#     error_msg = 'I couldn\'t find this user.'
+#   if isinstance(error, commands.ChannelNotFound):
+#     error_msg = 'I couldn\'t find this channel.'
+#   if isinstance(error, commands.NoPrivateMessage):
+#     error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
+#   if isinstance(error, commands.MissingPermissions):
+#     error_msg = 'Sorry, you don\'t have the role permissions for this.'
+#   if isinstance(error, commands.BotMissingPermissions):
+#     error_msg = 'Sorry, I don\'t have permissions to do this.'
+#   if isinstance(error, commands.ExtensionError):
+#     error_msg = 'I apologize, but I couldn\'t load the needed extension.'
+#   if isinstance(error, commands.CheckFailure):
+#     error_msg = 'Sorry, you don\'t have the permissions for this.'
+#   if isinstance(error, commands.BadArgument):
+#     error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
 
-  if error_msg != 'Unknown error.':
-    await ctx.send(f':x: **ERROR** - {error_msg}')
-    raise error
+#   if error_msg != 'Unknown error.':
+#     await ctx.send(f':x: **ERROR** - {error_msg}')
+#     raise error
 
 @client.command(name='stats', help='Get statistics about this bot.')
 async def stats(ctx):
   embed = discord.Embed(
     title='Thank you so much! <3',
-    description='Here are some stats for this bot:',
+    description='Here are some stats for this instance of the bot:',
     color=discord.Color(0x0094FF),
   )
   embed.add_field(name='Servers', value=f'{len(client.guilds)}')
   embed.add_field(name='Members', value=f'{len(client.users)}')
-  embed.set_footer(text='<3')
+  embed.set_footer(text=':heart:')
   await ctx.send(embed=embed)
+
+@client.command(name='bot', help='Get client info about this bot.')
+async def bot(ctx):
+  embed = discord.Embed(
+    title='Bot Client',
+    description='NV Bot system:',
+    color=discord.Color(0x0094FF),
+  )
+  embed.add_field(name='NeoVision', value=f'{len(client.guilds)}')
+  embed.add_field(name='AlphaVision', value=f'{len(client.users)}')
+  embed.set_footer(text=':heart:')
+  await ctx.send(embed=embed)  
 
 @client.command(name='ping', help='Get statistics about the connection and latency.')
 async def ping(ctx):
@@ -619,6 +633,9 @@ async def counting(ctx):
 
 @client.command(name='minecraft', aliases=['mc', 'minecraftinfo', 'mcinfo'], help='Get information about a player or server.', usage='<player|server>')
 async def minecraft(ctx, value):
+  hypixel_key = [open(CWD + '/config/SECRET_hypixel.txt').read()]
+  hypixel.setKeys(hypixel_key) # This sets the API keys that are going to be used.
+  
   value = value.lower()
   uuid = mojang.MojangAPI.get_uuid(value)
 
@@ -646,6 +663,8 @@ async def minecraft(ctx, value):
     await ctx.send(embed=embed)
 
   else:
+    print(1)
+
     skin = mojang.MojangAPI.get_profile(uuid).skin_url
     skinrender = skingrabber.skingrabber()
     skinrendered = skinrender.get_skin_rendered(user=value)
@@ -658,7 +677,23 @@ async def minecraft(ctx, value):
       drop = drop - time.time()
       drop = f'Dropping in: {drop} Seconds'
 
-    embed = discord.Embed(title=value, Color=discord.Color(0x009fff))
+    player = hypixel.Player(value)
+
+    print(2)
+
+    hypixel_stats = f'''
+    **__Hypixel__**
+      **Rank:** {player.getRank()['rank']}
+      **Level:** {player.getLevel()}
+      **Karma:** {player.JSON['karma']}
+    '''
+
+    print(3)
+
+    embed = discord.Embed(
+      title=value,
+      color=discord.Color(0x009fff),
+      description=hypixel_stats)
     embed.set_thumbnail(url=skinrendered)
     embed.add_field(name='UUID', value=uuid, inline=False)
     await ctx.send(embed=embed)

@@ -9,6 +9,7 @@ pillow
 pyyaml
 mojang
 PyNaCl
+hypixel
 discord
 aiohttp
 chardet

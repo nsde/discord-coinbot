@@ -5,9 +5,12 @@ import dateparser
 from bs4 import BeautifulSoup
 
 def getsoup(url):
-    html = requests.get(url).text
-    soup = BeautifulSoup(html, 'html.parser')
-    return soup
+    try:
+        html = requests.get(url).text
+        soup = BeautifulSoup(html, 'html.parser')
+        return soup
+    except:
+        raise Exception
 
 
 def getlastcommit(url):
