@@ -65,11 +65,11 @@ import langdetect #pip install langdetect | to detect langauges in a string
 import skingrabber #pip install skingrabber | to render skins
 import googlesearch #pip install google | to search something on the web
 # import geizhalscrawler #pip install geizhalscrawler | for product data (price, etc.)
-try:
-  import deep_translator #pip install deep_translator | for translating-commands
-except:
-  print(colorama.Fore.YELLOW + 'Ignoring deep_translator module because of ImportError')
-  print(colorama.Fore.RED + 'No internet connection.')
+# try:
+import googletrans #pip install googletrans | for translating-commands
+# except:
+# print(colorama.Fore.YELLOW + 'Ignoring deep_translator module because of ImportError')
+# print(colorama.Fore.RED + 'No internet connection.')
 
 '''Imports with abbrevations'''
 import youtubesearchpython as ysp #pip install youtube-search-python | for YouTube-Search
@@ -308,7 +308,6 @@ async def info(ctx):
     [:scroll: Information and help](https://github.com/nsde/neovision/blob/main/README.md)
     [:white_check_mark: Invite to other servers](https://discord.com/oauth2/authorize?client_id=795743605221621782&scope=bot&permissions=8)
     [:blue_heart: Vote on Top.GG](https://top.gg/bot/795743605221621782/vote)
-    [:purple_heart: Vote on DBL](https://discordbotlist.com/bots/neovision/upvote)
   
   __**Version (GitHub)**__
     **Total updates:** {number}
@@ -445,12 +444,17 @@ async def timer(ctx, time, unit, *message):
   await asyncio.sleep(time)
   await ctx.send(f'{ctx.author.mention} **{message}** (**{oldtime}{unit}** passed.)')
 
-@client.command(name='translate', aliases=['tl'], help='Translate a text!', usage='<to_lang> <text>')
+@client.command(name='translate', aliases=['tl', 'translator'], help='Translate a text!', usage='<to_lang> <text>')
 async def translate(ctx, *args):
   to_lang = args[0].lower()
   text = ' '.join(args[1:])
-  translated = deep_translator.GoogleTranslator(source='auto', target=to_lang).translate(text)
+  translator = googletrans.Translator()
+  try:
+    translated = translator.translate(text, dest=to_lang).text
+  except ValueError:
+      embed = discord.Embed(title='Google Translator', color=discord.Color(0xff0000), description='Please use a correct language shorcut, e.g. **de** or **en**.')
   await ctx.send(translated)
+  embed = discord.Embed(title='Google Translator', color=discord.Color(0x0094FF), description=translated)
 
 @client.command(name='coronavirus', aliases=['covid', 'covid19', 'corona'], help='Display information about the novel coronavirus.', usage='(<country>)')
 async def coronavirus(ctx, country=''):
@@ -535,6 +539,13 @@ async def bigbluebutton(ctx, url):
     embed.set_thumbnail(url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.socallinuxexpo.org%2Fscale9x%2Fsites%2Fsocallinuxexpo.org.scale9x%2Ffiles%2Fimagecache%2Fsmall_plus%2Flogos%2Fbigbluebutton.png&f=1&nofb=1')
     embed.set_footer(text=f'{confid}')
     await ctx.send(embed=embed)
+
+@client.command(name='freemoney', aliases=[''], help='JUST A JOKE!')
+async def freemoney(ctx):
+  last = await ctx.send('Generating free money...')
+  await asyncio.sleep(3)
+  people = ['Marilyn Monroe', 'Abraham Lincoln', 'Nelson Mandela', 'John F. Kennedy', 'Martin Luther King', 'Queen Elizabeth II', 'Winston Churchill', 'Donald Trump', 'Bill Gates', 'Muhammad Ali', 'Mahatma Gandhi', 'Mother Teresa', 'Christopher Columbus', 'Charles Darwin', 'Elvis Presley', 'Albert Einstein', 'Paul McCartney', 'Queen Victoria', 'Pope Francis', 'Jawaharlal Nehru', 'Leonardo da Vinci', 'VincentVan Gogh', 'Franklin D. Roosevelt', 'Pope John Paul II', 'Thomas Edison', 'RosaParks', 'Lyndon Johnson', 'Ludwig Beethoven', 'Oprah Winfrey', 'Indira Gandhi','Eva Peron', 'Benazir Bhutto', 'George Orwell', 'Desmond Tutu', 'Dalai Lama', 'Walt Disney', 'Neil Armstrong', 'Peter Sellers', 'Barack Obama', 'Malcolm X', 'J.K.Rowling', 'Richard Branson', 'Pele', 'Angelina Jolie', 'Jesse Owens', 'John Lennon', 'Henry Ford', 'Haile Selassie', 'Joseph Stalin', 'Lord Baden Powell', 'Michael Jordon', 'George Bush Jnr', 'Vladimir Lenin', 'Ingrid Bergman', 'Fidel Castro', 'Leo Tolstoy', 'Greta Thunberg', 'Pablo Picasso', 'Oscar Wilde', 'Coco Chanel', 'Charles de Gaulle', 'Amelia Earhart', 'John M Keynes', 'Louis Pasteur', 'Mikhail Gorbachev', 'Plato', 'Adolf Hitler', 'Sting', 'Mary Magdalene', 'AlfredHitchcock', 'Michael Jackson', 'Madonna', 'Mata Hari', 'Cleopatra', 'Grace Kelly', 'Steve Jobs', 'Ronald Reagan', 'Lionel Messi', 'Babe Ruth', 'Bob Geldof', 'Eva Peron', 'Benazir Bhutto', 'George Orwell', 'Desmond Tutu', 'Dalai Lama', 'Walt Disney', 'Neil Armstrong', 'Peter Sellers', 'Barack Obama', 'Malcolm X', 'J.K.Rowling', 'Richard Branson', 'Pele', 'Angelina Jolie', 'Jesse Owens', 'John Lennon', 'Henry Ford', 'Haile Selassie', 'Joseph Stalin', 'Lord Baden Powell', 'Michael Jordon', 'George Bush Jnr', 'Vladimir Lenin', 'Ingrid Bergman', 'Fidel Castro', 'Leo Tolstoy', 'Greta Thunberg', 'Pablo Picasso', 'Oscar Wilde', 'Coco Chanel', 'Charles de Gaulle', 'Amelia Earhart', 'John M Keynes', 'Louis Pasteur', 'Mikhail Gorbachev', 'Plato', 'Adolf Hitler', 'Sting', 'Mary Magdalene', 'Alfred Hitchcock', 'Michael Jackson', 'Madonna', 'Mata Hari', 'Cleopatra', 'Grace Kelly', 'Steve Jobs', 'Ronald Reagan', 'Lionel Messi', 'Babe Ruth', 'Bob Geldof', 'Roger Federer', 'Sigmund Freud', 'Woodrow Wilson', 'Mao Zedong', 'Katherine Hepburn', 'Audrey Hepburn', 'David Beckham', 'Tiger Woods', 'Usain Bolt', 'Carl Lewis', 'Prince Charles', 'Jacqueline Kennedy Onassis', 'C.S. Lewis', 'Billie Holiday', 'J.R.R. Tolkien', 'Billie Jean King', 'Margaret Thatcher', 'Anne Frank', 'More famous people', 'YOU', 'Simon Bolivar', 'Marie Antoinette', 'Cristiano Ronaldo', 'Emmeline Pankhurst ', 'Emile Zatopek', 'Lech Walesa', 'Julie Andrews', 'Florence Nightingale', 'Marie Curie', 'Stephen Hawking', 'Tim Berners Lee', 'Aung San Suu Kyi', 'Lance Armstrong', 'Shakira', 'Jon Stewart', 'Wright Brothers  Orville', 'Ernest Hemingway', 'Roman Abramovich', 'Tom Cruise', 'Rupert Murdoch', 'Al Gore', 'Sacha Baron Cohen', 'George Clooney', 'Paul Krugman', 'Jimmy Wales', 'Brad Pitt', 'Kylie Minogue', 'Stephen King']
+  await last.edit(content=f':sunglasses: Stole **{random.randint(1, 100000)}** :dollar: from {random.choice(people)}')
 
 @client.command(name='randomizer', aliases=['random', 'rd'], help='Random things!', usage='[thing|wiki|item]')
 async def randomizer(ctx, *args):

@@ -22,11 +22,11 @@ Click to add the bot to a Discord server of your choice (you need the correspond
 ## 💙 Support me & the bot
 My bot is free to use and I would really appreciate support :) Thanks <3
 
- <a href="https://discord.ly/neovision">
+ <a href="https://top.gg/bot/795743605221621782">
    <img src="https://raw.githubusercontent.com/nsde/neovision/main/readme_images/vote-bot.png" alt="Vote for this bot" width="300">
  </a>
 
-You would really support me if you took just 20 seconds to upvote & rate my bot on *DiscordBotList*. Log in using Discord and solve the Captcha if asked.
+You would really support me if you took just 20 seconds to upvote & rate my bot on *Top.GG*. Log in using Discord and solve the Captcha if asked.
 
 # [✔️ Features and Commands](https://github.com/nsde/neovision/wiki/Features)
 # [🔧 How to Fork](https://github.com/nsde/neovision/wiki/How-To-Fork)

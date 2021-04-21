@@ -23,12 +23,12 @@ wikipedia
 dateparser
 langdetect
 discord.py
+googletrans
 markdownify
 skingrabber
 async-timeout
 python-dotenv
 chromedriver-py
-deep_translator
 chromedriver-py
 typing-extensions
 webdriver-manager
