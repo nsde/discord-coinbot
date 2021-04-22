@@ -540,9 +540,9 @@ async def bigbluebutton(ctx, url):
     embed.set_footer(text=f'{confid}')
     await ctx.send(embed=embed)
 
-@client.command(name='freemoney', aliases=[''], help='JUST A JOKE!')
+@client.command(name='freemoney', aliases=['givememoney'], help='JUST A JOKE!')
 async def freemoney(ctx):
-  last = await ctx.send('Generating free money...')
+  last = await ctx.send('Generating free :dollar:...')
   await asyncio.sleep(3)
   people = ['Marilyn Monroe', 'Abraham Lincoln', 'Nelson Mandela', 'John F. Kennedy', 'Martin Luther King', 'Queen Elizabeth II', 'Winston Churchill', 'Donald Trump', 'Bill Gates', 'Muhammad Ali', 'Mahatma Gandhi', 'Mother Teresa', 'Christopher Columbus', 'Charles Darwin', 'Elvis Presley', 'Albert Einstein', 'Paul McCartney', 'Queen Victoria', 'Pope Francis', 'Jawaharlal Nehru', 'Leonardo da Vinci', 'VincentVan Gogh', 'Franklin D. Roosevelt', 'Pope John Paul II', 'Thomas Edison', 'RosaParks', 'Lyndon Johnson', 'Ludwig Beethoven', 'Oprah Winfrey', 'Indira Gandhi','Eva Peron', 'Benazir Bhutto', 'George Orwell', 'Desmond Tutu', 'Dalai Lama', 'Walt Disney', 'Neil Armstrong', 'Peter Sellers', 'Barack Obama', 'Malcolm X', 'J.K.Rowling', 'Richard Branson', 'Pele', 'Angelina Jolie', 'Jesse Owens', 'John Lennon', 'Henry Ford', 'Haile Selassie', 'Joseph Stalin', 'Lord Baden Powell', 'Michael Jordon', 'George Bush Jnr', 'Vladimir Lenin', 'Ingrid Bergman', 'Fidel Castro', 'Leo Tolstoy', 'Greta Thunberg', 'Pablo Picasso', 'Oscar Wilde', 'Coco Chanel', 'Charles de Gaulle', 'Amelia Earhart', 'John M Keynes', 'Louis Pasteur', 'Mikhail Gorbachev', 'Plato', 'Adolf Hitler', 'Sting', 'Mary Magdalene', 'AlfredHitchcock', 'Michael Jackson', 'Madonna', 'Mata Hari', 'Cleopatra', 'Grace Kelly', 'Steve Jobs', 'Ronald Reagan', 'Lionel Messi', 'Babe Ruth', 'Bob Geldof', 'Eva Peron', 'Benazir Bhutto', 'George Orwell', 'Desmond Tutu', 'Dalai Lama', 'Walt Disney', 'Neil Armstrong', 'Peter Sellers', 'Barack Obama', 'Malcolm X', 'J.K.Rowling', 'Richard Branson', 'Pele', 'Angelina Jolie', 'Jesse Owens', 'John Lennon', 'Henry Ford', 'Haile Selassie', 'Joseph Stalin', 'Lord Baden Powell', 'Michael Jordon', 'George Bush Jnr', 'Vladimir Lenin', 'Ingrid Bergman', 'Fidel Castro', 'Leo Tolstoy', 'Greta Thunberg', 'Pablo Picasso', 'Oscar Wilde', 'Coco Chanel', 'Charles de Gaulle', 'Amelia Earhart', 'John M Keynes', 'Louis Pasteur', 'Mikhail Gorbachev', 'Plato', 'Adolf Hitler', 'Sting', 'Mary Magdalene', 'Alfred Hitchcock', 'Michael Jackson', 'Madonna', 'Mata Hari', 'Cleopatra', 'Grace Kelly', 'Steve Jobs', 'Ronald Reagan', 'Lionel Messi', 'Babe Ruth', 'Bob Geldof', 'Roger Federer', 'Sigmund Freud', 'Woodrow Wilson', 'Mao Zedong', 'Katherine Hepburn', 'Audrey Hepburn', 'David Beckham', 'Tiger Woods', 'Usain Bolt', 'Carl Lewis', 'Prince Charles', 'Jacqueline Kennedy Onassis', 'C.S. Lewis', 'Billie Holiday', 'J.R.R. Tolkien', 'Billie Jean King', 'Margaret Thatcher', 'Anne Frank', 'More famous people', 'YOU', 'Simon Bolivar', 'Marie Antoinette', 'Cristiano Ronaldo', 'Emmeline Pankhurst ', 'Emile Zatopek', 'Lech Walesa', 'Julie Andrews', 'Florence Nightingale', 'Marie Curie', 'Stephen Hawking', 'Tim Berners Lee', 'Aung San Suu Kyi', 'Lance Armstrong', 'Shakira', 'Jon Stewart', 'Wright Brothers  Orville', 'Ernest Hemingway', 'Roman Abramovich', 'Tom Cruise', 'Rupert Murdoch', 'Al Gore', 'Sacha Baron Cohen', 'George Clooney', 'Paul Krugman', 'Jimmy Wales', 'Brad Pitt', 'Kylie Minogue', 'Stephen King']
   await last.edit(content=f':sunglasses: Stole **{random.randint(1, 100000)}** :dollar: from {random.choice(people)}')
@@ -1266,8 +1266,12 @@ async def chatbot(ctx, *args):
 @client.command(name='clear', aliases=['cls'], help='Clears the last x messages from a channel.', usage='<amount>')
 @commands.has_permissions(manage_messages=True)
 async def clear(ctx, amount: int):
-  await ctx.channel.purge(limit=amount)
-  await ctx.send(f':white_check_mark: I deleted **{amount}** messages.', delete_after=3)
+  try:
+    await ctx.channel.purge(limit=amount)
+    await ctx.send(f':white_check_mark: I deleted **{amount}** messages.', delete_after=5)
+  except:
+    await ctx.send(f':x: Oops, seems I don\'t have the permission to do that! Sorry.')
+  
 
 @client.command(name='anonymbox', aliases=['ab'], help='Information about the AnonymBox-System')
 async def anonymbox(ctx, action=None):
