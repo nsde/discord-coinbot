@@ -9,6 +9,11 @@ except ImportError:
 colorama.init(autoreset=True)
 print(colorama.Fore.MAGENTA)
 
+# This import thingy is really, really important for requests things, see https://github.com/gevent/gevent/issues/1235
+import gevent.monkey
+gevent.monkey.patch_all()
+
+
 '''Local imports'''
 import bbb #self-made
 try:
@@ -34,6 +39,7 @@ import shutil
 import socket
 import mojang #pip install mojang | API for Minecraft
 #pip install PyNaCl | for voicechannel support
+import dotenv 
 import discord #pip install discord | for bot-system
 import asyncio
 import requests #pip install requests | for getting html of a website
@@ -42,7 +48,9 @@ try:
   import pymongo #pip install pymongo | for the database
 except ImportError:
   print(colorama.Fore.YELLOW + 'Ignoring pymongo module because of ImportError')
+
 import hypixel
+
 try:
   import meme_get #pip install meme_get | for meme-commands
 except ImportError:
@@ -52,15 +60,19 @@ try:
   import mcstatus #pip install mcstatus | see "mojang"
 except ImportError:
   print(colorama.Fore.YELLOW + 'Ignoring mcstatus module because of ImportError')
+
 try:
   import wikipedia #pip install wikipedia | Wikipedia scraping
 except ImportError:
   print(colorama.Fore.YELLOW + 'Ignoring wikipedia module because of ImportError')
+
 import xmltodict #pip install xmltodict | The name says it.
+
 try:
   import dateparser #pip install dateparser | Converts human readable text to datetime.datetime
 except ImportError:
   print(colorama.Fore.YELLOW + 'Ignoring padlet module because of ImportError')
+
 import langdetect #pip install langdetect | to detect langauges in a string
 import skingrabber #pip install skingrabber | to render skins
 import googlesearch #pip install google | to search something on the web
@@ -86,6 +98,8 @@ if CWD.split('/')[-1] == 'src':
 
 chatbot_history = ['']
 bot_started_at = datetime.datetime.now()
+
+dotenv.load_dotenv()
 
 temp_path = CWD + '/temp'
 try:
@@ -138,6 +152,13 @@ Please set up a database and a cluster at 'mongodb.com', create a user, remember
 connect with the application 'Python' -> '3.6 or higher', replace the <password> in the string
 with the user you just set up and copy the final string. Sorry - It's quite difficult to set up,
 but it's needed for coin/economy/leveling & other systems to work!''')
+
+def get_w2g_apikey():
+  try:
+    return os.getenv('W2G')
+  except:
+    print(f'''{colorama.Fore.RED}
+  Oops! Could not load the Watch2Gether API token.''')
 
 @client.event
 async def on_ready():
@@ -284,17 +305,21 @@ async def ping(ctx):
 @client.command(name='info', help='Information, useful commands & links for this bot.')
 async def info(ctx):
   url = 'https://github.com/nsde/neovision'
-  github_data = github.getlastcommit(url)
-
-  number = github_data['number']
-  time = github_data['time']
-  if not time:
+  try:
+    github_data = github.getlastcommit(url)
+    time = github_data['time']
+    if not time:
+      time = datetime.datetime.now()
+    readable = github_data['time_readable']
+    if not readable:
+      readable = '***?***'
+    title = github_data['title']
+    if not title:
+      title = '***?***'
+  except:
+    number = github_data['number']
     time = datetime.datetime.now()
-  readable = github_data['time_readable']
-  if not readable:
     readable = '***?***'
-  title = github_data['title']
-  if not title:
     title = '***?***'
 
   embed = discord.Embed(title='NeoVision Bot Info', color=discord.Color(0x0094FF), description=f'''
@@ -641,6 +666,12 @@ async def counting(ctx):
     f'''**__Counting Information__**
     *For help on how to setup a counting channel, see the wiki on the GitHub page.*
     ''')
+
+@client.command(name='w2g', aliases=['watchtogether', 'watch2gether'], help='Create a WatchToGether room to watch a online video together with friends.', usage='(<video_to_play_after_room_create_url>)')
+async def w2g(ctx, autoplay_url='https://youtu.be/Lrj2Hq7xqQ8'):
+  w2g_api_key = get_w2g_apikey()
+  room_id = requests.post('https://w2g.tv/rooms/create.json', params={'w2g_api_key': w2g_api_key, 'share': autoplay_url, 'bg_color': '#5f8ac2', 'bg_opacity': '10'}).json()['streamkey']
+  await ctx.send('https://w2g.tv/rooms/' + room_id)
 
 @client.command(name='minecraft', aliases=['mc', 'minecraftinfo', 'mcinfo'], help='Get information about a player or server.', usage='<player|server>')
 async def minecraft(ctx, value):
