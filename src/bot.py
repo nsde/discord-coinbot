@@ -110,14 +110,11 @@ finally:
   os.mkdir(temp_path)
 
 try:
-  token = open(CWD + '/config/SECRET_token.txt').read()
-except Exception as e:
-  try:
-    token = os.getenv('token')
-  except:
-    print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
-    token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
-    open(CWD + '/config/SECRET_token.txt', 'w').write(token)    
+  token = os.getenv('dc')
+except:
+  print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
+  token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
+  open(CWD + '/config/SECRET_token.txt', 'w').write(token)    
 
 
 if not token:
@@ -140,18 +137,16 @@ with open(CWD + '/config/config.yml') as f:
 
   client = commands.Bot(command_prefix=commands.when_mentioned_or(config['main']['prefix']), intents=intents)
 
-try:
-  database = pymongo.MongoClient(open(CWD + '/config/SECRET_database.txt'))
-except:
+def get_db():
   try:
-    database = pymongo.MongoClient(os.getenv('database'))
+    return pymongo.MongoClient(os.getenv('db'))
   except:
     print(f'''{colorama.Fore.RED}
-Oops! There was an problem loading the MondoDB database.
-Please set up a database and a cluster at 'mongodb.com', create a user, remember its password,
-connect with the application 'Python' -> '3.6 or higher', replace the <password> in the string
-with the user you just set up and copy the final string. Sorry - It's quite difficult to set up,
-but it's needed for coin/economy/leveling & other systems to work!''')
+  Oops! There was an problem loading the MondoDB database.
+  Please set up a database and a cluster at 'mongodb.com', create a user, remember its password,
+  connect with the application 'Python' -> '3.6 or higher', replace the <password> in the string
+  with the user you just set up and copy the final string. Sorry - It's quite difficult to set up,
+  but it's needed for coin/economy/leveling & other systems to work!''')
 
 def get_w2g_apikey():
   try:
@@ -743,26 +738,21 @@ async def minecraft(ctx, value):
 coins_file = CWD + '/data/coins.txt'
 
 def getcoins(user):
-  global database
-  coin_db = database['users']
-  for line in open(coins_file).readlines():
-    if line.startswith(str(user.id)):
-      return int(line.split()[1])
-  open(coins_file, 'a').write(f'\n{user} 0')
+  db = get_db()
+  coin_db = db['coinsystem']['users']
+  for bal in coin_db.find({'userid': user}): # I know this seems dumb, but this may actually work lol
+    return bal
   return 0
 
 def setcoins(user, amount):
-  global database
-  for line in open(coins_file).readlines():
-    if line.startswith(str(user.id)):
-      open(coins_file, 'w').write(open(coins_file.read().replace(line, f'{user} {amount}')))
-      return
-  open(coins_file, 'a').write(f'\n{user} {amount}')
+  db = get_db()
+  coin_db = db['coinsystem']['users']
+  coin_db.update_one({'userid': int(user)}, {'$set': {'coins': int(amount)}})
 
 @client.command(name='dailycoins', aliases=['dcoins', 'dc', 'dailyrewards'], help='Economy command to get daily coins.')
 async def dailycoins(ctx):
-  global database
-  dailycoins_db = database['dailycoins']
+  db = get_db()
+  dailycoins_db = db['coinsystem']['dailycoins']
   if not dailycoins_db.find_one({'id': ctx.message.author.id}):
     amount = random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])
 
@@ -770,20 +760,28 @@ async def dailycoins(ctx):
       title='DailyCoins',
       Color=discord.Color(0xdb9d20),
       description='**Here, enjoy your daily coins!**\n> +' + str(amount) + ' ' + config['currency']['symbols']['currency_normal']
-      )
+    )
 
     await ctx.send(embed=embed)
     
-    setcoins(user=ctx.author, amount=getcoins(ctx.message.author) + amount)
+    setcoins(user=ctx.author.id, amount=getcoins(ctx.message.author.id) + amount)
+
   else:
+    print(dailycoins_db.find_one({'id': ctx.message.author.id}))
     await ctx.send('https://youtu.be/RC8ksHG6FhQ')
 
 @client.command(name='balance', aliases=['bal'], help='Get a user\'s account balance.')
 async def balance(ctx, user:discord.Member=None):
   if not user:
     user = ctx.author
-  
-  await ctx.send(f'Account balance of  \'{user}\': {getcoins(user)}')
+
+  embed = discord.Embed(
+    title=f'Account balance of {user}',
+    Color=discord.Color(0xdb9d20),
+    description=f'{getcoins(user.id)} {config["currency"]["symbols"]["currency_normal"]}'
+  )
+
+  await ctx.send(embed=embed)
 
 @client.command(name='meme', help='Shows a random meme. Specify "load count" to a high number to get more unique memes.', usage='(<load_count>)')
 async def meme(ctx, load_count=None):
