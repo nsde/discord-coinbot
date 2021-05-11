@@ -30,7 +30,6 @@ skingrabber
 async-timeout
 python-dotenv
 chromedriver-py
-chromedriver-py
 anime-images-api
 typing-extensions
 webdriver-manager

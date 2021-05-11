@@ -115,15 +115,12 @@ finally:
 try:
   token = os.getenv('dc')
 except:
-  print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
-  token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
-  open(CWD + '/config/SECRET_token.txt', 'w').write(token)    
-
+  print(colorama.Fore.YELLOW + 'Token in ENV not found.')
+  sys.exit(0)
 
 if not token:
-  print(colorama.Fore.YELLOW + 'Token file not found. Creating one...')
-  token = input(colorama.Fore.BLUE + 'Please type in the Discord bot token: ')
-  open(CWD + '/config/SECRET_token.txt', 'w').write(token)    
+  print(colorama.Fore.YELLOW + 'Token in ENV empty. ')
+  sys.exit(0)
 else:
   print(colorama.Fore.GREEN + 'Token loaded. Length: ' + str(len(token)))
 
