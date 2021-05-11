@@ -1,3 +1,5 @@
+testing_mode = False
+
 '''A Discord-Bot written in Python with features like coin/economy system, music, memes, temporary channels, server-bridge, general moderation utilities and more!'''
 
 import os
@@ -11,7 +13,7 @@ print(colorama.Fore.MAGENTA)
 
 # This import thingy is really, really important for requests things, see https://github.com/gevent/gevent/issues/1235
 import gevent.monkey
-gevent.monkey.patch_all()
+gevent.monkey.patch_all(thread=False, select=False)
 
 
 '''Local imports'''
@@ -61,10 +63,10 @@ try:
 except ImportError:
   print(colorama.Fore.YELLOW + 'Ignoring mcstatus module because of ImportError')
 
-try:
-  import wikipedia #pip install wikipedia | Wikipedia scraping
-except ImportError:
-  print(colorama.Fore.YELLOW + 'Ignoring wikipedia module because of ImportError')
+# try:
+#   import wikipedia #pip install wikipedia | Wikipedia scraping
+# except ImportError:
+#   print(colorama.Fore.YELLOW + 'Ignoring wikipedia module because of ImportError')
 
 import xmltodict #pip install xmltodict | The name says it.
 
@@ -82,6 +84,7 @@ import googletrans #pip install googletrans | for translating-commands
 # except:
 # print(colorama.Fore.YELLOW + 'Ignoring deep_translator module because of ImportError')
 # print(colorama.Fore.RED + 'No internet connection.')
+import anime_images_api #pip install anime-images-api
 
 '''Imports with abbrevations'''
 import youtubesearchpython as ysp #pip install youtube-search-python | for YouTube-Search
@@ -184,7 +187,7 @@ async def on_member_join(member):
           text = f'Welcome to the server, {member.mention}!'
         embed = discord.Embed(
           title=f'Member joined',
-          Color=0x00EB00,
+          color=0x00EB00,
           description=text,
           timestamp=member.created_at
           )
@@ -204,7 +207,7 @@ async def on_member_remove(member):
           text = f'Oh no, {member.mention} left the server...'
         embed = discord.Embed(
           title=f'Member left',
-          Color=0xfc2626,
+          color=0xfc2626,
           description=text,
           timestamp=member.joined_at
           )
@@ -217,43 +220,47 @@ async def on_member_remove(member):
 async def on_private_channel_create(channel):
   await channel.send('*Do **`.help`** for information about the DM system.*', delete_after=5)
 
-# @client.event
-# async def on_command_error(ctx, error):
-#   error_msg = 'Unknown error.'
-#   if isinstance(error, commands.CommandNotFound):
-#     error_msg = 'This command does not exist. Use **`.info`** for information.'
-#   if isinstance(error, commands.MissingRequiredArgument):
-#     error_msg = 'Please follow the syntax.\nYou can use `.help <command>` for information.'
-#   if isinstance(error, commands.TooManyArguments):
-#     error_msg = 'You passed too many arguments. You can use `.help` for information'
-#   if isinstance(error, commands.Cooldown):
-#     error_msg = 'Please wait. You are on a cooldown.'
-#   # if isinstance(error, commands.CommandError):
-#   #   error_msg = 'There was an error with this command.'
-#   if isinstance(error, commands.MessageNotFound):
-#     error_msg = 'I couldn\'t find this message.'
-#   if isinstance(error, commands.ChannelNotFound):
-#     error_msg = 'I couldn\'t find this channel.'
-#   if isinstance(error, commands.UserInputError):
-#     error_msg = 'I couldn\'t find this user.'
-#   if isinstance(error, commands.ChannelNotFound):
-#     error_msg = 'I couldn\'t find this channel.'
-#   if isinstance(error, commands.NoPrivateMessage):
-#     error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
-#   if isinstance(error, commands.MissingPermissions):
-#     error_msg = 'Sorry, you don\'t have the role permissions for this.'
-#   if isinstance(error, commands.BotMissingPermissions):
-#     error_msg = 'Sorry, I don\'t have permissions to do this.'
-#   if isinstance(error, commands.ExtensionError):
-#     error_msg = 'I apologize, but I couldn\'t load the needed extension.'
-#   if isinstance(error, commands.CheckFailure):
-#     error_msg = 'Sorry, you don\'t have the permissions for this.'
-#   if isinstance(error, commands.BadArgument):
-#     error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
+@client.event
+async def on_command_error(ctx, error):
+  error_msg = 'Unknown error.'
+  if isinstance(error, commands.CommandNotFound):
+    error_msg = 'This command does not exist. Use **`.info`** for information.'
+  if isinstance(error, commands.MissingRequiredArgument):
+    error_msg = 'Please follow the argument syntax.\nYou can use `.help <command>` for information.'
+  if isinstance(error, commands.TooManyArguments):
+    error_msg = 'You passed too many arguments. You can use `.help` for information'
+  if isinstance(error, commands.Cooldown):
+    error_msg = 'Please wait. You are on a cooldown.'
+  if isinstance(error, commands.MessageNotFound):
+    error_msg = 'I couldn\'t find this message.'
+  if isinstance(error, commands.ChannelNotFound):
+    error_msg = 'I couldn\'t find this channel.'
+  if isinstance(error, commands.UserInputError):
+    error_msg = 'I couldn\'t find this user.'
+  if isinstance(error, commands.ChannelNotFound):
+    error_msg = 'I couldn\'t find this channel.'
+  if isinstance(error, commands.NoPrivateMessage):
+    error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
+  if isinstance(error, commands.MissingPermissions):
+    error_msg = 'Sorry, you don\'t have the role permissions for this.'
+  if isinstance(error, commands.BotMissingPermissions):
+    error_msg = 'Sorry, I don\'t have permissions to do this.'
+  if isinstance(error, commands.ExtensionError):
+    error_msg = 'I apologize, but I couldn\'t load the needed extension.'
+  if isinstance(error, commands.CheckFailure):
+    error_msg = 'Sorry, you don\'t have the permissions for this.'
+  if isinstance(error, commands.BadArgument):
+     error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
 
-#   if error_msg != 'Unknown error.':
-#     await ctx.send(f':x: **ERROR** - {error_msg}')
-#     raise error
+  embed = discord.Embed(
+    title='Error',
+    description=error_msg,
+    color=0xff0000
+  )
+  
+  await ctx.send(embed=embed)
+  if testing_mode or error_msg == 'Unknown error.':
+    raise error
 
 @client.command(name='stats', help='Get statistics about this bot.')
 async def stats(ctx):
@@ -264,7 +271,7 @@ async def stats(ctx):
   )
   embed.add_field(name='Servers', value=f'{len(client.guilds)}')
   embed.add_field(name='Members', value=f'{len(client.users)}')
-  embed.set_footer(text=':heart:')
+  embed.set_footer(text='💙')
   await ctx.send(embed=embed)
 
 @client.command(name='bot', help='Get client info about this bot.')
@@ -439,6 +446,32 @@ async def calc(ctx, *args):
     )
   await ctx.send(embed=embed)
 
+@client.command(name='baerbock', help='Mixes the letters of a text. Works best in German.')
+async def baerbock(ctx, *text):
+  text = ' '.join(text)
+
+  mixer = {
+    'au': 'en',
+    'le': 'el',
+    'un': 'nu',
+    'he': 'eh',
+    'de': 'ed',
+    'ver': 'um',
+    'nach': 'vor',
+    'zu': 'un',
+    'runter': 'hoch',
+    'links': 'rechts',
+    'ke': 'ek',
+    'ba': 'bu',
+    'na': 'an',
+  }
+
+  for mix in mixer.keys():
+    text = text.replace(mix, mixer[mix])
+
+  await ctx.send(text)
+
+
 @client.command(name='timer', help='Create a timer.', usage='<time> [s|m|h] (<message>)')
 async def timer(ctx, time, unit, *message):
   if not message:
@@ -471,14 +504,16 @@ async def translate(ctx, *args):
   translator = googletrans.Translator()
   try:
     translated = translator.translate(text, dest=to_lang).text
+    embed = discord.Embed(title='Google Translator', color=discord.Color(0x0094FF), description=translated)
+
   except ValueError:
-      embed = discord.Embed(title='Google Translator', color=discord.Color(0xff0000), description='Please use a correct language shorcut, e.g. **de** or **en**.')
-  await ctx.send(translated)
-  embed = discord.Embed(title='Google Translator', color=discord.Color(0x0094FF), description=translated)
+    embed = discord.Embed(title='Google Translator', color=discord.Color(0xff0000), description='Please use a correct language shorcut, e.g. **de** or **en**.')
+    
+  await ctx.send(embed=embed)
 
 @client.command(name='coronavirus', aliases=['covid', 'covid19', 'corona'], help='Display information about the novel coronavirus.', usage='(<country>)')
 async def coronavirus(ctx, country=''):
-  await ctx.send('🦠 **Loading coronavirus data... This will take ca. 5 seconds**', delete_after=5)
+  await ctx.send('🦠 **Fetching coronavirus API data... This might take approx. 4 seconds**', delete_after=4)
   covid_data = covid.Covid(source='worldometers')
   if country:
     country = country.lower()
@@ -616,44 +651,44 @@ async def randomizer(ctx, *args):
   await ctx.send(embed=embed)
 
 
-@client.command(name='wiki', aliases=['wikipedia'], help='View a Wikipedia page.', usage='<page>')
-async def wiki(ctx, *args):
-  page = ' '.join(args)
+# @client.command(name='wiki', aliases=['wikipedia'], help='View a Wikipedia page.', usage='<page>')
+# async def wiki(ctx, *args):
+#   page = ' '.join(args)
 
-  try:
-    wikipage = wikipedia.page(wikipedia.search(page, results=10)[0])
-  except:
-    if wikipedia.search(page, results=10):
-      await ctx.send(':x: **ERROR:** Sorry, I couldn\'t find any page with this title.\nMaybe you are looking for:\n**`' + '`**, **`'.join(list(wikipedia.search(page, results=10))) + '`**')
-      return
-    else:
-      await ctx.send(':x: **ERROR:** Sorry, I couldn\'t find any page with this title.')
+#   try:
+#     wikipage = wikipedia.page(wikipedia.search(page, results=10)[0])
+#   except:
+#     if wikipedia.search(page, results=10):
+#       await ctx.send(':x: **ERROR:** Sorry, I couldn\'t find any page with this title.\nMaybe you are looking for:\n**`' + '`**, **`'.join(list(wikipedia.search(page, results=10))) + '`**')
+#       return
+#     else:
+#       await ctx.send(':x: **ERROR:** Sorry, I couldn\'t find any page with this title.')
 
-  title = wikipage.title
-  url = wikipage.url
+#   title = wikipage.title
+#   url = wikipage.url
 
-  try:
-    for picture in wikipage.images:
-      if picture.endswith('jpg') or picture.endswith('png'):
-        pic = picture
-        break
-  except:
-    pass    
+#   try:
+#     for picture in wikipage.images:
+#       if picture.endswith('jpg') or picture.endswith('png'):
+#         pic = picture
+#         break
+#   except:
+#     pass    
 
-  try:
-    info = wikipedia.summary(title)[:500] + ' *[...]*'
-  except:
-    info = '[No description avaiable]'
-  footer =  'Categories: ' + ', '.join(wikipage.categories[:3][:50])
+#   try:
+#     info = wikipedia.summary(title)[:500] + ' *[...]*'
+#   except:
+#     info = '[No description avaiable]'
+#   footer =  'Categories: ' + ', '.join(wikipage.categories[:3][:50])
 
-  embed = discord.Embed(title=title, Color=discord.Color(0x009fff), description=info, url=url)
+#   embed = discord.Embed(title=title, Color=discord.Color(0x009fff), description=info, url=url)
 
-  try:
-    embed.set_thumbnail(url=pic)
-  except:
-    pass
-  embed.set_footer(text=footer)
-  await ctx.send(embed=embed)
+#   try:
+#     embed.set_thumbnail(url=pic)
+#   except:
+#     pass
+#   embed.set_footer(text=footer)
+#   await ctx.send(embed=embed)
 
 @client.command(name='counting', aliases=['ct'], help='Get information about the counting system.')
 async def counting(ctx):
@@ -737,51 +772,61 @@ async def minecraft(ctx, value):
 
 coins_file = CWD + '/data/coins.txt'
 
-def getcoins(user):
+def getcoins(user_id):
   db = get_db()
   coin_db = db['coinsystem']['users']
-  for bal in coin_db.find({'userid': user}): # I know this seems dumb, but this may actually work lol
-    return bal
+  for bal in coin_db.find({'id': user_id}): # I know this seems dumb, but this may actually work lol
+    return bal['coins']
   return 0
 
-def setcoins(user, amount):
+def setcoins(user_id, amount):
   db = get_db()
   coin_db = db['coinsystem']['users']
-  coin_db.update_one({'userid': int(user)}, {'$set': {'coins': int(amount)}})
-
-@client.command(name='dailycoins', aliases=['dcoins', 'dc', 'dailyrewards'], help='Economy command to get daily coins.')
-async def dailycoins(ctx):
-  db = get_db()
-  dailycoins_db = db['coinsystem']['dailycoins']
-  if not dailycoins_db.find_one({'id': ctx.message.author.id}):
-    amount = random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])
-
-    embed = discord.Embed(
-      title='DailyCoins',
-      Color=discord.Color(0xdb9d20),
-      description='**Here, enjoy your daily coins!**\n> +' + str(amount) + ' ' + config['currency']['symbols']['currency_normal']
-    )
-
-    await ctx.send(embed=embed)
-    
-    setcoins(user=ctx.author.id, amount=getcoins(ctx.message.author.id) + amount)
-
+  if not coin_db.find_one({'id': user_id}):
+    coin_db.insert_one({'id': int(user_id), 'coins': int(amount)})
   else:
-    print(dailycoins_db.find_one({'id': ctx.message.author.id}))
-    await ctx.send('https://youtu.be/RC8ksHG6FhQ')
+    coin_db.update_one({'id': int(user_id)}, {'$set': {'coins': int(amount)}})
 
-@client.command(name='balance', aliases=['bal'], help='Get a user\'s account balance.')
-async def balance(ctx, user:discord.Member=None):
-  if not user:
-    user = ctx.author
+#@client.command(name='dailycoins', aliases=['dcoins', 'dc', 'dailyrewards'], help='Economy command to get daily coins.')
+#async def dailycoins(ctx):
+  #await ctx.send('Sorry, the coin system is currently under developement. Thanks for your understanding.')
+  # db = get_db()
+  # dailycoins_db = db['coinsystem']['dailycoins']
 
-  embed = discord.Embed(
-    title=f'Account balance of {user}',
-    Color=discord.Color(0xdb9d20),
-    description=f'{getcoins(user.id)} {config["currency"]["symbols"]["currency_normal"]}'
-  )
+  # if not dailycoins_db.find_one({'status': 'updated'):
+  #   dailycoins_db.insert_one({'status': int(user_id), 'coins': int(amount)})
+  # else:
+  #   dailycoins_db.update_one({'id': int(user_id)}, {'$set': {'coins': int(amount)}})
 
-  await ctx.send(embed=embed)
+#   if not dailycoins_db.find_one({'id': ctx.message.author.id}):
+#     amount = random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])
+
+#     embed = discord.Embed(
+#       title='DailyCoins',
+#       Color=discord.Color(0xdb9d20),
+#       description='**Here, enjoy your daily coins!**\n> +' + str(amount) + ' ' + config['currency']['symbols']['currency_normal']
+#     )
+
+#     await ctx.send(embed=embed)
+
+#     dailycoins_db.insert_one({'id': int(ctx.author.id)})
+#     setcoins(ctx.author.id, getcoins(ctx.author.id) + amount)
+#   else:
+#     print(dailycoins_db.find_one({'id': ctx.message.author.id}))
+#     await ctx.send('https://youtu.be/RC8ksHG6FhQ')
+
+# @client.command(name='balance', aliases=['bal'], help='Get a user\'s account balance.')
+# async def balance(ctx, user:discord.Member=None):
+#   if not user:
+#     user = ctx.author
+
+#   embed = discord.Embed(
+#     title=f'Account balance of {user}',
+#     Color=discord.Color(0xdb9d20),
+#     description=f'{getcoins(user.id)} {config["currency"]["symbols"]["currency_normal"]}'
+#   )
+
+#   await ctx.send(embed=embed)
 
 @client.command(name='meme', help='Shows a random meme. Specify "load count" to a high number to get more unique memes.', usage='(<load_count>)')
 async def meme(ctx, load_count=None):
@@ -831,6 +876,7 @@ async def image(ctx, style, user:discord.Member=None):
   await ctx.send(file=discord.File(filepath))
 
 @client.command(name='sendembed', aliases=['embed'], help='Send an embed.', usage='For usage, see the docs.')
+@commands.has_permissions(embed_links=True)
 async def sendembed(ctx, *args):
   args = ' '.join(args)
   if not args.replace(' ', ''):
@@ -878,6 +924,16 @@ async def sendembed(ctx, *args):
   
   await ctx.send(content=content, embed=embed)
 
+@client.command(name='animegif', aliases=['anime'], help='Get SFW anime GIFs. For the weebs.', usage='<[hug|wink|pat|cuddle]>')
+async def animegif(ctx, topic=''):
+  anime = anime_images_api.Anime_Images()
+  try:
+    sfw = anime.get_sfw(topic)
+    await ctx.send(sfw)
+  except:
+    await ctx.send('Please choose a topic (hug or wink or pat or cuddle) and run the command again, eg. \'.anime hug\'')
+    return
+
 @client.command(name='texttospeech', aliases=['tts', 'text2speech', 't2s'], help='Reads text in a voice channel.', usage='([en|de|fr]:) <text>')
 async def texttospeech(ctx, *args):
   text = ' '.join(args)
@@ -917,7 +973,7 @@ async def texttospeech(ctx, *args):
     pass
 
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-  voice.play(discord.FFmpegPCMAudio(executable='C:/ffmpeg/ffmpeg.exe', source=f'{CWD}/temp/tts.mp3'))
+  voice.play(discord.FFmpegPCMAudio(executable='ffmepg', source=f'{CWD}/temp/tts.mp3'), options='-loglevel panic')
   voice.source = discord.PCMVolumeTransformer(voice.source)
 
 globals()['tempchannel_users'] = []
@@ -1108,11 +1164,11 @@ async def playsong(ctx, *args):
   print('Before embed')
 
   embed = discord.Embed(title=title, Color=discord.Color(0x20b1d5), url=url, description=description)
-  # embed.set_thumbnail(url=thumbnail)
   embed.add_field(name='__Channel__', value=channel, inline=True)
   # embed.add_field(name='__Duration__', value=duration], inline=True)
   embed.add_field(name='__Views__', value=views, inline=True)
   embed.add_field(name='__Uploaded__', value=upload_date, inline=True)
+  thumbnail = f'http://i3.ytimg.com/vi/{video_id}/hqdefault.jpg'
   embed.set_thumbnail(url=url)
   
   globals()['embed'] = embed
@@ -1130,7 +1186,6 @@ async def playsong(ctx, *args):
   except PermissionError:
       await ctx.send(':x: **ERROR** Wait for the current playing music to end or use the \'stop\' command')
       return
-
 
   try:
     channel = ctx.author.voice.channel
@@ -1168,7 +1223,7 @@ async def playsong(ctx, *args):
         
     # filepath = temp_path + '/' + filename + '.' + filetype
 
-    voice.play(discord.FFmpegPCMAudio(options='-loglevel panic', executable='C:/ffmpeg/ffmpeg.exe', source=filepath))
+    voice.play(discord.FFmpegPCMAudio(options='-loglevel panic', executable='ffmepg', source=filepath))
     voice.source = discord.PCMVolumeTransformer(voice.source)
 
   except Exception as e:

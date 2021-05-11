@@ -18,6 +18,7 @@ pymongo
 mcstatus
 meme_get
 selenium
+dnspython
 multidict
 wikipedia
 dateparser
@@ -30,6 +31,7 @@ async-timeout
 python-dotenv
 chromedriver-py
 chromedriver-py
+anime-images-api
 typing-extensions
 webdriver-manager
 googlesearch_python
