@@ -63,10 +63,10 @@ try:
 except ImportError:
   print(colorama.Fore.YELLOW + 'Ignoring mcstatus module because of ImportError')
 
-# try:
-#   import wikipedia #pip install wikipedia | Wikipedia scraping
-# except ImportError:
-#   print(colorama.Fore.YELLOW + 'Ignoring wikipedia module because of ImportError')
+try:
+  import wikipedia #pip install wikipedia | Wikipedia scraping
+except ImportError:
+  print(colorama.Fore.YELLOW + 'Ignoring wikipedia module because of ImportError')
 
 import xmltodict #pip install xmltodict | The name says it.
 
@@ -122,7 +122,7 @@ if not token:
   print(colorama.Fore.YELLOW + 'Token in ENV empty. ')
   sys.exit(0)
 else:
-  print(colorama.Fore.GREEN + 'Token loaded. Length: ' + str(len(token)))
+  print(datetime.datetime.now().strftime('%b %d %H:%M:%S %p %Z') + colorama.Fore.GREEN + 'Token loaded. Length: ' + str(len(token)))
 
 with open(CWD + '/config/config.yml') as f:
   config = yaml.load(f, Loader=yaml.SafeLoader)
@@ -157,13 +157,13 @@ def get_w2g_apikey():
 
 @client.event
 async def on_ready():
-  print(f'{colorama.Fore.GREEN}Ready. User: {client.user}.')
+  print(datetime.datetime.now().strftime('%b %d %H:%M:%S %p %Z') + f'{colorama.Fore.GREEN}Ready. User: {client.user}.')
   # helpcmd = commands.HelpCommand
   await client.change_presence(activity=discord.Game(name='.help | visit bit.ly/nevi'))
 
 @client.event
 async def on_disconnect():
-  print(f'{colorama.Fore.YELLOW}Disconnected.')
+  print(datetime.datetime.now().strftime('%b %d %H:%M:%S %p %Z') + f'{colorama.Fore.YELLOW}Disconnected.')
 
 @client.event
 async def on_reaction_add(reaction, user):
@@ -179,7 +179,7 @@ async def on_member_join(member):
     if isinstance(channel, discord.TextChannel):
       if 'nv-join' in str(channel.topic):
         if 'nv-join(' in str(channel.topic):
-          text = str(channel.topic).split('nv-join(')[1].split(')')[0].replace('%MENTION%', member.mention).replace('%NAME%', member.name).replace('%ID%', str(member.id))
+          text = str(channel.topic).split('nv-join(')[1].split(')')[0].replace('%M:%SENTION%', member.mention).replace('%NAME%', member.name).replace('%ID%', str(member.id))
         else:
           text = f'Welcome to the server, {member.mention}!'
         embed = discord.Embed(
@@ -199,7 +199,7 @@ async def on_member_remove(member):
     if isinstance(channel, discord.TextChannel):
       if 'nv-leave' in str(channel.topic):
         if 'nv-leave(' in str(channel.topic):
-          text = str(channel.topic).split('nv-leave(')[1].split(')')[0].replace('%MENTION%', member.mention).replace('%NAME%', member.name).replace('%ID%', str(member.id))
+          text = str(channel.topic).split('nv-leave(')[1].split(')')[0].replace('%M:%SENTION%', member.mention).replace('%NAME%', member.name).replace('%ID%', str(member.id))
         else:
           text = f'Oh no, {member.mention} left the server...'
         embed = discord.Embed(
@@ -219,7 +219,8 @@ async def on_private_channel_create(channel):
 
 @client.event
 async def on_command_error(ctx, error):
-  error_msg = 'Unknown error.'
+  error_msg = 'Programming bug/problem.'
+
   if isinstance(error, commands.CommandNotFound):
     error_msg = 'This command does not exist. Use **`.info`** for information.'
   if isinstance(error, commands.MissingRequiredArgument):
@@ -233,7 +234,7 @@ async def on_command_error(ctx, error):
   if isinstance(error, commands.ChannelNotFound):
     error_msg = 'I couldn\'t find this channel.'
   if isinstance(error, commands.UserInputError):
-    error_msg = 'I couldn\'t find this user.'
+    error_msg = 'Please check the arguments you gave using `.help <command>`.'
   if isinstance(error, commands.ChannelNotFound):
     error_msg = 'I couldn\'t find this channel.'
   if isinstance(error, commands.NoPrivateMessage):
@@ -248,6 +249,8 @@ async def on_command_error(ctx, error):
     error_msg = 'Sorry, you don\'t have the permissions for this.'
   if isinstance(error, commands.BadArgument):
      error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
+
+  error_msg += '\n```py\n' + str(error) + '\n```'
 
   embed = discord.Embed(
     title='Error',
@@ -270,18 +273,6 @@ async def stats(ctx):
   embed.add_field(name='Members', value=f'{len(client.users)}')
   embed.set_footer(text='💙')
   await ctx.send(embed=embed)
-
-@client.command(name='bot', help='Get client info about this bot.')
-async def bot(ctx):
-  embed = discord.Embed(
-    title='Bot Client',
-    description='NV Bot system:',
-    color=discord.Color(0x0094FF),
-  )
-  embed.add_field(name='NeoVision', value=f'{len(client.guilds)}')
-  embed.add_field(name='AlphaVision', value=f'{len(client.users)}')
-  embed.set_footer(text=':heart:')
-  await ctx.send(embed=embed)  
 
 @client.command(name='ping', help='Get statistics about the connection and latency.')
 async def ping(ctx):
@@ -333,16 +324,11 @@ async def info(ctx):
     [:white_check_mark: Invite to other servers](https://discord.com/oauth2/authorize?client_id=795743605221621782&scope=bot&permissions=8)
     [:blue_heart: Vote on Top.GG](https://top.gg/bot/795743605221621782/vote)
   
-  __**Version (GitHub)**__
-    **Total updates:** {number}
-    **Last update:** {readable}
-    **Last update info:** {title}
-
   __**Bot Account**__
     **Account:** {client.user}
     **ID:** {client.user.id}
-    **Verified:** {client.user.verified}
-    **Created:** {client.user.created_at.strftime('%A, %B %d, %Y at %H:%M %p %Z')}
+    **Created:** {client.user.created_at.strftime('%A, %B %d, %Y %H:%M:%S %p %Z')}
+    **Joined:** {client.user.joined_at.strftime('%A, %B %d, %Y %H:%M:%S %p %Z')}
   ''', timestamp=time)
   embed.set_thumbnail(url=client.user.avatar_url)
   embed.set_footer(text=f'Ping: {str(round(client.latency * 1000, 2))}ms ~ Last update: ')
@@ -397,8 +383,8 @@ async def user(ctx, *args):
   roles = ' '.join(x.mention for x in member.roles)
 
   status = member.status
-  created = member.created_at.strftime('%A, %B %d, %Y at %H:%M %p %Z')
-  joined = member.joined_at.strftime('%A, %B %d, %Y at %H:%M %p %Z')
+  created = member.created_at.strftime('%A, %B %d, %Y %H:%M:%S %p %Z')
+  joined = member.joined_at.strftime('%A, %B %d, %Y %H:%M:%S %p %Z')
   highest_role = member.top_role.mention
 
   status_icon = str(member.status).replace('dnd', ':no_entry:').replace('online', ':green_circle:').replace('idle', ':crescent_moon:').replace('offline', ':black_circle:')
@@ -448,23 +434,21 @@ async def baerbock(ctx, *text):
   text = ' '.join(text)
 
   mixer = {
-    'au': 'en',
-    'le': 'el',
-    'un': 'nu',
-    'he': 'eh',
-    'de': 'ed',
+    'low': 'high',
+    'left': 'right',
+    'right': 'left',
+    'high': 'low',
+    'up': 'down',
     'ver': 'um',
     'nach': 'vor',
     'zu': 'un',
     'runter': 'hoch',
     'links': 'rechts',
-    'ke': 'ek',
-    'ba': 'bu',
-    'na': 'an',
+
   }
 
   for mix in mixer.keys():
-    text = text.replace(mix, mixer[mix])
+    text = text.lower().replace(mix, mixer[mix])
 
   await ctx.send(text)
 
@@ -570,7 +554,6 @@ async def getpadlet(ctx, value, posts=10):
         content = post['items'][:3]
     else:
       content = '*[Empty]*'
-    print(title, content)
     embed.add_field(name=title, value=content, inline=False)
   await ctx.send(embed=embed)
 
@@ -732,8 +715,6 @@ async def minecraft(ctx, value):
     await ctx.send(embed=embed)
 
   else:
-    print(1)
-
     skin = mojang.MojangAPI.get_profile(uuid).skin_url
     skinrender = skingrabber.skingrabber()
     skinrendered = skinrender.get_skin_rendered(user=value)
@@ -748,16 +729,12 @@ async def minecraft(ctx, value):
 
     player = hypixel.Player(value)
 
-    print(2)
-
     hypixel_stats = f'''
     **__Hypixel__**
       **Rank:** {player.getRank()['rank']}
       **Level:** {player.getLevel()}
       **Karma:** {player.JSON['karma']}
     '''
-
-    print(3)
 
     embed = discord.Embed(
       title=value,
@@ -925,6 +902,8 @@ async def sendembed(ctx, *args):
 async def animegif(ctx, topic=''):
   anime = anime_images_api.Anime_Images()
   try:
+    if not topic in ['hug', 'wink', 'pat', 'cuddle']:
+      raise Exception
     sfw = anime.get_sfw(topic)
     await ctx.send(sfw)
   except:
@@ -1117,8 +1096,6 @@ async def templimit(ctx, limit=None):
 
 @client.command(name='playsong', aliases=['play', 'psong', 'song', 'music', 'playmusic' 'ps', 'p'], help='Search and play song on YouTube.', usage='<search>')
 async def playsong(ctx, *args):
-  print('Start')
-
   if not args:
     await  ctx.send(':x: **ERROR** No argument for the search term given.')
     return    
@@ -1127,8 +1104,6 @@ async def playsong(ctx, *args):
   except Exception as e:
     await  ctx.send(f':x: **ERROR** Sorry, I couldn\'t find videos on YouTube with that search term. Error:\n`{e}`')
     return
-
-  print('Before video check')
 
   url = result['link']
 
@@ -1158,7 +1133,6 @@ async def playsong(ctx, *args):
   if video_id in easteregg_videos:
     description = 'No, not again.'
 
-  print('Before embed')
 
   embed = discord.Embed(title=title, Color=discord.Color(0x20b1d5), url=url, description=description)
   embed.add_field(name='__Channel__', value=channel, inline=True)
@@ -1265,6 +1239,8 @@ async def volume(ctx, number=None):
     title='Voice volume',
     color=discord.Color(0x0094FF),
     description=f'**Current volume:** {number}')
+  
+  await ctx.send(embed=embed)
 
 @client.command(name='stopsong', aliases=['stop', 'skip'], help='Stops a song without leaving.')
 async def stopsong(ctx):
@@ -1347,14 +1323,30 @@ async def chatbot(ctx, *args):
 @client.command(name='clear', aliases=['cls'], help='Clears the last x messages from a channel.', usage='<amount>')
 @commands.has_permissions(manage_messages=True)
 async def clear(ctx, amount: int):
-  try:
-    await ctx.channel.purge(limit=amount)
-    await ctx.send(f':white_check_mark: I deleted **{amount}** messages.', delete_after=5)
-  except:
-    await ctx.send(f':x: Oops, seems I don\'t have the permission to do that! Sorry.')
+  if (amount < 1) or (amount > 100):
+    embed=discord.Embed(
+      title='Clear',
+      color=discord.Color(0x0094FF),
+      description=f'Please specify a valid number between 1-100.')
+    
+    await ctx.send(embed=embed)
+    return
+
+  await ctx.channel.purge(limit=amount)
+
+  embed=discord.Embed(
+    title='Cleared!',
+    color=discord.Color(0x0094FF),
+    description=f':white_check_mark: I deleted **{amount}** messages.')
+
+  embed.set_footer(text='This message should delete itself after 5 seconds.')
+  await ctx.send(embed=embed)
+
+  await ctx.send(embed, delete_after=5)
   
 
 @client.command(name='anonymbox', aliases=['ab'], help='Information about the AnonymBox-System')
+@commands.has_permissions(manage_channels=True)
 async def anonymbox(ctx, action=None):
   if action == 'setup':
     channel = ctx.channel
@@ -1367,14 +1359,21 @@ async def anonymbox(ctx, action=None):
 Oops! I don\'t have the permission to edit the channel\'s description.\nYou can copy & paste this text then:
       ***{text}***''')
   else:
-    await ctx.send(f'''
-    **AnonymBox**
-AnonymBox means that users can DM
+    embed = discord.Embed(
+      title=f'AnonymBox Explained',
+      color=0x0094FF,
+      description='''AnonymBox means that users can DM
 me and an anonymous message will be
 posted in an specific AnonomBox-channel.
+Warning! Do this only if you trust your
+community, because they could send harmful
+content or spam without punishment! To remove
+the AnonymBox system, clear the channel's
+description.
 
-To set up such one, do **`.ab setup`**.
-    ''')
+To start setting up AnonymBox, do **`.ab setup`**.''',
+      )
+    await ctx.send(embed=embed)
 
 @client.event
 async def on_message(message):
@@ -1406,7 +1405,14 @@ async def on_message(message):
         channel = client.get_channel(int(channel_id))
         for name in anonymbox_names:
           if name in channel.topic:
-            await channel.send(text)
+                    embed = discord.Embed(
+          title=f'AnonymBox Message',
+          color=0x00EB00,
+          description=text,
+          timestamp=datetime.datetime.now()
+          )
+        embed.set_footer(text=f'Sent anonymously via the NV AnonymBox system', icon_url='https://cdn.pixabay.com/photo/2016/10/18/18/19/question-mark-1750942_960_720.png')
+        await channel.send(embed=embed)
         return
       elif message.content.startswith('.support '):
           text = ' '.join(message.content.split()[1:])

@@ -35,5 +35,4 @@ You would really support me if you took just 20 seconds to upvote & rate my bot 
 
 
 ## ❗ Credit (code by others & thank you)
-- Thanks to "martinblech" for **`XMLtoDict`**: https://github.com/martinblech/xmltodict.
 - Thanks to "Max Codez" on YouTube for a great tutorial on a leveling system! https://youtu.be/qaJ58rrv_PM
