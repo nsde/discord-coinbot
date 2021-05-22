@@ -262,6 +262,17 @@ async def on_command_error(ctx, error):
   if testing_mode or error_msg == 'Unknown error.':
     raise error
 
+@client.event
+async def on_voice_state_update(member, before, after):
+  if after.channel:
+    for role in member.guild.roles:
+      if 'nv-invoice' in role.name:
+        await member.add_roles(role)
+  else:
+    for role in member.guild.roles:
+      if 'nv-invoice' in role.name:
+        await member.remove_roles(role)
+
 @client.command(name='stats', help='Get statistics about this bot.')
 async def stats(ctx):
   embed = discord.Embed(
