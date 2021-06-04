@@ -177,6 +177,14 @@ async def on_reaction_add(reaction, user):
       votes_for_delete = 5
     
     if reaction.count >= votes_for_delete:
+      embed = discord.Embed(
+        title='Cleared!',
+        color=COLOR,
+        description=f':exclamation: Deleted a message by {reaction.message.author.mention} because their message got **{reaction.count}** delete-votes.')
+
+      embed.set_footer(text='This message should delete itself after 5 seconds.')
+
+      await reaction.message.channel.send(embed=embed, delete_after=5)
       await reaction.message.delete()
 
 # @client.event
@@ -1333,15 +1341,13 @@ async def clear(ctx, amount: int):
 
   await ctx.channel.purge(limit=amount)
 
-  embed=discord.Embed(
+  embed = discord.Embed(
     title='Cleared!',
-    color=discord.Color(0x0094FF),
+    color=COLOR,
     description=f':white_check_mark: I deleted **{amount}** messages.')
 
   embed.set_footer(text='This message should delete itself after 5 seconds.')
-  await ctx.send(embed=embed)
-
-  await ctx.send(embed, delete_after=5)
+  await ctx.send(embed=embed, delete_after=5)
   
 @client.command(name='anonymbox', aliases=['ab'], help='Information about the AnonymBox-System')
 @commands.has_permissions(manage_channels=True)
