@@ -93,11 +93,14 @@ import youtubesearchpython as ysp #pip install youtube-search-python | for YouTu
 from discord.ext import commands #pip install discord.py | For an advanced version of the "normal" discord libary
 from PIL import Image, ImageFilter #pip install pillow | for image modification | sorry for importing in this that way, but see https://stackoverflow.com/questions/11911480/python-pil-has-no-attribute-image
 
+print(datetime.datetime.now().strftime('%b %d %H:%M:%S %p %Z') + colorama.Fore.GREEN + 'Done importing.')
+
 '''Constants'''
 VERSION = '0.0.1'
 CWD = os.getcwd().replace('\\', '/')
 if CWD.split('/')[-1] == 'src':
   CWD = '/'.join(CWD.split('/')[:-1])
+COLOR = discord.Color(0x0094FF) # color used in command embeds
 
 chatbot_history = ['']
 bot_started_at = datetime.datetime.now()
@@ -142,7 +145,7 @@ def get_db():
     return pymongo.MongoClient(os.getenv('db'))
   except:
     print(f'''{colorama.Fore.RED}
-  Oops! There was an problem loading the MondoDB database.
+  Oops! There was a problem loading the MondoDB database.
   Please set up a database and a cluster at 'mongodb.com', create a user, remember its password,
   connect with the application 'Python' -> '3.6 or higher', replace the <password> in the string
   with the user you just set up and copy the final string. Sorry - It's quite difficult to set up,
@@ -167,11 +170,18 @@ async def on_disconnect():
 
 @client.event
 async def on_reaction_add(reaction, user):
-  pass
+  if str(reaction.emoji) == '🗑️' and 'nv-msgdelvote' in reaction.message.channel.topic:
+    try:
+      votes_for_delete = int(reaction.message.channel.topic.split('nv-msgdelvote(')[1].split(')')[0])
+    except:
+      votes_for_delete = 5
+    
+    if reaction.count >= votes_for_delete:
+      await reaction.message.delete()
 
-@client.event
-async def on_reaction_remove(reaction, user):
-  pass
+# @client.event
+# async def on_reaction_remove(reaction, user):
+#   pass
 
 @client.event
 async def on_member_join(member):
@@ -219,24 +229,24 @@ async def on_private_channel_create(channel):
 
 @client.event
 async def on_command_error(ctx, error):
-  error_msg = 'Programming bug/problem.'
+  error_msg = 'Sorry, this may be a programming bug/problem.'
 
   if isinstance(error, commands.CommandNotFound):
-    error_msg = 'This command does not exist. Use **`.info`** for information.'
+    error_msg = 'Sorry, this command does not exist. Use **`.info`** for information.'
   if isinstance(error, commands.MissingRequiredArgument):
-    error_msg = 'Please follow the argument syntax.\nYou can use `.help <command>` for information.'
+    error_msg = 'Sorry, please follow the argument syntax.\nYou can use `.help <command>` for information.'
   if isinstance(error, commands.TooManyArguments):
-    error_msg = 'You passed too many arguments. You can use `.help` for information'
+    error_msg = 'Sorry, you passed too many arguments. You can use `.help` for information'
   if isinstance(error, commands.Cooldown):
-    error_msg = 'Please wait. You are on a cooldown.'
+    error_msg = 'Sorry, please wait. You are on a cooldown.'
   if isinstance(error, commands.MessageNotFound):
-    error_msg = 'I couldn\'t find this message.'
+    error_msg = 'Sorry, I couldn\'t find this message.'
   if isinstance(error, commands.ChannelNotFound):
-    error_msg = 'I couldn\'t find this channel.'
+    error_msg = 'Sorry, I couldn\'t find this channel.'
   if isinstance(error, commands.UserInputError):
-    error_msg = 'Please check the arguments you gave using `.help <command>`.'
+    error_msg = 'Sorry, please check the arguments you gave using `.help <command>`.'
   if isinstance(error, commands.ChannelNotFound):
-    error_msg = 'I couldn\'t find this channel.'
+    error_msg = 'Sorry, I couldn\'t find this channel.'
   if isinstance(error, commands.NoPrivateMessage):
     error_msg = 'Sorry, I can\'t send you private messages.\nLooks like you have disabled them.'
   if isinstance(error, commands.MissingPermissions):
@@ -244,11 +254,11 @@ async def on_command_error(ctx, error):
   if isinstance(error, commands.BotMissingPermissions):
     error_msg = 'Sorry, I don\'t have permissions to do this.'
   if isinstance(error, commands.ExtensionError):
-    error_msg = 'I apologize, but I couldn\'t load the needed extension.'
+    error_msg = 'Sorry, I couldn\'t load the needed extension.'
   if isinstance(error, commands.CheckFailure):
     error_msg = 'Sorry, you don\'t have the permissions for this.'
   if isinstance(error, commands.BadArgument):
-     error_msg = 'You gave an invalid agument. Please check if it\'s correct.'
+     error_msg = 'Sorry, you gave an invalid agument. Please check if it\'s correct.'
 
   error_msg += '\n```py\n' + str(error) + '\n```'
 
@@ -339,7 +349,6 @@ async def info(ctx):
     **Account:** {client.user}
     **ID:** {client.user.id}
     **Created:** {client.user.created_at.strftime('%A, %B %d, %Y %H:%M:%S %p %Z')}
-    **Joined:** {client.user.joined_at.strftime('%A, %B %d, %Y %H:%M:%S %p %Z')}
   ''', timestamp=time)
   embed.set_thumbnail(url=client.user.avatar_url)
   embed.set_footer(text=f'Ping: {str(round(client.latency * 1000, 2))}ms ~ Last update: ')
@@ -349,14 +358,19 @@ async def info(ctx):
     return
   await ctx.send(embed=embed)
 
-@client.command(name='dm', aliases=['directmessage'], help='Sends you a DM.')
-async def dm(ctx):
-  embed = discord.Embed(title='DM incoming!', color=discord.Color(0x0094FF), description='I will try to DM you.')
+@client.command(name='commandinfo', aliases=['command', 'commands'], help='Just a placeholder command.')
+async def commandinfo(ctx):
+  embed = discord.Embed(title='Information', color=COLOR, description='This commmand currently is not being used. Please use `.info` for general information or `.help` for a list of commands :)')
   await ctx.send(embed=embed)
-  embed = discord.Embed(title='Hey it\'s me!', color=discord.Color(0x0094FF), description='Hello!')
+
+@client.command(name='dm', aliases=['directmessage'], help='Tries to send you a DM, used to test the DM system.')
+async def dm(ctx):
+  embed = discord.Embed(title='DM incoming!', color=COLOR, description='I will try to DM you.\n If it doesn\'t work, try the following:\n**Rightclick this server symbol in the left server bar > Privacy settings > Allow direct messages from server members > ON**')
+  await ctx.send(embed=embed)
+  embed = discord.Embed(title='Good news', color=COLOR, description='Hey, you wanted to DM me! It worked :)')
   await ctx.author.send(embed=embed)
 
-@client.command(name='user', aliases=['member', 'userinfo', 'memberinfo'], help='Get information about an user.', usage='<user>')
+@client.command(name='user', aliases=['member', 'userinfo', 'memberinfo'], help='Get information about an member the current server.', usage='<name>')
 async def user(ctx, *args):
   args = list(args)
   if isinstance(args, list):
@@ -371,7 +385,7 @@ async def user(ctx, *args):
         break
    
   if isinstance(member, str):
-    await ctx.send(':x: Member not (at leat in this guild) found.')
+    await ctx.send(embed=discord.Embed(title='User not found', description=':x: Member could not be found in this server.', color=COLOR))
     return
 
   custom_status = '*[Not set]*'
@@ -423,7 +437,7 @@ async def user(ctx, *args):
   embed.set_thumbnail(url=member.avatar_url)
   await ctx.send(embed=embed)
 
-@client.command(name='calc', aliases=['calculate', 'eval'], help='Get all emojis this bot can access.')
+@client.command(name='calc', aliases=['calculate', 'calculator', 'eval', 'evaluate'], help='A simple calculator tool.')
 async def calc(ctx, *args):
   expression = ' '.join(args).replace('^', '**').replace('pi', str(round(math.pi, 5)))
   try:
@@ -439,30 +453,6 @@ async def calc(ctx, *args):
     description=f'''```\n{result}```'''
     )
   await ctx.send(embed=embed)
-
-@client.command(name='baerbock', help='Mixes the letters of a text. Works best in German.')
-async def baerbock(ctx, *text):
-  text = ' '.join(text)
-
-  mixer = {
-    'low': 'high',
-    'left': 'right',
-    'right': 'left',
-    'high': 'low',
-    'up': 'down',
-    'ver': 'um',
-    'nach': 'vor',
-    'zu': 'un',
-    'runter': 'hoch',
-    'links': 'rechts',
-
-  }
-
-  for mix in mixer.keys():
-    text = text.lower().replace(mix, mixer[mix])
-
-  await ctx.send(text)
-
 
 @client.command(name='timer', help='Create a timer.', usage='<time> [s|m|h] (<message>)')
 async def timer(ctx, time, unit, *message):
@@ -489,7 +479,7 @@ async def timer(ctx, time, unit, *message):
   await asyncio.sleep(time)
   await ctx.send(f'{ctx.author.mention} **{message}** (**{oldtime}{unit}** passed.)')
 
-@client.command(name='translate', aliases=['tl', 'translator'], help='Translate a text!', usage='<to_lang> <text>')
+@client.command(name='translate', aliases=['trans', 'translator'], help='Translate a text!', usage='<to_lang> <text>')
 async def translate(ctx, *args):
   to_lang = args[0].lower()
   text = ' '.join(args[1:])
@@ -568,30 +558,30 @@ async def getpadlet(ctx, value, posts=10):
     embed.add_field(name=title, value=content, inline=False)
   await ctx.send(embed=embed)
 
-@client.command(name='bigbluebutton', aliases=['bbb'], help='Display information about a video conference.', usage='<url>')
-async def bigbluebutton(ctx, url):
-  if 'presentation' in url:
-    slides = '\n'.join(bbb.getslides(url))
-    embed = discord.Embed(title='Presentation slides', Color=discord.Color(0x009fff), url=url, description=f'{slides}')
-    await ctx.send(embed=embed)
-  else:
-    conf = bbb.getconference(url)
-    owner = conf['owner']
-    confid = conf['id']
-    room = conf['room']
-    hostid = conf['host_id']
+# @client.command(name='bbb', aliases=['bigbluebutton', 'vk', 'videoconference'], help='Display information about a BigBlueButton video conference.', usage='<url>')
+# async def bbb(ctx, url):
+#   if 'presentation' in url:
+#     slides = '\n'.join(bbb.getslides(url))
+#     embed = discord.Embed(title='Presentation slides', Color=discord.Color(0x009fff), url=url, description=f'{slides}')
+#     await ctx.send(embed=embed)
+#   else:
+#     conf = bbb.getconference(url)
+#     owner = conf['owner']
+#     confid = conf['id']
+#     room = conf['room']
+#     hostid = conf['host_id']
 
-    embed = discord.Embed(title=f'{owner}', Color=discord.Color(0x009fff), url=url, description=f'Room {room}\nHost {hostid}')
-    embed.set_thumbnail(url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.socallinuxexpo.org%2Fscale9x%2Fsites%2Fsocallinuxexpo.org.scale9x%2Ffiles%2Fimagecache%2Fsmall_plus%2Flogos%2Fbigbluebutton.png&f=1&nofb=1')
-    embed.set_footer(text=f'{confid}')
-    await ctx.send(embed=embed)
+#     embed = discord.Embed(title=f'{owner}', Color=discord.Color(0x009fff), url=url, description=f'Room {room}\nHost {hostid}')
+#     embed.set_thumbnail(url='https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.socallinuxexpo.org%2Fscale9x%2Fsites%2Fsocallinuxexpo.org.scale9x%2Ffiles%2Fimagecache%2Fsmall_plus%2Flogos%2Fbigbluebutton.png&f=1&nofb=1')
+#     embed.set_footer(text=f'{confid}')
+#     await ctx.send(embed=embed)
 
-@client.command(name='freemoney', aliases=['givememoney'], help='JUST A JOKE!')
-async def freemoney(ctx):
-  last = await ctx.send('Generating free :dollar:...')
-  await asyncio.sleep(3)
-  people = ['Marilyn Monroe', 'Abraham Lincoln', 'Nelson Mandela', 'John F. Kennedy', 'Martin Luther King', 'Queen Elizabeth II', 'Winston Churchill', 'Donald Trump', 'Bill Gates', 'Muhammad Ali', 'Mahatma Gandhi', 'Mother Teresa', 'Christopher Columbus', 'Charles Darwin', 'Elvis Presley', 'Albert Einstein', 'Paul McCartney', 'Queen Victoria', 'Pope Francis', 'Jawaharlal Nehru', 'Leonardo da Vinci', 'VincentVan Gogh', 'Franklin D. Roosevelt', 'Pope John Paul II', 'Thomas Edison', 'RosaParks', 'Lyndon Johnson', 'Ludwig Beethoven', 'Oprah Winfrey', 'Indira Gandhi','Eva Peron', 'Benazir Bhutto', 'George Orwell', 'Desmond Tutu', 'Dalai Lama', 'Walt Disney', 'Neil Armstrong', 'Peter Sellers', 'Barack Obama', 'Malcolm X', 'J.K.Rowling', 'Richard Branson', 'Pele', 'Angelina Jolie', 'Jesse Owens', 'John Lennon', 'Henry Ford', 'Haile Selassie', 'Joseph Stalin', 'Lord Baden Powell', 'Michael Jordon', 'George Bush Jnr', 'Vladimir Lenin', 'Ingrid Bergman', 'Fidel Castro', 'Leo Tolstoy', 'Greta Thunberg', 'Pablo Picasso', 'Oscar Wilde', 'Coco Chanel', 'Charles de Gaulle', 'Amelia Earhart', 'John M Keynes', 'Louis Pasteur', 'Mikhail Gorbachev', 'Plato', 'Adolf Hitler', 'Sting', 'Mary Magdalene', 'AlfredHitchcock', 'Michael Jackson', 'Madonna', 'Mata Hari', 'Cleopatra', 'Grace Kelly', 'Steve Jobs', 'Ronald Reagan', 'Lionel Messi', 'Babe Ruth', 'Bob Geldof', 'Eva Peron', 'Benazir Bhutto', 'George Orwell', 'Desmond Tutu', 'Dalai Lama', 'Walt Disney', 'Neil Armstrong', 'Peter Sellers', 'Barack Obama', 'Malcolm X', 'J.K.Rowling', 'Richard Branson', 'Pele', 'Angelina Jolie', 'Jesse Owens', 'John Lennon', 'Henry Ford', 'Haile Selassie', 'Joseph Stalin', 'Lord Baden Powell', 'Michael Jordon', 'George Bush Jnr', 'Vladimir Lenin', 'Ingrid Bergman', 'Fidel Castro', 'Leo Tolstoy', 'Greta Thunberg', 'Pablo Picasso', 'Oscar Wilde', 'Coco Chanel', 'Charles de Gaulle', 'Amelia Earhart', 'John M Keynes', 'Louis Pasteur', 'Mikhail Gorbachev', 'Plato', 'Adolf Hitler', 'Sting', 'Mary Magdalene', 'Alfred Hitchcock', 'Michael Jackson', 'Madonna', 'Mata Hari', 'Cleopatra', 'Grace Kelly', 'Steve Jobs', 'Ronald Reagan', 'Lionel Messi', 'Babe Ruth', 'Bob Geldof', 'Roger Federer', 'Sigmund Freud', 'Woodrow Wilson', 'Mao Zedong', 'Katherine Hepburn', 'Audrey Hepburn', 'David Beckham', 'Tiger Woods', 'Usain Bolt', 'Carl Lewis', 'Prince Charles', 'Jacqueline Kennedy Onassis', 'C.S. Lewis', 'Billie Holiday', 'J.R.R. Tolkien', 'Billie Jean King', 'Margaret Thatcher', 'Anne Frank', 'More famous people', 'YOU', 'Simon Bolivar', 'Marie Antoinette', 'Cristiano Ronaldo', 'Emmeline Pankhurst ', 'Emile Zatopek', 'Lech Walesa', 'Julie Andrews', 'Florence Nightingale', 'Marie Curie', 'Stephen Hawking', 'Tim Berners Lee', 'Aung San Suu Kyi', 'Lance Armstrong', 'Shakira', 'Jon Stewart', 'Wright Brothers  Orville', 'Ernest Hemingway', 'Roman Abramovich', 'Tom Cruise', 'Rupert Murdoch', 'Al Gore', 'Sacha Baron Cohen', 'George Clooney', 'Paul Krugman', 'Jimmy Wales', 'Brad Pitt', 'Kylie Minogue', 'Stephen King']
-  await last.edit(content=f':sunglasses: Stole **{random.randint(1, 100000)}** :dollar: from {random.choice(people)}')
+# @client.command(name='freemoney', aliases=['givememoney'], help='r/wooosh')
+# async def freemoney(ctx):
+#   last = await ctx.send('Generating free :dollar:...')
+#   await asyncio.sleep(3)
+#   people = ['Marilyn Monroe', 'Abraham Lincoln', 'Nelson Mandela', 'John F. Kennedy', 'Martin Luther King', 'Queen Elizabeth II', 'Winston Churchill', 'Donald Trump', 'Bill Gates', 'Muhammad Ali', 'Mahatma Gandhi', 'Mother Teresa', 'Christopher Columbus', 'Charles Darwin', 'Elvis Presley', 'Albert Einstein', 'Paul McCartney', 'Queen Victoria', 'Pope Francis', 'Jawaharlal Nehru', 'Leonardo da Vinci', 'VincentVan Gogh', 'Franklin D. Roosevelt', 'Pope John Paul II', 'Thomas Edison', 'RosaParks', 'Lyndon Johnson', 'Ludwig Beethoven', 'Oprah Winfrey', 'Indira Gandhi','Eva Peron', 'Benazir Bhutto', 'George Orwell', 'Desmond Tutu', 'Dalai Lama', 'Walt Disney', 'Neil Armstrong', 'Peter Sellers', 'Barack Obama', 'Malcolm X', 'J.K.Rowling', 'Richard Branson', 'Pele', 'Angelina Jolie', 'Jesse Owens', 'John Lennon', 'Henry Ford', 'Haile Selassie', 'Joseph Stalin', 'Lord Baden Powell', 'Michael Jordon', 'George Bush Jnr', 'Vladimir Lenin', 'Ingrid Bergman', 'Fidel Castro', 'Leo Tolstoy', 'Greta Thunberg', 'Pablo Picasso', 'Oscar Wilde', 'Coco Chanel', 'Charles de Gaulle', 'Amelia Earhart', 'John M Keynes', 'Louis Pasteur', 'Mikhail Gorbachev', 'Plato', 'Adolf Hitler', 'Sting', 'Mary Magdalene', 'AlfredHitchcock', 'Michael Jackson', 'Madonna', 'Mata Hari', 'Cleopatra', 'Grace Kelly', 'Steve Jobs', 'Ronald Reagan', 'Lionel Messi', 'Babe Ruth', 'Bob Geldof', 'Eva Peron', 'Benazir Bhutto', 'George Orwell', 'Desmond Tutu', 'Dalai Lama', 'Walt Disney', 'Neil Armstrong', 'Peter Sellers', 'Barack Obama', 'Malcolm X', 'J.K.Rowling', 'Richard Branson', 'Pele', 'Angelina Jolie', 'Jesse Owens', 'John Lennon', 'Henry Ford', 'Haile Selassie', 'Joseph Stalin', 'Lord Baden Powell', 'Michael Jordon', 'George Bush Jnr', 'Vladimir Lenin', 'Ingrid Bergman', 'Fidel Castro', 'Leo Tolstoy', 'Greta Thunberg', 'Pablo Picasso', 'Oscar Wilde', 'Coco Chanel', 'Charles de Gaulle', 'Amelia Earhart', 'John M Keynes', 'Louis Pasteur', 'Mikhail Gorbachev', 'Plato', 'Adolf Hitler', 'Sting', 'Mary Magdalene', 'Alfred Hitchcock', 'Michael Jackson', 'Madonna', 'Mata Hari', 'Cleopatra', 'Grace Kelly', 'Steve Jobs', 'Ronald Reagan', 'Lionel Messi', 'Babe Ruth', 'Bob Geldof', 'Roger Federer', 'Sigmund Freud', 'Woodrow Wilson', 'Mao Zedong', 'Katherine Hepburn', 'Audrey Hepburn', 'David Beckham', 'Tiger Woods', 'Usain Bolt', 'Carl Lewis', 'Prince Charles', 'Jacqueline Kennedy Onassis', 'C.S. Lewis', 'Billie Holiday', 'J.R.R. Tolkien', 'Billie Jean King', 'Margaret Thatcher', 'Anne Frank', 'More famous people', 'YOU', 'Simon Bolivar', 'Marie Antoinette', 'Cristiano Ronaldo', 'Emmeline Pankhurst ', 'Emile Zatopek', 'Lech Walesa', 'Julie Andrews', 'Florence Nightingale', 'Marie Curie', 'Stephen Hawking', 'Tim Berners Lee', 'Aung San Suu Kyi', 'Lance Armstrong', 'Shakira', 'Jon Stewart', 'Wright Brothers  Orville', 'Ernest Hemingway', 'Roman Abramovich', 'Tom Cruise', 'Rupert Murdoch', 'Al Gore', 'Sacha Baron Cohen', 'George Clooney', 'Paul Krugman', 'Jimmy Wales', 'Brad Pitt', 'Kylie Minogue', 'Stephen King']
+#   await last.edit(content=f':sunglasses: Stole **{random.randint(1, 100000)}** :dollar: from {random.choice(people)}')
 
 @client.command(name='randomizer', aliases=['random', 'rd'], help='Random things!', usage='[thing|wiki|item]')
 async def randomizer(ctx, *args):
@@ -681,12 +671,12 @@ async def randomizer(ctx, *args):
 #   embed.set_footer(text=footer)
 #   await ctx.send(embed=embed)
 
-@client.command(name='counting', aliases=['ct'], help='Get information about the counting system.')
-async def counting(ctx):
-  await ctx.send(
-    f'''**__Counting Information__**
-    *For help on how to setup a counting channel, see the wiki on the GitHub page.*
-    ''')
+# @client.command(name='counting', aliases=['ct'], help='Get information about the counting system.')
+# async def counting(ctx):
+#   await ctx.send(
+#     f'''**__Counting Information__**
+#     *For help on how to setup a counting channel, see the wiki on the GitHub page.*
+#     ''')
 
 @client.command(name='w2g', aliases=['watchtogether', 'watch2gether'], help='Create a WatchToGether room to watch a online video together with friends.', usage='(<video_to_play_after_room_create_url>)')
 async def w2g(ctx, autoplay_url='https://youtu.be/Lrj2Hq7xqQ8'):
@@ -843,7 +833,7 @@ async def image(ctx, style, user:discord.Member=None):
   # Syntax: {'style_name': [resize_size, top_left_x, top_left_y]}. All 3 values represent the location of the profile-picture-square
 
   try:
-    template = Image.open(f'{CWD}/data/images/{style}.png')
+    template = Image.open(f'{CWD}/config/images/{style}.png')
   except:
     style_list = ', '.join(styles.keys())
     await ctx.send(f':x: There is no such image template. Avaiable style templates: {style_list}.')
@@ -864,7 +854,7 @@ async def image(ctx, style, user:discord.Member=None):
 @commands.has_permissions(embed_links=True)
 async def sendembed(ctx, *args):
   args = ' '.join(args)
-  if not args.replace(' ', ''):
+  if not args.strip():
     await ctx.send('**Example embed:**\nhttps://i.ibb.co/JRp48Z8/image.png')
     return
 
@@ -909,7 +899,7 @@ async def sendembed(ctx, *args):
   
   await ctx.send(content=content, embed=embed)
 
-@client.command(name='animegif', aliases=['anime'], help='Get SFW anime GIFs. For the weebs.', usage='<[hug|wink|pat|cuddle]>')
+@client.command(name='animegif', aliases=['anime', 'animepics'], help='Get SFW anime GIFs. For the weebs.', usage='<[hug|wink|pat|cuddle]>')
 async def animegif(ctx, topic=''):
   anime = anime_images_api.Anime_Images()
   try:
@@ -918,7 +908,8 @@ async def animegif(ctx, topic=''):
     sfw = anime.get_sfw(topic)
     await ctx.send(sfw)
   except:
-    await ctx.send('Please choose a topic (hug or wink or pat or cuddle) and run the command again, eg. \'.anime hug\'')
+    embed = discord.Embed(title='Anime Argument Error', description='Please choose a topic (hug or wink or pat or cuddle) and run the command again.\nExample: **`.anime hug`**', color=COLOR)
+    await ctx.send(embed=embed)
     return
 
 @client.command(name='texttospeech', aliases=['tts', 'text2speech', 't2s'], help='Reads text in a voice channel.', usage='([en|de|fr]:) <text>')
@@ -1086,7 +1077,8 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
     await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
     return
 
-@client.command(name='templimit', aliases=['tul', 'tempul', 'tcul'], help='Edits a voice channel\'s user limit.', usage='<limit>')
+@commands.has_permissions(manage_channels=True)
+@client.command(name='templimit', aliases=['tl', 'ul', 'userlimit'], help='Edits a voice channel\'s user limit. Requires manage channels permission.', usage='<limit>')
 async def templimit(ctx, limit=None):
   if not limit:
     limit = 0
@@ -1101,10 +1093,11 @@ async def templimit(ctx, limit=None):
         :white_check_mark: New user limit for ***{channel.name}*** is **{limit}**.
         Keep in mind that users with certain permissions can bypass this restriction.''')
     else:
-      await ctx.send('Lol, You little hacker, not this time!')
+      await ctx.send(discord.Embed(title='Error', color=COLOR, description=':x: You can only edit your own temporary channel.'))
   else:
     await ctx.send(':x: **ERROR:** Please join a voice channel to change its userlimit and try again.')
 
+@commands.has_permissions(connect=True)
 @client.command(name='playsong', aliases=['play', 'psong', 'song', 'music', 'playmusic' 'ps', 'p'], help='Search and play song on YouTube.', usage='<search>')
 async def playsong(ctx, *args):
   if not args:
@@ -1143,7 +1136,6 @@ async def playsong(ctx, *args):
 
   if video_id in easteregg_videos:
     description = 'No, not again.'
-
 
   embed = discord.Embed(title=title, Color=discord.Color(0x20b1d5), url=url, description=description)
   embed.add_field(name='__Channel__', value=channel, inline=True)
@@ -1265,16 +1257,12 @@ async def songname(ctx):
     await ctx.send(f'Currently playing:', embed=embed)
   except:
     await ctx.send('No song is currently playing.')
-
-@client.command(name='blockabl', help='Get information about blockabl.')
-async def blockabl():
-  pass
  
 chatbot_phrases = {
   'hi': 'Hello! :wink:',
   'hey': 'Hey! What\'s up? :wave:',
   'hello': 'Hi :wave:',
-  'how are you': 'I\'m good, what about you? :+1:',
+  'how are you': 'I\'m good, what about you? :thumbsup:',
   'what are you doing': 'I\'m chatting with you! :joy:',
   'thank': 'You\'re welcome. :blush:',
   'lmao': ':sweat_smile:',
@@ -1283,53 +1271,53 @@ chatbot_phrases = {
 }
 
 context_phrases = [
-  ['I\'m good, what about you? :+1:', 'good', 'I\'m glad to hear that!'],
-  ['I\'m good, what about you? :+1:', 'fine', 'I\'m glad to hear that!'],
-  ['I\'m good, what about you? :+1:', 'nice', 'I\'m glad to hear that!'],
-  ['I\'m good, what about you? :+1:', 'great', 'I\'m glad to hear that!'],
+  ['I\'m good, what about you? :thumbsup:', 'good', 'I\'m glad to hear that!'],
+  ['I\'m good, what about you? :thumbsup:', 'fine', 'Thanks!'],
+  ['I\'m good, what about you? :thumbsup:', 'nice', 'Thank you!'],
+  ['I\'m good, what about you? :thumbsup:', 'great', 'Thank\'s, that\'s nice of you!'],
 
 ]
 
-intelligent_phrases = {
-  'wiki': 'Wikipedia Search'
-}
+# intelligent_phrases = {
+#   'wiki': 'Wikipedia Search'
+# }
 
 @client.command(name='chatbot', aliases=['cb'], help='Get information about the chatbot.', usage='[info|phrases]')
 async def chatbot(ctx, *args):
-  if len(args) == 0:
-    await ctx.send(':x: Please give `info` or `phrases` as an argument.')
+  if not args:
+    await ctx.send(discord.Embed(title='Argument error', color=COLOR, description=':x: Type either `.cb info`, `.cb setup` or `.cb phrases`.'))
     return
 
   if args[0] == 'info':
-    await ctx.send('''
-    *Do **`.chatbot phrases`** to see all different input-possibilities.*
+    await ctx.send(discord.Embed(color=COLOR, title='ChatBot Phrases', description=f'''
+*Do **`.chatbot phrases`** to see all different input-possibilities.*
 
-    **Normal Phrases (NP)**\n> NPs react every single time with pretty much the same thing, no matter the situation and context.
+**Normal Phrases (NP)**\n> NPs react every single time with pretty much the same thing, no matter the situation and context.
 
-    **Context-Dependent Phrases (CDP)**\n> CDPs can react different at each situation. They can check the last messages and think of what to say now.
+**Context-Dependent Phrases (CDP)**\n> CDPs can react different at each situation. They can check the last messages and think of what to say now.
+    '''))
 
-    **Intelligent Phrases (IP)**\n> IPs can react with a scientific solution to a question. For example, they can calculate or search something on the internet.
-    ''')
+  elif args[0] == 'phrases':
+    cdp_list = []
+    for i in context_phrases:
+      cdp_list.append(i[0])
 
-  cdp_list = []
-  for i in context_phrases:
-    cdp_list.append(i[0])
+    await ctx.send(discord.Embed(color=COLOR, title='ChatBot Phrases', description=f'''
+__**ChatBot**__
+*Do **`.chatbot info`** to see what the difference between the phrases are.*
 
-  if args[0] == 'phrases':
-    await ctx.send(
-      f'''
-      __**ChatBot**__
-      *Do **`.chatbot info`** to see what the difference between the phrases are.*
+__Normal Phrases__
+`{'`, `'.join(chatbot_phrases.keys())}`
 
-      __Normal Phrases__
-      `{'`, `'.join(chatbot_phrases.keys())}`
+__Context-Dependent Phrases__
+`{'`, `'.join(cdp_list)}`'''))
 
-      __Context-Dependent Phrases__
-      `{'`, `'.join(cdp_list)}`
+  elif args[0] == 'setup':
+    await ctx.send(discord.Embed(color=COLOR, title='ChatBot Setup', description=':'))
 
-      __Intelligent Phrases__
-      `{'`, `'.join(intelligent_phrases.keys())}`
-      ''')
+  else:
+    await ctx.send(discord.Embed(title='Argument error', color=COLOR, description=':x: Type either `.cb info`, `.cb setup` or `.cb phrases`.'))
+
 
 @client.command(name='clear', aliases=['cls'], help='Clears the last x messages from a channel.', usage='<amount>')
 @commands.has_permissions(manage_messages=True)
@@ -1355,16 +1343,15 @@ async def clear(ctx, amount: int):
 
   await ctx.send(embed, delete_after=5)
   
-
 @client.command(name='anonymbox', aliases=['ab'], help='Information about the AnonymBox-System')
 @commands.has_permissions(manage_channels=True)
 async def anonymbox(ctx, action=None):
   if action == 'setup':
     channel = ctx.channel
-    text = f'Send anonym messages! Just DM the \'NeoVision\'-Bot with \'.anonymbox {channel.id} (message)\'. nv-anonymbox'
+    text = f'Send anonym messages! Just DM the \'NeoVision\'-Bot with \'**.anonymbox {channel.id} your message here\'. nv-ab'
     try:
       await channel.edit(topic=text)
-      await ctx.send(':white_check_mark: Changed the channel\'s description.')
+      await ctx.send(discord.Embed(title='AnonymBox setup', color=COLOR, description=':white_check_mark: Changed the channel\'s description.\nMake sure that the channel description contains \'nv-ab\' for the system to work.'))
     except:
       await ctx.send(f'''
 Oops! I don\'t have the permission to edit the channel\'s description.\nYou can copy & paste this text then:
@@ -1390,10 +1377,10 @@ To start setting up AnonymBox, do **`.ab setup`**.''',
 async def on_message(message):
   '''Used for e.g. counting system, chatbot system & bridge system'''
 
-  bridge_names = ['nv-bridge', '𝔫𝔳-𝔟𝔯𝔦𝔡𝔤𝔢', '𝖓𝖛-𝖇𝖗𝖎𝖉𝖌𝖊', '𝓷𝓿-𝓫𝓻𝓲𝓭𝓰𝓮', '𝓃𝓋-𝒷𝓇𝒾𝒹𝑔𝑒', '𝕟𝕧-𝕓𝕣𝕚𝕕𝕘𝕖', '𝘯𝘷-𝘣𝘳𝘪𝘥𝘨𝘦', '𝙣𝙫-𝙗𝙧𝙞𝙙𝙜𝙚', '𝚗𝚟-𝚋𝚛𝚒𝚍𝚐𝚎', '𝐧𝐯-𝐛𝐫𝐢𝐝𝐠𝐞', 'ᑎᐯ-ᗷᖇᎥᗪǤᗴ'] # channel names for bridges can be...
+  bridge_names = ['nv-bridge', '𝔫𝔳-𝔟𝔯𝔦𝔡𝔤𝔢', '𝖓𝖛-𝖇𝖗𝖎𝖉𝖌𝖊', '𝓷𝓿-𝓫𝓻𝓲𝓭𝓰𝓮', '𝓃𝓋-𝒷𝓇𝒾𝒹𝑔𝑒', '𝕟𝕧-𝕓𝕣𝕚𝕕𝕘𝕖', '𝘯𝘷-𝘣𝘳𝘪𝘥𝘨𝘦', '𝙣𝙫-𝙗𝙧𝙞𝙙𝙜𝙚', '𝚗𝚟-𝚋𝚛𝚒𝚍𝚐𝚎', '𝐧𝐯-𝐛𝐫𝐢𝐝𝐠𝐞', 'ᑎᐯ-ᗷᖇᎥᗪǤᗴ']
   chatbot_names = ['nv-chatbot', '𝔫𝔳-𝔠𝔥𝔞𝔱𝔟𝔬𝔱', '𝖓𝖛-𝖈𝖍𝖆𝖙𝖇𝖔𝖙', '𝓷𝓿-𝓬𝓱𝓪𝓽𝓫𝓸𝓽', '𝓃𝓋-𝒸𝒽𝒶𝓉𝒷𝑜𝓉', '𝕟𝕧-𝕔𝕙𝕒𝕥𝕓𝕠𝕥', '𝘯𝘷-𝘤𝘩𝘢𝘵𝘣𝘰𝘵', '𝙣𝙫-𝙘𝙝𝙖𝙩𝙗𝙤𝙩', '𝚗𝚟-𝚌𝚑𝚊𝚝𝚋𝚘𝚝', '𝐧𝐯-𝐜𝐡𝐚𝐭𝐛𝐨𝐭', 'ᑎᐯ-ᑕᕼᗩ丅ᗷᗝ丅']
   counting_names = ['nv-counting', 'nv-count']
-  anonymbox_names = ['nv-anonymbox']
+  anonymbox_names = ['nv-ab']
 
   if not message.author.bot:
     if not isinstance(message.channel, discord.DMChannel):
