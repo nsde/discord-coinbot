@@ -33,6 +33,7 @@ import yaml #pip install pyyaml | for config files
 import time
 import gtts #pip install gtts | for text to speech
 import math
+import json
 import covid #pip install covid | for coronavirus data
 import string
 import pytube #pip install pytube | for downloading YouTube videos and reading their data
@@ -41,7 +42,8 @@ import shutil
 import socket
 import mojang #pip install mojang | API for Minecraft
 #pip install PyNaCl | for voicechannel support
-import dotenv 
+import dotenv
+import pickle #pip install pickle | to save objects as a file
 import discord #pip install discord | for bot-system
 import asyncio
 import requests #pip install requests | for getting html of a website
@@ -100,7 +102,8 @@ VERSION = '0.0.1'
 CWD = os.getcwd().replace('\\', '/')
 if CWD.split('/')[-1] == 'src':
   CWD = '/'.join(CWD.split('/')[:-1])
-COLOR = discord.Color(0x0094FF) # color used in command embeds
+COLOR = discord.Color(0x0094FF) # color used in command embeds (light blue)
+RED = discord.Color(0xFF0000) # color used in error embeds (red, obviously)
 
 chatbot_history = ['']
 bot_started_at = datetime.datetime.now()
@@ -138,7 +141,7 @@ with open(CWD + '/config/config.yml') as f:
   intents = discord.Intents.default()
   intents.members = True
 
-  client = commands.Bot(command_prefix=commands.when_mentioned_or(config['main']['prefix']), intents=intents)
+  client = commands.Bot(command_prefix=commands.when_mentioned_or(config['main']['prefix']), intents=intents, help_command=None)
 
 def get_db():
   try:
@@ -180,7 +183,7 @@ async def on_reaction_add(reaction, user):
       embed = discord.Embed(
         title='Cleared!',
         color=COLOR,
-        description=f':exclamation: Deleted a message by {reaction.message.author.mention} because their message got **{reaction.count}** delete-votes.')
+        description=f':exclamation: Deleted a message by {reaction.message.author.mention} because their message got **{reaction.count}** delete-vote{"s" if reaction.count != 1 else ""}.')
 
       embed.set_footer(text='This message should delete itself after 5 seconds.')
 
@@ -197,7 +200,7 @@ async def on_member_join(member):
     if isinstance(channel, discord.TextChannel):
       if 'nv-join' in str(channel.topic):
         if 'nv-join(' in str(channel.topic):
-          text = str(channel.topic).split('nv-join(')[1].split(')')[0].replace('%M:%SENTION%', member.mention).replace('%NAME%', member.name).replace('%ID%', str(member.id))
+          text = str(channel.topic).split('nv-join(')[1].split(')')[0].replace('%MENTION%', member.mention).replace('%NAME%', member.name).replace('%ID%', str(member.id))
         else:
           text = f'Welcome to the server, {member.mention}!'
         embed = discord.Embed(
@@ -238,7 +241,8 @@ async def on_private_channel_create(channel):
 @client.event
 async def on_command_error(ctx, error):
   error_msg = 'Sorry, this may be a programming bug/problem.'
-
+  if 'Invalid Form Body' in str(error):
+    error_msg = 'Sorry, the message would have been too long.'
   if isinstance(error, commands.CommandNotFound):
     error_msg = 'Sorry, this command does not exist. Use **`.info`** for information.'
   if isinstance(error, commands.MissingRequiredArgument):
@@ -366,10 +370,68 @@ async def info(ctx):
     return
   await ctx.send(embed=embed)
 
-@client.command(name='commandinfo', aliases=['command', 'commands'], help='Just a placeholder command.')
-async def commandinfo(ctx):
-  embed = discord.Embed(title='Information', color=COLOR, description='This commmand currently is not being used. Please use `.info` for general information or `.help` for a list of commands :)')
-  await ctx.send(embed=embed)
+@client.command(name='sourcecode', aliases=['sc'], help='Shows the source code of a command', usage='<command-name>')
+async def sourcecode(ctx, name=None):
+  if name:
+    for c in client.commands:
+      if name.lower() == c.name or name.lower() in list(c.aliases):
+
+        l = 0
+        for line in open(__file__, encoding='utf-8').readlines():
+          if f'@client.command(name=\'{c.name}\'' in line:
+            code = line + '\n'.join(open(__file__, encoding='utf-8').read().split(line)[1:]).split('\n@client.command')[0]
+          l += 1
+
+        codeblock = '`'*3 # so the source code of this command itself can be ran without problems
+
+        code_edited = code.replace(codeblock, '\\' + codeblock)
+        # for l in code_edited.split('\n'):
+        #   code_edited += '\t' + l + '\n'
+
+        text = f'''{codeblock}py\n{code_edited}\n{codeblock}'''
+        embed = discord.Embed(title='Source code for command \'' + c.name + '\'', color=COLOR, description=text)
+        embed.set_footer(text='The full soure code can be found at github.com/nsde/neovision')
+        await ctx.send(embed=embed)
+
+        return
+
+    embed = discord.Embed(title='Command not found', color=COLOR, description='This command does not exist...')
+    await ctx.send(embed=embed)
+   
+@client.command(name='commandinfo', aliases=['command', 'commands', 'cmd', 'cmds', 'commandlist', 'help'], help='List all commands.')
+async def commandinfo(ctx, name=None):
+  if name:
+    for c in client.commands:
+      if name.lower() == c.name or name.lower() in list(c.aliases):
+        text = f'''
+        **Help:** {c.help if c.help else ' - '}
+        **Usage:** {c.usage if c.usage else ' - '}
+        **Aliases:** {', '.join(c.aliases) if c.aliases else ' - '}
+        **Cooldown:** {str(c.cooldown_after_parsing)}
+        '''
+        embed = discord.Embed(title='Command ' + c.name, color=COLOR, description=text)
+        await ctx.send(embed=embed)
+
+        return
+
+    embed = discord.Embed(title='Command not found', color=COLOR, description='This command does not exist...')
+    await ctx.send(embed=embed)
+   
+  else:
+    # because I had some f-string problems
+    space = ' '
+    empty = ''
+
+    text = ''
+
+    def sortkey(x):
+      return x.name
+    for c in sorted(client.commands, key=sortkey):
+      text += f'`{c.name}` {c.help[:50] if c.help else empty}{"..." if len(c.help) > 50 else empty}\n'
+      # text += f'**`{c.name}{space + c.usage if c.usage else empty}`** {c.help if c.help else empty}\n'
+
+    embed = discord.Embed(title='Commands', color=COLOR, description=text)
+    await ctx.send(embed=embed)
 
 @client.command(name='dm', aliases=['directmessage'], help='Tries to send you a DM, used to test the DM system.')
 async def dm(ctx):
@@ -494,12 +556,57 @@ async def translate(ctx, *args):
   translator = googletrans.Translator()
   try:
     translated = translator.translate(text, dest=to_lang).text
-    embed = discord.Embed(title='Google Translator', color=discord.Color(0x0094FF), description=translated)
+    embed = discord.Embed(title='Google Translator', color=COLOR, description=translated)
 
   except ValueError:
-    embed = discord.Embed(title='Google Translator', color=discord.Color(0xff0000), description='Please use a correct language shorcut, e.g. **de** or **en**.')
+    embed = discord.Embed(title='Google Translator', color=COLOR, description='Please use a correct language shorcut, e.g. **de** or **en**.')
     
   await ctx.send(embed=embed)
+
+@client.command(name='partygames', aliases=['game', 'games'], help='Start a social party game.', usage='(<name>)')
+async def partygames(ctx, name=None):
+  if name:
+    if ctx.author.voice:
+      # FOLLOWING CODE MOSTLY BY https://github.com/AnushK-Fro/Discord-Voice-Chat-Game-Activities/blob/main/main.py
+      # and a little by https://github.com/Wolfhound905/the-vents-bot/blob/547716086b72ca62ce1d93efd89101c63dcf2ae0/behaviors/voiceActivities.py
+      # THANKS <3
+
+      def activities(activity): # Get Activity ID
+          switch = {
+              'yt': '755600276941176913',
+              'poker': '755827207812677713',
+              'bio': '773336526917861400',
+              'fio': '814288819477020702'
+          }
+          return switch.get(activity, '755600276941176913')
+
+      data = json.dumps({ # Data to Send
+          'max_age': 86400,
+          'max_uses': 0,
+          'target_application_id': activities(name),
+          'target_type': 2,
+          'temporary': False,
+          'validate': None
+      })
+
+      headers = { # Headers
+          'Authorization': 'Bot ' + os.getenv('DC'),
+          'Content-Type': 'application/json'
+      } 
+
+      response = requests.post('https://discord.com/api/v8/channels/' + str(ctx.author.voice.channel.id) + '/invites', data=data, headers=headers).json() # Send request to Discord servers
+      
+      embed = discord.Embed(title='Join party game', color=COLOR, description='Click here: https://discord.gg/' + response['code'])
+      await ctx.send(embed=embed)
+
+    else:
+      embed = discord.Embed(title='Error', color=RED, description='Please join a voice channel and try again. Type `.games` to view all possible game types and how to use this command.')
+      await ctx.send(embed=embed)
+
+  else:
+    embed = discord.Embed(title='Party games', color=COLOR, description='Welcome to the party games feature on Discord! You just need to join a voice channel, type **`.game <name>`** and have fun! Replace `<name>` with one of the following game names:\n\n`yt` to watch YouTube together\n`poker` to play Poker Night\n`bio` to play Betrayal.io\n`fio` to play Fishington.io´\n\nHave fun!')
+    await ctx.send(embed=embed)
+
 
 @client.command(name='coronavirus', aliases=['covid', 'covid19', 'corona'], help='Display information about the novel coronavirus.', usage='(<country>)')
 async def coronavirus(ctx, country=''):
@@ -1236,7 +1343,7 @@ async def move(ctx):
     await ctx.send(f':x: **ERROR** Couldn\'t move the voice client to your channel. Please join a voice channel and try again. Error:\n{e}')
     return
 
-@client.command(name='volume')
+@client.command(name='volume', help='Change the voice client volume.', usage='(<percentage>)')
 async def volume(ctx, number=None):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   voice.source = discord.PCMVolumeTransformer(voice.source)
@@ -1244,7 +1351,7 @@ async def volume(ctx, number=None):
   if not number:
     number = voice.source.volume
   else:
-    number = voice.source.volume = float(number)
+    number = voice.source.volume = int(number)*100
   
   embed=discord.Embed(
     title='Voice volume',
@@ -1526,7 +1633,8 @@ async def on_message(message):
             msg_count += 1
     if '@someone' in message.content:
       await message.channel.send(f'Here\'s ***@someone:*** {random.choice(message.guild.members)}')
-  await client.process_commands(message)
+  if message.content.replace('.', ''): 
+    await client.process_commands(message)
   
 try:
   client.run(token)

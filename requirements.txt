@@ -1,23 +1,18 @@
 pytube==10.4.1
 
 gtts
-idna
-yarl
-attrs
 covid
 pillow
 pyyaml
 mojang
 PyNaCl
+pickle
 hypixel
 discord
-aiohttp
-chardet
 urllib3
 pymongo
 mcstatus
 meme_get
-selenium
 dnspython
 multidict
 wikipedia
@@ -27,11 +22,7 @@ discord.py
 googletrans
 markdownify
 skingrabber
-async-timeout
 python-dotenv
-chromedriver-py
 anime-images-api
-typing-extensions
-webdriver-manager
 googlesearch_python
 youtube-search-python
