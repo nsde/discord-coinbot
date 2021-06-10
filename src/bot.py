@@ -398,7 +398,7 @@ async def sourcecode(ctx, name=None):
     embed = discord.Embed(title='Command not found', color=COLOR, description='This command does not exist...')
     await ctx.send(embed=embed)
    
-@client.command(name='commandinfo', aliases=['command', 'commands', 'cmd', 'cmds', 'commandlist', 'help'], help='List all commands.')
+@client.command(name='commandinfo', aliases=['command', 'commands', 'cmd', 'cmds', 'commandlist', 'help'], help='Command info.')
 async def commandinfo(ctx, name=None):
   if name:
     for c in client.commands:
@@ -430,13 +430,37 @@ async def commandinfo(ctx, name=None):
       text += f'`{c.name}` {c.help[:50] if c.help else empty}{"..." if len(c.help) > 50 else empty}\n'
       # text += f'**`{c.name}{space + c.usage if c.usage else empty}`** {c.help if c.help else empty}\n'
 
-    embed = discord.Embed(title='Commands', color=COLOR, description=text)
+    embed = discord.Embed(title='Commands', color=COLOR, description=text, footer='Custom actions are not displayed here!')
     await ctx.send(embed=embed)
+
+@client.command(name='addaction', help='Add a guild-wide event command by replying to a embed with this command.', usage='<name>')
+async def addaction(ctx, name):
+  try:
+    d = pickle.load(open('data/actions.pickle', 'rb'))
+  except FileNotFoundError: # NO IM NOT GONNA SPECIFY A EXCEPTION LMAO
+    d = {}
+  d[ctx.guild.id] = {name: ctx.message.reference.resolved.embeds[0]}
+  f = open('data/actions.pickle', 'wb')
+  pickle.dump(obj=d, file=f)
+
+  embed = discord.Embed(title='Added action', color=COLOR, description='I\'m trying to add this action. Keep in mind to make sure that you mention a embed by replying to it!')
+  await ctx.send(embed=embed)
+
+@client.command(name='action', help='Run an action.', usage='<name>')
+async def action(ctx, name):
+  d = pickle.load(file=open('data/actions.pickle', 'rb'))
+  await ctx.send(f'**Message sent via action `{name}`**', embed=d[ctx.guild.id][name])
+
+@client.command(name='actions', help='List all actions for this server.')
+async def actions(ctx):
+  embed = discord.Embed(title='All actions', color=COLOR, description='\n'.join(pickle.load(file=open('data/actions.pickle', 'rb'))[ctx.guild.id].keys()))
+  await ctx.send(embed=embed)
 
 @client.command(name='dm', aliases=['directmessage'], help='Tries to send you a DM, used to test the DM system.')
 async def dm(ctx):
   embed = discord.Embed(title='DM incoming!', color=COLOR, description='I will try to DM you.\n If it doesn\'t work, try the following:\n**Rightclick this server symbol in the left server bar > Privacy settings > Allow direct messages from server members > ON**')
   await ctx.send(embed=embed)
+
   embed = discord.Embed(title='Good news', color=COLOR, description='Hey, you wanted to DM me! It worked :)')
   await ctx.author.send(embed=embed)
 
@@ -554,12 +578,12 @@ async def translate(ctx, *args):
   to_lang = args[0].lower()
   text = ' '.join(args[1:])
   translator = googletrans.Translator()
+
   try:
     translated = translator.translate(text, dest=to_lang).text
     embed = discord.Embed(title='Google Translator', color=COLOR, description=translated)
-
   except ValueError:
-    embed = discord.Embed(title='Google Translator', color=COLOR, description='Please use a correct language shorcut, e.g. **de** or **en**.')
+    embed = discord.Embed(title='Could not translate', color=RED, description='Please use a correct language shorcut:\n\naf, sq, am, ar, hy, az, eu, be, bn, bs, bg, ca, ceb, ny, zh-cn, zh-tw, co, hr, cs, da, nl, en, eo, et, tl, fi, fr, fy, gl, ka, de, el, gu, ht, ha, haw, iw, he, hi, hmn, hu, is, ig, id, ga, it, ja, jw, kn, kk, km, ko, ku, ky, lo, la, lv, lt, lb, mk, mg, ms, ml, mt, mi, mr, mn, my, ne, no, or, ps, fa, pl, pt, pa, ro, ru, sm, gd, sr, st, sn, sd, si, sk, sl, so, es, su, sw, sv, tg, ta, te, th, tr, uk, ur, ug, uz, vi, cy, xh, yi, yo, zu')
     
   await ctx.send(embed=embed)
 
@@ -1434,7 +1458,7 @@ __Context-Dependent Phrases__
     await ctx.send(discord.Embed(title='Argument error', color=COLOR, description=':x: Type either `.cb info`, `.cb setup` or `.cb phrases`.'))
 
 
-@client.command(name='clear', aliases=['cls'], help='Clears the last x messages from a channel.', usage='<amount>')
+@client.command(name='clear', aliases=['cls', 'purge'], help='Clears the last x messages from a channel.', usage='<amount>')
 @commands.has_permissions(manage_messages=True)
 async def clear(ctx, amount: int):
   if (amount < 1) or (amount > 100):
