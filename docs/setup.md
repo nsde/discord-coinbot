@@ -14,6 +14,8 @@
 
 4. [This is experimental and this may be changed later] Finally, go to https://github.com/BtbN/FFmpeg-Builds/releases download `ffmpeg-n(VERSION)-win64-gpl-(VERSION).zip`, unzip it, and paste `/bin/ffmpeg.exe` to `C:/ffmpeg/ffmpeg.exe`.
 
+5. Before running the `src/bot.py`, make sure to check and update (if neccessary) its constants (about in line 100), this step is optional, but some variables, such as `OWNERS` are recommended to be changed. Read the variable line's comments for more info.
+
 ## ⛔ Fix errors & problems
 ### General ImportErrors
 1. Make sure you are using the exact correct Python version for the program, you can view it at the first step of *Installation*.

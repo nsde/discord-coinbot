@@ -98,12 +98,20 @@ from PIL import Image, ImageFilter #pip install pillow | for image modification 
 print(datetime.datetime.now().strftime('%b %d %H:%M:%S %p %Z') + colorama.Fore.GREEN + 'Done importing.')
 
 '''Constants'''
-VERSION = '0.0.1'
-CWD = os.getcwd().replace('\\', '/')
-if CWD.split('/')[-1] == 'src':
-  CWD = '/'.join(CWD.split('/')[:-1])
+VERSION = '0.6.0' # not used **yet** (but may be later)
+CWD = os.getcwd().replace('\\', '/') # working directory (active directory) for file management (default *should* work fine)
 COLOR = discord.Color(0x0094FF) # color used in command embeds (light blue)
 RED = discord.Color(0xFF0000) # color used in error embeds (red, obviously)
+FFMPEG = 'ffmpeg' # path/executable to the ffmpeg.exe, this is highly experimental!
+OWNERS = '657900196189044736 314090743830675466 414852081401331712' # Discord user IDs of people that have full access to this bot, only enter people you trust! | I didn't use a list because this is easier to read 
+#             onlix              JH220                Benedikt
+
+RAW_OWNERS = OWNERS
+# make a list of ints
+x = []
+for i in OWNERS.split():
+  x.append(int(i))
+OWNERS = x
 
 chatbot_history = ['']
 bot_started_at = datetime.datetime.now()
@@ -118,6 +126,7 @@ except Exception as e:
 finally:
   os.mkdir(temp_path)
 
+# token stuff
 try:
   token = os.getenv('dc')
 except:
@@ -130,6 +139,7 @@ if not token:
 else:
   print(datetime.datetime.now().strftime('%b %d %H:%M:%S %p %Z') + colorama.Fore.GREEN + 'Token loaded. Length: ' + str(len(token)))
 
+# load config
 with open(CWD + '/config/config.yml') as f:
   config = yaml.load(f, Loader=yaml.SafeLoader)
 
@@ -141,7 +151,7 @@ with open(CWD + '/config/config.yml') as f:
   intents = discord.Intents.default()
   intents.members = True
 
-  client = commands.Bot(command_prefix=commands.when_mentioned_or(config['main']['prefix']), intents=intents, help_command=None)
+  client = commands.Bot(command_prefix=commands.when_mentioned_or(config['main']['prefix']), intents=intents, help_command=None) # epic gamer moment right here
 
 def get_db():
   try:
@@ -370,6 +380,22 @@ async def info(ctx):
     return
   await ctx.send(embed=embed)
 
+@client.command(name='terminate', aliases=['shutdown'], help='Stops the bot - ')
+async def terminate(ctx):
+  if ctx.author.id in OWNERS:
+    await ctx.send(embed=discord.Embed(title='Bot stopping', description=f'Stopping the bot...', color=COLOR))
+    await client.close()
+    sys.exit(0)
+  else:
+    # lets have some fun
+    msg = await ctx.send(embed=discord.Embed(title='Bot stopping', description=f'Stopping the bot...', color=COLOR))
+    await asyncio.sleep(3)
+    await msg.edit(embed=discord.Embed(title='Haha, no.', description=f'You have to be a developer of this bot to do this.\nIf you are developing this bot, enter your user ID in `OWNERS = \'{RAW_OWNERS}\'` unter the *CONSTANTS* section.', color=RED))
+
+@client.command(name='developers', aliases=['devs'], help='Displays this bot\'s developers. <3')
+async def developers(ctx):
+  await ctx.send(embed=discord.Embed(title='Bot stopping', description=f'Stopping the bot...', color=COLOR))
+
 @client.command(name='sourcecode', aliases=['sc'], help='Shows the source code of a command', usage='<command-name>')
 async def sourcecode(ctx, name=None):
   if name:
@@ -587,7 +613,7 @@ async def translate(ctx, *args):
     
   await ctx.send(embed=embed)
 
-@client.command(name='partygames', aliases=['game', 'games'], help='Start a social party game.', usage='(<name>)')
+@client.command(name='partygames', aliases=['game', 'games', 'partygame'], help='Start a social party game.', usage='(<name>)')
 async def partygames(ctx, name=None):
   if name:
     if ctx.author.voice:
@@ -613,14 +639,19 @@ async def partygames(ctx, name=None):
           'validate': None
       })
 
+      dotenv.load_dotenv()
+
       headers = { # Headers
           'Authorization': 'Bot ' + os.getenv('DC'),
           'Content-Type': 'application/json'
       } 
 
-      response = requests.post('https://discord.com/api/v8/channels/' + str(ctx.author.voice.channel.id) + '/invites', data=data, headers=headers).json() # Send request to Discord servers
-      
-      embed = discord.Embed(title='Join party game', color=COLOR, description='Click here: https://discord.gg/' + response['code'])
+      try:
+        response = requests.post('https://discord.com/api/v8/channels/' + str(ctx.author.voice.channel.id) + '/invites', data=data, headers=headers).json() # Send request to Discord servers
+        embed = discord.Embed(title='Join party game', color=COLOR, url='https://discord.gg/' + response['code']) 
+      except TypeError:
+        embed = discord.Embed(title='System error', color=RED, description='Sorry, there was a problem. If you are developer: make sure you have `DC=your_Discord_bot_token_here` in `.env`.')
+
       await ctx.send(embed=embed)
 
     else:
@@ -825,9 +856,6 @@ async def w2g(ctx, autoplay_url='https://youtu.be/Lrj2Hq7xqQ8'):
 
 @client.command(name='minecraft', aliases=['mc', 'minecraftinfo', 'mcinfo'], help='Get information about a player or server.', usage='<player|server>')
 async def minecraft(ctx, value):
-  hypixel_key = [open(CWD + '/config/SECRET_hypixel.txt').read()]
-  hypixel.setKeys(hypixel_key) # This sets the API keys that are going to be used.
-  
   value = value.lower()
   uuid = mojang.MojangAPI.get_uuid(value)
 
@@ -878,39 +906,54 @@ async def minecraft(ctx, value):
 
     embed = discord.Embed(
       title=value,
-      color=discord.Color(0x009fff),
+      color=COLOR,
       description=hypixel_stats)
     embed.set_thumbnail(url=skinrendered)
     embed.add_field(name='UUID', value=uuid, inline=False)
+
     await ctx.send(embed=embed)
 
-coins_file = CWD + '/data/coins.txt'
+coins_file = CWD + '/data/coins.pickle'
 
 def getcoins(user_id):
-  db = get_db()
-  coin_db = db['coinsystem']['users']
-  for bal in coin_db.find({'id': user_id}): # I know this seems dumb, but this may actually work lol
-    return bal['coins']
-  return 0
+  try:
+    infile = open(coins_file, 'rb')
+  except:
+    outfile = open(coins_file, 'wb')
+    pickle.dump({}, outfile)
+    outfile.close() # "wHy dOnT yOu jUSt UsE wItH sTaTeMeNt Or Do A OnElInEr" because why debugging when you can just use this LMAO
+    
+    infile = open(coins_file, 'rb')
+
+  data = pickle.load(infile)
+  infile.close()
+
+  try:
+    return data[user_id]
+  except:
+    return 0
 
 def setcoins(user_id, amount):
-  db = get_db()
-  coin_db = db['coinsystem']['users']
-  if not coin_db.find_one({'id': user_id}):
-    coin_db.insert_one({'id': int(user_id), 'coins': int(amount)})
-  else:
-    coin_db.update_one({'id': int(user_id)}, {'$set': {'coins': int(amount)}})
+  infile = open(coins_file, 'rb')
+  data = pickle.load(infile)
+  infile.close()
 
-#@client.command(name='dailycoins', aliases=['dcoins', 'dc', 'dailyrewards'], help='Economy command to get daily coins.')
-#async def dailycoins(ctx):
-  #await ctx.send('Sorry, the coin system is currently under developement. Thanks for your understanding.')
-  # db = get_db()
-  # dailycoins_db = db['coinsystem']['dailycoins']
+  data[user_id] = amount
 
-  # if not dailycoins_db.find_one({'status': 'updated'):
-  #   dailycoins_db.insert_one({'status': int(user_id), 'coins': int(amount)})
-  # else:
-  #   dailycoins_db.update_one({'id': int(user_id)}, {'$set': {'coins': int(amount)}})
+  outfile = open(coins_file, 'wb')
+  pickle.dump(data, outfile)
+  outfile.close()
+
+# @client.command(name='dailycoins', aliases=['dcoins', 'dc', 'dailyrewards'], help='Economy command to get daily coins.')
+# async def dailycoins(ctx):
+#   await ctx.send('Sorry, the coin system is currently under developement. Thanks for your understanding.')
+#   db = get_db()
+#   dailycoins_db = db['coinsystem']['dailycoins']
+
+#   if not dailycoins_db.find_one({'status': 'updated'):
+#     dailycoins_db.insert_one({'status': int(user_id), 'coins': int(amount)})
+#   else:
+#     dailycoins_db.update_one({'id': int(user_id)}, {'$set': {'coins': int(amount)}})
 
 #   if not dailycoins_db.find_one({'id': ctx.message.author.id}):
 #     amount = random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])
@@ -929,18 +972,42 @@ def setcoins(user_id, amount):
 #     print(dailycoins_db.find_one({'id': ctx.message.author.id}))
 #     await ctx.send('https://youtu.be/RC8ksHG6FhQ')
 
-# @client.command(name='balance', aliases=['bal'], help='Get a user\'s account balance.')
-# async def balance(ctx, user:discord.Member=None):
-#   if not user:
-#     user = ctx.author
+@client.command(name='beg', help='Beg for money.')
+async def beg(ctx):
+  if getcoins(ctx.author.id) < 1000:
+    amount = random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max']) // 10
 
-#   embed = discord.Embed(
-#     title=f'Account balance of {user}',
-#     Color=discord.Color(0xdb9d20),
-#     description=f'{getcoins(user.id)} {config["currency"]["symbols"]["currency_normal"]}'
-#   )
+    setcoins(ctx.author.id, getcoins(ctx.author.id) + amount)
 
-#   await ctx.send(embed=embed)
+    embed = discord.Embed(
+      title=f'Beggar...',
+      color=COLOR,
+      description=f'Ok, here are your {amount} {config["currency"]["symbols"]["currency_normal"]}...'
+    )
+
+    await ctx.send(embed=embed)
+
+  else:
+    embed = discord.Embed(
+      title=f'You\'re already rich...',
+      color=RED,
+      description=f'¯\_(ツ)_/¯'
+    )
+
+    await ctx.send(embed=embed)    
+
+@client.command(name='balance', aliases=['bal'], help='Get a user\'s account balance.')
+async def balance(ctx, user:discord.Member=None):
+  if not user:
+    user = ctx.author
+
+  embed = discord.Embed(
+    title=f'Account balance of {user}',
+    color=COLOR,
+    description=f'{getcoins(user.id)} {config["currency"]["symbols"]["currency_normal"]}'
+  )
+
+  await ctx.send(embed=embed)
 
 @client.command(name='meme', help='Shows a random meme. Specify "load count" to a high number to get more unique memes.', usage='(<load_count>)')
 async def meme(ctx, load_count=None):
@@ -994,43 +1061,47 @@ async def image(ctx, style, user:discord.Member=None):
 async def sendembed(ctx, *args):
   args = ' '.join(args)
   if not args.strip():
-    await ctx.send('**Example embed:**\nhttps://i.ibb.co/JRp48Z8/image.png')
+    await ctx.send(embed=discord.Embed(title='How to use the embed command', description='Create a embed using the following attributes:\n\n***title** (Embed title), **text** (The embed description text), **color** (As an integer/number), **content** (The message text, not the embed\'s one), **time** (Can be anything, even in other languages, it will get parsed), **url** (The website the embed title links to), **icon** (The embed icon URL.) **footer** (The footer text)* \n\nExample: **`.embed title<I\'m the embed\'s title!> text<I\'m the embed text.> footer<I\'m at the bottom of the embed.> content<I\'m the non-embed text.>`**', color=COLOR))
     return
 
   try:
-    title = args.split('title(')[1].split(')')[0]
+    title = args.split('title<')[1].split('>')[0]
   except:
-    title = None
+    title = '᲼᲼᲼᲼᲼᲼'
   try:
-    description = args.split('description(')[1].split(')')[0]
+    description = args.split('text<')[1].split('>')[0]
   except:
-    description = None
+    description = '᲼᲼᲼᲼᲼᲼'
   try:
-    color = int(args.split('color(')[1].split(')')[0])
+    color = int(args.split('color<')[1].split('>')[0])
   except:
-    color = 0x20b1d5
+    color = COLOR.value
   try:
-    content = args.split('content(')[1].split(')')[0]
+    content = args.split('content<')[1].split('>')[0]
   except:
     content = None
   try:
-    timestamp = dateparser.parse((args.split('timestamp(')[1].split(')')[0]))
+    timestamp = dateparser.parse((args.split('time<')[1].split('>')[0]))
   except:
     timestamp = datetime.datetime.now()
   try:
-    url = args.split('url(')[1].split(')')[0]
+    url = args.split('url<')[1].split('>')[0]
   except:
     url = None
   try:
-    thumbnail = args.split('thumbnail(')[1].split(')')[0]
+    thumbnail = args.split('icon<')[1].split('>')[0]
   except:
     thumbnail = None
   try:
-    footer = args.split('footer(')[1].split(')')[0]
+    footer = args.split('footer<')[1].split('>')[0]
   except:
     footer = None
 
-  embed = discord.Embed(title=title, url=url, description=description, color=discord.Color(color), timestamp=timestamp)
+  if url:
+    embed = discord.Embed(title=title, url=url, description=description, color=discord.Color(color), timestamp=timestamp)
+  else:
+    embed = discord.Embed(title=title, description=description, color=discord.Color(color), timestamp=timestamp)
+  
   if thumbnail:
     embed.set_thumbnail(url=thumbnail)
   if footer:
@@ -1090,7 +1161,7 @@ async def texttospeech(ctx, *args):
     pass
 
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
-  voice.play(discord.FFmpegPCMAudio(executable='ffmepg', source=f'{CWD}/temp/tts.mp3'), options='-loglevel panic')
+  voice.play(discord.FFmpegPCMAudio(executable=FFMPEG, source=f'{CWD}/temp/tts.mp3'), options='-loglevel panic')
   voice.source = discord.PCMVolumeTransformer(voice.source)
 
 globals()['tempchannel_users'] = []
@@ -1336,7 +1407,7 @@ async def playsong(ctx, *args):
         
     # filepath = temp_path + '/' + filename + '.' + filetype
 
-    voice.play(discord.FFmpegPCMAudio(options='-loglevel panic', executable='ffmepg', source=filepath))
+    voice.play(discord.FFmpegPCMAudio(options='-loglevel panic', executable=FFMPEG, source=filepath))
     voice.source = discord.PCMVolumeTransformer(voice.source)
 
   except Exception as e:
@@ -1551,7 +1622,7 @@ async def on_message(message):
         return
       elif message.content.startswith('.support '):
           text = ' '.join(message.content.split()[1:])
-          support_users = [657900196189044736] # Supporter IDs that can help the users
+          support_users = OWNERS # Supporter IDs that can help the users
           if not message.author.id in support_users: # So supporters don't get spammed by their own messages lmao
             for user_id in support_users:
               user = await client.fetch_user(user_id)
@@ -1569,9 +1640,9 @@ async def on_message(message):
 
         await channel.trigger_typing()
         await asyncio.sleep(2.5)
-        await channel.trigger_typing() 
         await channel.send('But you can write me for help & support!')
 
+        await channel.trigger_typing()
         await asyncio.sleep(2)
         await channel.send('Don\'t worry, the messages will be redirected to a human ;)')
 
