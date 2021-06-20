@@ -1,5 +1,3 @@
-testing_mode = False
-
 '''A Discord-Bot written in Python with features like coin/economy system, music, memes, temporary channels, server-bridge, general moderation utilities and more!'''
 
 import os
@@ -10,6 +8,7 @@ except ImportError:
   import colorama
 colorama.init(autoreset=True)
 print(colorama.Fore.MAGENTA)
+
 
 # This import thingy is really, really important for requests things, see https://github.com/gevent/gevent/issues/1235
 import gevent.monkey
@@ -98,13 +97,15 @@ from PIL import Image, ImageFilter #pip install pillow | for image modification 
 print(datetime.datetime.now().strftime('%b %d %H:%M:%S %p %Z') + colorama.Fore.GREEN + 'Done importing.')
 
 '''Constants'''
+testing_mode = socket.gethostname() == 'RTX3090'
+
 VERSION = '0.6.0' # not used **yet** (but may be later)
 CWD = os.getcwd().replace('\\', '/') # working directory (active directory) for file management (default *should* work fine)
 COLOR = discord.Color(0x0094FF) # color used in command embeds (light blue)
 RED = discord.Color(0xFF0000) # color used in error embeds (red, obviously)
 FFMPEG = 'ffmpeg' # path/executable to the ffmpeg.exe, this is highly experimental!
-OWNERS = '657900196189044736 314090743830675466 414852081401331712' # Discord user IDs of people that have full access to this bot, only enter people you trust! | I didn't use a list because this is easier to read 
-#             onlix              JH220                Benedikt
+OWNERS = '657900196189044736 314090743830675466 414852081401331712 743068723245482084' # Discord user IDs of people that have full access to this bot, only enter people you trust! | I didn't use a list because this is easier to read 
+#             onlix              JH220                Benedikt     onlix Alt Account
 
 RAW_OWNERS = OWNERS
 # make a list of ints
@@ -147,8 +148,8 @@ with open(CWD + '/config/config.yml') as f:
     '''Fix wrong coding of äüö (German language only)'''
     return x.replace('Ã¤','ä').replace('Ã¶','ö').replace('Ã¼', 'ü')
 
-  # intents = discord.Intents().all()
-  intents = discord.Intents.default()
+  # intents = discord.Intents().default()
+  intents = discord.Intents.all() # make the bot able to get full member information
   intents.members = True
 
   client = commands.Bot(command_prefix=commands.when_mentioned_or(config['main']['prefix']), intents=intents, help_command=None) # epic gamer moment right here
@@ -180,6 +181,26 @@ async def on_ready():
 @client.event
 async def on_disconnect():
   print(datetime.datetime.now().strftime('%b %d %H:%M:%S %p %Z') + f'{colorama.Fore.YELLOW}Disconnected.')
+
+async def tensecondloop():
+  await client.wait_until_ready()
+
+  while not client.is_closed():
+    for guild in client.guilds:
+      for channel in guild.channels:
+        if channel.name.endswith(' members online') and channel.name.startswith('✨'):
+          members_online = 0
+          members_count = 0
+          for member in guild.members:
+            if not member.bot:
+              members_count += 1
+              if not str(member.status.name) == 'offline':
+                members_online += 1
+
+          await channel.edit(name=f'✨ {members_online}/{members_count} members online')
+    await asyncio.sleep(10)
+
+client.loop.create_task(tensecondloop())
 
 @client.event
 async def on_reaction_add(reaction, user):
@@ -221,7 +242,10 @@ async def on_member_join(member):
           )
         embed.set_thumbnail(url=member.avatar_url)
         embed.set_footer(text=f'ID: {member.id} ~ Account created: ')
-        await channel.send(f'{member.mention}', embed=embed)
+        try:
+          await channel.send(f'{member.mention}', embed=embed)
+        except:
+          await member.guild.owner.send(embed=embed_error('No permission', f'Hey there, I don\'t have the **permission** to send member **join messages** in {channel.mention} in *{member.guild.name}*. If you don\'t want me to send join messages, delete the text `nv-join` from the channel topic/description.'))
         return
 
 @client.event
@@ -241,7 +265,10 @@ async def on_member_remove(member):
           )
         embed.set_thumbnail(url=member.avatar_url)
         embed.set_footer(text=f'ID: {member.id} ~ Server joined: ')
-        await channel.send(f'{member.mention}', embed=embed)
+        try:
+          await channel.send(f'{member.mention}', embed=embed)
+        except:
+          await member.guild.owner.send(embed=embed_error('No permission', f'Hey there, I don\'t have the **permission** to send member **join messages** in {channel.mention} in *{member.guild.name}*. If you don\'t want me to send join messages, delete the text `nv-leave` from the channel topic/description.'))
         return
 
 @client.event
@@ -250,11 +277,13 @@ async def on_private_channel_create(channel):
 
 @client.event
 async def on_command_error(ctx, error):
-  error_msg = 'Sorry, this may be a programming bug/problem.'
+  error_msg = 'Unknown error.'
   if 'Invalid Form Body' in str(error):
     error_msg = 'Sorry, the message would have been too long.'
+  if 'Command raised an exception' in str(error):
+    error_msg = 'Sorry, this may be a programming bug/problem.'
   if isinstance(error, commands.CommandNotFound):
-    error_msg = 'Sorry, this command does not exist. Use **`.info`** for information.'
+    error_msg = 'Sorry, this command does not exist. Use **`.help`** for a list of commands.'
   if isinstance(error, commands.MissingRequiredArgument):
     error_msg = 'Sorry, please follow the argument syntax.\nYou can use `.help <command>` for information.'
   if isinstance(error, commands.TooManyArguments):
@@ -280,7 +309,7 @@ async def on_command_error(ctx, error):
   if isinstance(error, commands.CheckFailure):
     error_msg = 'Sorry, you don\'t have the permissions for this.'
   if isinstance(error, commands.BadArgument):
-     error_msg = 'Sorry, you gave an invalid agument. Please check if it\'s correct.'
+     error_msg = 'Sorry, you gave an invalid agument. Please check if it\'s correct.\n> **TIP:** To use multiple words as a argument, use "quotation marks"!'
 
   error_msg += '\n```py\n' + str(error) + '\n```'
 
@@ -305,19 +334,31 @@ async def on_voice_state_update(member, before, after):
       if 'nv-invoice' in role.name:
         await member.remove_roles(role)
 
-@client.command(name='stats', help='Get statistics about this bot.')
+def embed_normal(title, text, footer=None):
+  e = discord.Embed(title=title, color=COLOR, description=text)
+  if footer:
+    e.set_footer(text=footer)
+  return e
+
+def embed_error(title, text, footer=None):
+  e = discord.Embed(title=title, color=RED, description=text)
+  if footer:
+    e.set_footer(text=footer)
+  return e
+
+@client.command(name='stats', help='📃Get statistics about this bot.')
 async def stats(ctx):
   embed = discord.Embed(
     title='Thank you so much! <3',
     description='Here are some stats for this instance of the bot:',
-    color=discord.Color(0x0094FF),
+    color=COLOR,
   )
   embed.add_field(name='Servers', value=f'{len(client.guilds)}')
   embed.add_field(name='Members', value=f'{len(client.users)}')
   embed.set_footer(text='💙')
   await ctx.send(embed=embed)
 
-@client.command(name='ping', help='Get statistics about the connection and latency.')
+@client.command(name='ping', help='📃Get statistics about the connection and latency.')
 async def ping(ctx):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
 
@@ -335,7 +376,7 @@ async def ping(ctx):
   embed.set_footer(text='Bot started at: ')
   await ctx.send(embed=embed)
 
-@client.command(name='info', help='Information, useful commands & links for this bot.')
+@client.command(name='info', help='📃Information, useful commands & links for this bot.')
 async def info(ctx):
   url = 'https://github.com/nsde/neovision'
   try:
@@ -380,7 +421,24 @@ async def info(ctx):
     return
   await ctx.send(embed=embed)
 
-@client.command(name='terminate', aliases=['shutdown'], help='Stops the bot - ')
+@client.command(name='backup', help='🔒Create back-ups for important bot files (developer only).', usage='<(relative or not relative) file path>', hidden=True)
+async def backup(ctx, path):
+  if ctx.author.id in OWNERS:
+    await ctx.send(embed=discord.Embed(title='Sent via DM', description=f'I sent you the file(s) via direct message chat.', color=COLOR))
+    await ctx.author.send(embed=discord.Embed(title='Backup File', description=f'File should be attached.', color=COLOR), file=discord.File(fp=path))
+  else:
+    await ctx.send(embed=discord.Embed(title='Developer only', description=f'You have to be a developer of this bot to do this.\nIf you are developing this bot, enter your user ID in `OWNERS = \'{RAW_OWNERS}\'` unter the *CONSTANTS* section.'))
+
+@client.command(name='setstatus', help='🔒Sets the bot activity status (developer only)', usage='')
+async def setstatus(ctx, *text):
+  text = ' '.join(text)
+  if ctx.author.id in OWNERS:
+    await ctx.send(embed=embed_normal('Changing status...', f'Changing the bot status...'))
+    await client.change_presence(activity=discord.Game(name=text))
+  else:
+    await ctx.send(embed=embed_error('You are not a developer', f'You have to be a developer of this bot to do this.\nIf you are developing this bot, enter your user ID in `OWNERS = \'{RAW_OWNERS}\'` unter the *CONSTANTS* section.'))
+
+@client.command(name='terminate', aliases=['shutdown'], help='🔒Stops the bot (developer only)', hidden=True)
 async def terminate(ctx):
   if ctx.author.id in OWNERS:
     await ctx.send(embed=discord.Embed(title='Bot stopping', description=f'Stopping the bot...', color=COLOR))
@@ -388,15 +446,19 @@ async def terminate(ctx):
     sys.exit(0)
   else:
     # lets have some fun
-    msg = await ctx.send(embed=discord.Embed(title='Bot stopping', description=f'Stopping the bot...', color=COLOR))
-    await asyncio.sleep(3)
-    await msg.edit(embed=discord.Embed(title='Haha, no.', description=f'You have to be a developer of this bot to do this.\nIf you are developing this bot, enter your user ID in `OWNERS = \'{RAW_OWNERS}\'` unter the *CONSTANTS* section.', color=RED))
+    await ctx.send(embed=discord.Embed(title='Bot could not be stopped', description=f'You have to be a developer of this bot to do this.\nIf you are developing this bot, enter your user ID in `OWNERS = \'{RAW_OWNERS}\'` unter the *CONSTANTS* section.', color=RED))
 
-@client.command(name='developers', aliases=['devs'], help='Displays this bot\'s developers. <3')
+@client.command(name='developers', aliases=['devs'], help='🔒Displays this bot\'s developers. <3')
 async def developers(ctx):
-  await ctx.send(embed=discord.Embed(title='Bot stopping', description=f'Stopping the bot...', color=COLOR))
+  names = []
+  for owner in OWNERS:
+    user = await client.fetch_user(owner)
+    names.append('**' + user.name + '#' + user.discriminator + '** ' + str(user.id))
 
-@client.command(name='sourcecode', aliases=['sc'], help='Shows the source code of a command', usage='<command-name>')
+  joiner = '\n **•** '
+  await ctx.send(embed=discord.Embed(title='Developers of this bot:', description=f'{joiner + joiner.join(names)}', color=COLOR))
+
+@client.command(name='sourcecode', aliases=['sc'], help='🔒Shows the source code of a command', usage='<command-name>')
 async def sourcecode(ctx, name=None):
   if name:
     for c in client.commands:
@@ -424,7 +486,7 @@ async def sourcecode(ctx, name=None):
     embed = discord.Embed(title='Command not found', color=COLOR, description='This command does not exist...')
     await ctx.send(embed=embed)
    
-@client.command(name='commandinfo', aliases=['command', 'commands', 'cmd', 'cmds', 'commandlist', 'help'], help='Command info.')
+@client.command(name='commandinfo', aliases=['command', 'commands', 'help'], help='📃Display info about commands.', usage='(<command name>)')
 async def commandinfo(ctx, name=None):
   if name:
     for c in client.commands:
@@ -433,7 +495,6 @@ async def commandinfo(ctx, name=None):
         **Help:** {c.help if c.help else ' - '}
         **Usage:** {c.usage if c.usage else ' - '}
         **Aliases:** {', '.join(c.aliases) if c.aliases else ' - '}
-        **Cooldown:** {str(c.cooldown_after_parsing)}
         '''
         embed = discord.Embed(title='Command ' + c.name, color=COLOR, description=text)
         await ctx.send(embed=embed)
@@ -444,45 +505,58 @@ async def commandinfo(ctx, name=None):
     await ctx.send(embed=embed)
    
   else:
-    # because I had some f-string problems
-    space = ' '
-    empty = ''
-
-    text = ''
-
     def sortkey(x):
       return x.name
-    for c in sorted(client.commands, key=sortkey):
-      text += f'`{c.name}` {c.help[:50] if c.help else empty}{"..." if len(c.help) > 50 else empty}\n'
-      # text += f'**`{c.name}{space + c.usage if c.usage else empty}`** {c.help if c.help else empty}\n'
+    
+    categories = {'🔊': 'Voice and music', '💲': 'Coins and economy', '📃': 'Information and help', '🔧': 'Tools and uutilities', '🎮': 'Fun and games', '🔒': 'Specials and bot configuration', '🔩': 'Other and misc', '✨': 'New and experimental'}
+    
+    text = ''
+    for category in categories.keys():
+      text += f'\n{category} **{categories[category]}**\n'
+      for command in sorted(client.commands, key=sortkey):
+        if command.help.startswith(category):
+          if command.aliases:
+            text += f'{command.name} *({"/".join(command.aliases)})*\n'
+          else:
+            text += f'{command.name}\n'
+          continue
+        if category == '✨' and command.help[0] not in categories.keys():
+          if command.aliases:
+            text += f'{command.name} *({"/".join(command.aliases)})*\n'
+          else:
+            text += f'{command.name}\n'
+
+      # text += f'`{c.name}` {c.help[:50] if c.help else empty}{"..." if len(c.help) > 50 else empty}\n'
 
     embed = discord.Embed(title='Commands', color=COLOR, description=text, footer='Custom actions are not displayed here!')
+    embed.set_footer(text='Run .help <command> for detailed info on a command')
     await ctx.send(embed=embed)
 
-@client.command(name='addaction', help='Add a guild-wide event command by replying to a embed with this command.', usage='<name>')
+@client.command(name='addaction', help='🔧Add a guild-wide event command by replying to a embed with this command.', usage='<name>')
 async def addaction(ctx, name):
   try:
     d = pickle.load(open('data/actions.pickle', 'rb'))
-  except FileNotFoundError: # NO IM NOT GONNA SPECIFY A EXCEPTION LMAO
+  except FileNotFoundError:
     d = {}
   d[ctx.guild.id] = {name: ctx.message.reference.resolved.embeds[0]}
   f = open('data/actions.pickle', 'wb')
   pickle.dump(obj=d, file=f)
+  f.close()
 
   embed = discord.Embed(title='Added action', color=COLOR, description='I\'m trying to add this action. Keep in mind to make sure that you mention a embed by replying to it!')
   await ctx.send(embed=embed)
 
-@client.command(name='action', help='Run an action.', usage='<name>')
+@client.command(name='action', help='🔧Display an previously saved embed.', usage='<name>')
 async def action(ctx, name):
   d = pickle.load(file=open('data/actions.pickle', 'rb'))
   await ctx.send(f'**Message sent via action `{name}`**', embed=d[ctx.guild.id][name])
 
-@client.command(name='actions', help='List all actions for this server.')
+@client.command(name='actions', help='🔧List all actions for this server.')
 async def actions(ctx):
   embed = discord.Embed(title='All actions', color=COLOR, description='\n'.join(pickle.load(file=open('data/actions.pickle', 'rb'))[ctx.guild.id].keys()))
   await ctx.send(embed=embed)
 
-@client.command(name='dm', aliases=['directmessage'], help='Tries to send you a DM, used to test the DM system.')
+@client.command(name='dm', aliases=['directmessage'], help='🔩Tries to send you a DM, used to test the DM system.')
 async def dm(ctx):
   embed = discord.Embed(title='DM incoming!', color=COLOR, description='I will try to DM you.\n If it doesn\'t work, try the following:\n**Rightclick this server symbol in the left server bar > Privacy settings > Allow direct messages from server members > ON**')
   await ctx.send(embed=embed)
@@ -490,7 +564,7 @@ async def dm(ctx):
   embed = discord.Embed(title='Good news', color=COLOR, description='Hey, you wanted to DM me! It worked :)')
   await ctx.author.send(embed=embed)
 
-@client.command(name='user', aliases=['member', 'userinfo', 'memberinfo'], help='Get information about an member the current server.', usage='<name>')
+@client.command(name='user', aliases=['member', 'userinfo', 'memberinfo'], help='🔧Get information about an member the current server.', usage='<name>')
 async def user(ctx, *args):
   args = list(args)
   if isinstance(args, list):
@@ -557,7 +631,7 @@ async def user(ctx, *args):
   embed.set_thumbnail(url=member.avatar_url)
   await ctx.send(embed=embed)
 
-@client.command(name='calc', aliases=['calculate', 'calculator', 'eval', 'evaluate'], help='A simple calculator tool.')
+@client.command(name='calc', aliases=['calculate', 'calculator', 'eval', 'evaluate'], help='🔧A simple calculator tool.')
 async def calc(ctx, *args):
   expression = ' '.join(args).replace('^', '**').replace('pi', str(round(math.pi, 5)))
   try:
@@ -574,7 +648,7 @@ async def calc(ctx, *args):
     )
   await ctx.send(embed=embed)
 
-@client.command(name='timer', help='Create a timer.', usage='<time> [s|m|h] (<message>)')
+@client.command(name='timer', help='🔧Create a timer.', usage='<time> [s|m|h] (<message>)')
 async def timer(ctx, time, unit, *message):
   if not message:
     message = 'Time\'s up!'
@@ -590,16 +664,16 @@ async def timer(ctx, time, unit, *message):
   elif unit == 'h':
     time *= 3600
   else:
-    await ctx.send(':x: **ERROR**: Invalid unit.\nUnit can be \'s\' for seconds, \'m\' for minutes or \'h\' for hours.')
+    await ctx.send(embed=embed_error('Invalid time', ':x: Invalid time unit.\nUnit can be \'s\' for seconds, \'m\' for minutes or \'h\' for hours.'))
     return
   if time > 10000:
-    await ctx.send(':x: **ERROR**: Timer can\'t be longer than 10000 seconds.')
+    await ctx.send(embed=embed_error('Too long', ':x: Timer can\'t be longer than 10000 seconds.', 'That\'s what she said')) #lmao
     return
-  await ctx.send(f':white_check_mark: Creating a timer for **{oldtime}{unit}** with message \"**{message}**\"...\nYou will get mentioned/pinged.')
+  await ctx.send(embed=embed_normal('Creating timer...', f':white_check_mark: Creating a timer for **{oldtime}{unit}** with message \"**{message}**\"...\nYou will get mentioned/pinged.'))
   await asyncio.sleep(time)
-  await ctx.send(f'{ctx.author.mention} **{message}** (**{oldtime}{unit}** passed.)')
+  await ctx.send(embed=embed_normal('🔔 Time passed', f'{ctx.author.mention} **{message}** (**{oldtime}{unit}** passed.)'))
 
-@client.command(name='translate', aliases=['trans', 'translator'], help='Translate a text!', usage='<to_lang> <text>')
+@client.command(name='translate', aliases=['trans', 'translator'], help='🔧Translate a text!', usage='<to_lang> <text>')
 async def translate(ctx, *args):
   to_lang = args[0].lower()
   text = ' '.join(args[1:])
@@ -613,7 +687,7 @@ async def translate(ctx, *args):
     
   await ctx.send(embed=embed)
 
-@client.command(name='partygames', aliases=['game', 'games', 'partygame'], help='Start a social party game.', usage='(<name>)')
+@client.command(name='partygames', aliases=['game', 'games', 'partygame'], help='🎮Start a social party game.', usage='(<name>)')
 async def partygames(ctx, name=None):
   if name:
     if ctx.author.voice:
@@ -663,9 +737,10 @@ async def partygames(ctx, name=None):
     await ctx.send(embed=embed)
 
 
-@client.command(name='coronavirus', aliases=['covid', 'covid19', 'corona'], help='Display information about the novel coronavirus.', usage='(<country>)')
+@client.command(name='coronavirus', aliases=['covid', 'covid19', 'corona'], help='🔧Display information about the coronavirus.', usage='(<country>)')
 async def coronavirus(ctx, country=''):
-  await ctx.send('🦠 **Fetching coronavirus API data... This might take approx. 4 seconds**', delete_after=4)
+  await ctx.send(embed=embed_normal('Please wait', '🦠 **Fetching coronavirus API data... This may take 3-5 seconds**', delete_after=4))
+
   covid_data = covid.Covid(source='worldometers')
   if country:
     country = country.lower()
@@ -676,7 +751,7 @@ async def coronavirus(ctx, country=''):
       recovered = covid_data.get_status_by_country_name(country)['recovered']
       deaths = covid_data.get_status_by_country_name(country)['deaths']
     except:
-      await ctx.send(':x: Oops! Invalid country name. Example: \'usa\' or \'germany\'')
+      await ctx.send(embed=embed_error('Invalid country', ':x: Oops! Invalid country name. Example: \'usa\' or \'germany\''))
   else:
     embed = discord.Embed(title='Coronavirus Dashboard', color=discord.Color(0xff0000))
 
@@ -694,7 +769,7 @@ async def coronavirus(ctx, country=''):
   
   await ctx.send(embed=embed)
 
-@client.command(name='padlet', help='Get posts from a padlet.com-page.', usage='[<url>|<shortcut>] (<show_the_last_?_posts>)')
+@client.command(name='padlet', help='🔧Get posts from a padlet.com-page.', usage='[<url>|<shortcut>] (<show_the_last_?_posts>)')
 async def getpadlet(ctx, value, posts=10):
   shortcuts = {
     'ha': 'https://padlet.com/onlix/ha',
@@ -710,10 +785,10 @@ async def getpadlet(ctx, value, posts=10):
   try:
     padlet_page = padlet.getpadlet(url, discord=True)
   except:
-    await ctx.send(':x: **ERROR:** Couldn\'t load this Padlet. Please check the URL.')
+    await ctx.send(embed=embed_error('Invalid padlet URL', ':x: **ERROR:** Couldn\'t load this Padlet. Please check the URL.'))
     return
 
-  embed = discord.Embed(title=padlet_page['title'], color=discord.Color(0x009fff), url=url, description=padlet_page['description'], timestamp=padlet_page['last_edit'])
+  embed = discord.Embed(title=padlet_page['title'], color=COLOR, url=url, description=padlet_page['description'], timestamp=padlet_page['last_edit'])
   embed.set_thumbnail(url=padlet_page['icon'])
   embed.set_footer(text='Padlet created by: ' + padlet_page['author'] + ' | Last update: ')
   for post in padlet_page['posts'][-posts:]:
@@ -753,7 +828,23 @@ async def getpadlet(ctx, value, posts=10):
 #   people = ['Marilyn Monroe', 'Abraham Lincoln', 'Nelson Mandela', 'John F. Kennedy', 'Martin Luther King', 'Queen Elizabeth II', 'Winston Churchill', 'Donald Trump', 'Bill Gates', 'Muhammad Ali', 'Mahatma Gandhi', 'Mother Teresa', 'Christopher Columbus', 'Charles Darwin', 'Elvis Presley', 'Albert Einstein', 'Paul McCartney', 'Queen Victoria', 'Pope Francis', 'Jawaharlal Nehru', 'Leonardo da Vinci', 'VincentVan Gogh', 'Franklin D. Roosevelt', 'Pope John Paul II', 'Thomas Edison', 'RosaParks', 'Lyndon Johnson', 'Ludwig Beethoven', 'Oprah Winfrey', 'Indira Gandhi','Eva Peron', 'Benazir Bhutto', 'George Orwell', 'Desmond Tutu', 'Dalai Lama', 'Walt Disney', 'Neil Armstrong', 'Peter Sellers', 'Barack Obama', 'Malcolm X', 'J.K.Rowling', 'Richard Branson', 'Pele', 'Angelina Jolie', 'Jesse Owens', 'John Lennon', 'Henry Ford', 'Haile Selassie', 'Joseph Stalin', 'Lord Baden Powell', 'Michael Jordon', 'George Bush Jnr', 'Vladimir Lenin', 'Ingrid Bergman', 'Fidel Castro', 'Leo Tolstoy', 'Greta Thunberg', 'Pablo Picasso', 'Oscar Wilde', 'Coco Chanel', 'Charles de Gaulle', 'Amelia Earhart', 'John M Keynes', 'Louis Pasteur', 'Mikhail Gorbachev', 'Plato', 'Adolf Hitler', 'Sting', 'Mary Magdalene', 'AlfredHitchcock', 'Michael Jackson', 'Madonna', 'Mata Hari', 'Cleopatra', 'Grace Kelly', 'Steve Jobs', 'Ronald Reagan', 'Lionel Messi', 'Babe Ruth', 'Bob Geldof', 'Eva Peron', 'Benazir Bhutto', 'George Orwell', 'Desmond Tutu', 'Dalai Lama', 'Walt Disney', 'Neil Armstrong', 'Peter Sellers', 'Barack Obama', 'Malcolm X', 'J.K.Rowling', 'Richard Branson', 'Pele', 'Angelina Jolie', 'Jesse Owens', 'John Lennon', 'Henry Ford', 'Haile Selassie', 'Joseph Stalin', 'Lord Baden Powell', 'Michael Jordon', 'George Bush Jnr', 'Vladimir Lenin', 'Ingrid Bergman', 'Fidel Castro', 'Leo Tolstoy', 'Greta Thunberg', 'Pablo Picasso', 'Oscar Wilde', 'Coco Chanel', 'Charles de Gaulle', 'Amelia Earhart', 'John M Keynes', 'Louis Pasteur', 'Mikhail Gorbachev', 'Plato', 'Adolf Hitler', 'Sting', 'Mary Magdalene', 'Alfred Hitchcock', 'Michael Jackson', 'Madonna', 'Mata Hari', 'Cleopatra', 'Grace Kelly', 'Steve Jobs', 'Ronald Reagan', 'Lionel Messi', 'Babe Ruth', 'Bob Geldof', 'Roger Federer', 'Sigmund Freud', 'Woodrow Wilson', 'Mao Zedong', 'Katherine Hepburn', 'Audrey Hepburn', 'David Beckham', 'Tiger Woods', 'Usain Bolt', 'Carl Lewis', 'Prince Charles', 'Jacqueline Kennedy Onassis', 'C.S. Lewis', 'Billie Holiday', 'J.R.R. Tolkien', 'Billie Jean King', 'Margaret Thatcher', 'Anne Frank', 'More famous people', 'YOU', 'Simon Bolivar', 'Marie Antoinette', 'Cristiano Ronaldo', 'Emmeline Pankhurst ', 'Emile Zatopek', 'Lech Walesa', 'Julie Andrews', 'Florence Nightingale', 'Marie Curie', 'Stephen Hawking', 'Tim Berners Lee', 'Aung San Suu Kyi', 'Lance Armstrong', 'Shakira', 'Jon Stewart', 'Wright Brothers  Orville', 'Ernest Hemingway', 'Roman Abramovich', 'Tom Cruise', 'Rupert Murdoch', 'Al Gore', 'Sacha Baron Cohen', 'George Clooney', 'Paul Krugman', 'Jimmy Wales', 'Brad Pitt', 'Kylie Minogue', 'Stephen King']
 #   await last.edit(content=f':sunglasses: Stole **{random.randint(1, 100000)}** :dollar: from {random.choice(people)}')
 
-@client.command(name='randomizer', aliases=['random', 'rd'], help='Random things!', usage='[thing|wiki|item]')
+@client.command(name='permissions', aliases=['perms'], help='🔧Check a user\'s permissions!', usage='(<user>)')
+async def permissions(ctx, user: discord.Member=None):
+  if not user:
+    user = ctx.author
+  
+  text = ''
+  p = user.guild_permissions
+  perms_values = [p.add_reactions, p.administrator, p.attach_files, p.ban_members, p.change_nickname, p.connect, p.create_instant_invite, p.deafen_members, p.embed_links, p.external_emojis, p.kick_members, p.manage_channels, p.manage_emojis, p.manage_guild, p.manage_messages, p.manage_nicknames, p.manage_permissions, p.manage_roles, p.manage_webhooks, p.mention_everyone, p.move_members, p.mute_members, p.priority_speaker, p.read_message_history, p.read_messages, p.send_messages, p.send_tts_messages, p.speak, p.stream, p.use_external_emojis, p.use_voice_activation, p.view_audit_log, p.view_channel, p.view_guild_insights]
+  
+  perms_names = ['add_reactions', 'administrator', 'attach_files', 'ban_members', 'change_nickname', 'connect', 'create_instant_invite', 'deafen_members', 'embed_links', 'external_emojis', 'kick_members', 'manage_channels', 'manage_emojis', 'manage_guild', 'manage_messages', 'manage_nicknames', 'manage_permissions', 'manage_roles', 'manage_webhooks', 'mention_everyone', 'move_members', 'mute_members', 'priority_speaker', 'read_message_history', 'read_messages', 'send_messages', 'send_tts_messages', 'speak', 'stream', 'use_external_emojis', 'use_voice_activation', 'view_audit_log', 'view_channel', 'view_guild_insights']
+  x = 0
+  for perm in perms_names:
+    text += f'{":white_check_mark:" if perms_values[x] else ":x:"} `{perm}`\n'
+    x += 1
+  await ctx.send(embed=embed_normal(f'Permissions for {user.name}#{user.discriminator}', text))
+
+@client.command(name='randomizer', aliases=['random', 'rd'], help='🎮Random things!', usage='[thing|wiki|item]')
 async def randomizer(ctx, *args):
   random_type = args[0]
 
@@ -790,7 +881,7 @@ async def randomizer(ctx, *args):
     footer = 'Thanks to Wikipedia and its contributors!'
     pass
   else:
-    await ctx.send(':x: **ERROR:** This is not a valid random thing type. Use `.help randomizer` for usage help.')
+    await ctx.send(embed=embed_error('Invalid type', ':x: This is not a valid random thing type. Use `.help randomizer` for usage help.'))
     return
 
   embed = discord.Embed(title=title, Color=discord.Color(0x009fff), description=info, url=url, )
@@ -848,13 +939,11 @@ async def randomizer(ctx, *args):
 #     *For help on how to setup a counting channel, see the wiki on the GitHub page.*
 #     ''')
 
-@client.command(name='w2g', aliases=['watchtogether', 'watch2gether'], help='Create a WatchToGether room to watch a online video together with friends.', usage='(<video_to_play_after_room_create_url>)')
-async def w2g(ctx, autoplay_url='https://youtu.be/Lrj2Hq7xqQ8'):
-  w2g_api_key = get_w2g_apikey()
-  room_id = requests.post('https://w2g.tv/rooms/create.json', params={'w2g_api_key': w2g_api_key, 'share': autoplay_url, 'bg_color': '#5f8ac2', 'bg_opacity': '10'}).json()['streamkey']
-  await ctx.send('https://w2g.tv/rooms/' + room_id)
+@client.command(name='w2g', aliases=['watchtogether', 'watch2gether'], help='🎮Create a WatchToGether room to watch a online video together with friends.', usage='(<video_to_play_after_room_create_url>)')
+async def w2g(ctx, autoplay_url='https://youtu.be/Lrj2Hq7xqQ8', color='#5f8ac2', transparency='10'): # sexy one-liner
+  await ctx.send(embed=embed_normal('W2G Room', 'https://w2g.tv/rooms/' + requests.post('https://w2g.tv/rooms/create.json', params={'w2g_api_key': get_w2g_apikey(), 'share': autoplay_url, 'bg_color': color, 'bg_opacity': transparency}).json()['streamkey']))
 
-@client.command(name='minecraft', aliases=['mc', 'minecraftinfo', 'mcinfo'], help='Get information about a player or server.', usage='<player|server>')
+@client.command(name='minecraft', aliases=['mc', 'minecraftinfo', 'mcinfo'], help='🎮Get information about a player or server.', usage='<player|server>')
 async def minecraft(ctx, value):
   value = value.lower()
   uuid = mojang.MojangAPI.get_uuid(value)
@@ -863,8 +952,8 @@ async def minecraft(ctx, value):
     server = mcstatus.MinecraftServer.lookup(f'{value}')
     try:
       status = server.status()
-    except:
-      await ctx.send(':x: **ERROR:** Invalid user/server.')
+    except Exception as e:
+      await ctx.send(embed=embed_error('Could not load data', ':x: Invalid user/server.', e))
       return
 
     color = discord.Color(0x009fff)
@@ -893,7 +982,7 @@ async def minecraft(ctx, value):
       drop = 'Not dropping.'
     else:
       drop = drop - time.time()
-      drop = f'Dropping in: {drop} Seconds'
+      drop = f'Dropping in: {drop} seconds'
 
     player = hypixel.Player(value)
 
@@ -913,71 +1002,124 @@ async def minecraft(ctx, value):
 
     await ctx.send(embed=embed)
 
-coins_file = CWD + '/data/coins.pickle'
-
-def getcoins(user_id):
+def get_data(path, key=None):
   try:
-    infile = open(coins_file, 'rb')
+    infile = open(path, 'rb')
   except:
-    outfile = open(coins_file, 'wb')
+    outfile = open(path, 'wb')
     pickle.dump({}, outfile)
-    outfile.close() # "wHy dOnT yOu jUSt UsE wItH sTaTeMeNt Or Do A OnElInEr" because why debugging when you can just use this LMAO
+    outfile.close()
     
-    infile = open(coins_file, 'rb')
+    infile = open(path, 'rb')
 
   data = pickle.load(infile)
   infile.close()
 
-  try:
-    return data[user_id]
-  except:
-    return 0
+  if key:
+    try:
+      return data[key]
+    except:
+      return None
+  else:
+    return data
 
-def setcoins(user_id, amount):
-  infile = open(coins_file, 'rb')
+def set_data(path, value, key=None):
+  infile = open(path, 'rb')
   data = pickle.load(infile)
   infile.close()
 
-  data[user_id] = amount
+  if key:
+    data[key] = value
+  else:
+    data = value
 
-  outfile = open(coins_file, 'wb')
+  outfile = open(path, 'wb')
   pickle.dump(data, outfile)
   outfile.close()
 
-# @client.command(name='dailycoins', aliases=['dcoins', 'dc', 'dailyrewards'], help='Economy command to get daily coins.')
+  return value
+
+coins_file = CWD + '/data/coins.pickle'
+
+def get_coins(user_id):
+  d = get_data(path=coins_file, key=user_id)
+  if not d:
+    return 0
+  return d 
+
+def set_coins(user_id, amount):
+  return set_data(path=coins_file, key=user_id, value=amount)
+
+def change_coins(user_id, change): # same as set_coins, but RELATIVE
+  return set_coins(user_id, get_coins(user_id) + change)
+
+def in_inventory(user_id, item):
+  try:
+    get_data('data/inventories.pickle')[user_id][item]
+    return True
+  except:
+    return False
+
+# @client.command(name='dailycoins', aliases=['dc', 'dailyrewards'], help='💲Economy command to get daily coins.')
 # async def dailycoins(ctx):
-#   await ctx.send('Sorry, the coin system is currently under developement. Thanks for your understanding.')
-#   db = get_db()
-#   dailycoins_db = db['coinsystem']['dailycoins']
-
-#   if not dailycoins_db.find_one({'status': 'updated'):
-#     dailycoins_db.insert_one({'status': int(user_id), 'coins': int(amount)})
-#   else:
-#     dailycoins_db.update_one({'id': int(user_id)}, {'$set': {'coins': int(amount)}})
-
 #   if not dailycoins_db.find_one({'id': ctx.message.author.id}):
 #     amount = random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max'])
 
 #     embed = discord.Embed(
 #       title='DailyCoins',
-#       Color=discord.Color(0xdb9d20),
+#       color=COLOR,
 #       description='**Here, enjoy your daily coins!**\n> +' + str(amount) + ' ' + config['currency']['symbols']['currency_normal']
 #     )
 
 #     await ctx.send(embed=embed)
 
-#     dailycoins_db.insert_one({'id': int(ctx.author.id)})
-#     setcoins(ctx.author.id, getcoins(ctx.author.id) + amount)
+#     set_coins(ctx.author.id, get_coins(ctx.author.id) + amount)
 #   else:
-#     print(dailycoins_db.find_one({'id': ctx.message.author.id}))
-#     await ctx.send('https://youtu.be/RC8ksHG6FhQ')
+#     await ctx.send(embed=embed_error('Please wait', 'This command has a timeout of 24 hours.'))
 
-@client.command(name='beg', help='Beg for money.')
+shop_items = {
+  'pizza': {
+    'name': 'Pizza',
+    'price': 10,
+    'description': 'Tasty, but just for fun.',
+    'icon': ':pizza:',
+    'combinable': True
+    },
+  'clover': { 
+    'name': 'Four-leaf Clover',
+    'price': 100,
+    'description': 'Get 3x luckier when begging for money.',
+    'icon': ':four_leaf_clover:',
+    'combinable': False
+    },
+  'camo': {
+    'name': 'Camouflage Clothing',
+    'price': 500,
+    'description': 'Get a 2x higher chance not getting caught when robbing someone.',
+    'icon': ':shirt:',
+    'combinable': False
+    },
+  'cam': {
+    'name': 'Security camera',
+    'price': 1000,
+    'description': 'Get a 2x higher chance for not getting robbed successfully.',
+    'icon': ':camera_with_flash:',
+    'combinable': True
+  }
+}
+
+@client.command(name='beg', help='💲Beg for money.')
+@commands.cooldown(1, 10.0, commands.BucketType.user)
 async def beg(ctx):
-  if getcoins(ctx.author.id) < 1000:
-    amount = random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max']) // 10
+  if get_coins(ctx.author.id) < 1000:
+    division = 20
+    if in_inventory(ctx.author.id, 'clover'): # has luck 
+      division = 20/3 # gets more money
 
-    setcoins(ctx.author.id, getcoins(ctx.author.id) + amount)
+    amount = random.randint(config['currency']['rarity_normal']['min'], config['currency']['rarity_normal']['max']) // division
+    amount = int(amount)
+
+    set_coins(ctx.author.id, get_coins(ctx.author.id) + amount)
 
     embed = discord.Embed(
       title=f'Beggar...',
@@ -996,7 +1138,7 @@ async def beg(ctx):
 
     await ctx.send(embed=embed)    
 
-@client.command(name='balance', aliases=['bal'], help='Get a user\'s account balance.')
+@client.command(name='balance', aliases=['bal'], help='💲Get a user\'s account balance.')
 async def balance(ctx, user:discord.Member=None):
   if not user:
     user = ctx.author
@@ -1004,13 +1146,225 @@ async def balance(ctx, user:discord.Member=None):
   embed = discord.Embed(
     title=f'Account balance of {user}',
     color=COLOR,
-    description=f'{getcoins(user.id)} {config["currency"]["symbols"]["currency_normal"]}'
+    description=f'{get_coins(user.id)} {config["currency"]["symbols"]["currency_normal"]}'
   )
 
   await ctx.send(embed=embed)
 
-@client.command(name='meme', help='Shows a random meme. Specify "load count" to a high number to get more unique memes.', usage='(<load_count>)')
-async def meme(ctx, load_count=None):
+@client.command(name='steal', aliases=['rob'], help='💲Steal a user\'s coins.')
+@commands.cooldown(1, 60.0, commands.BucketType.user)
+async def steal(ctx, user:discord.Member):
+  if user == ctx.author:
+    # user tries robbing themselves
+    embed = discord.Embed(
+      title=f'Wait-',
+      color=RED,
+      description=f'Did you just try to steal money from yourself?!'
+    )        
+
+    await ctx.send(embed=embed)
+    return
+
+  if get_coins(user.id) > 1000:
+    max_number = 1
+    if in_inventory(ctx.author.id, 'camo'): # has more luck 
+      max_number = 3
+    try:
+      max_number -= get_data('data/inventories.pickle', user)['cam']['amount']
+    except: # SpEcIfY a eXcEpTiOn NO! I dont care
+      pass
+
+    if random.randint(0, max_number) <= 0:
+      if get_coins(ctx.author.id) > 1000:
+        set_coins(ctx.author.id, get_coins(ctx.author.id) - 1000)
+        set_coins(user.id, get_coins(user.id) + 1000)
+        
+        embed = discord.Embed(
+          title=f'You got caught robbing {user.name}',
+          color=RED,
+          description=f'You paid **{user.name}** 1000 {config["currency"]["symbols"]["currency_normal"]}'
+        )
+      else:
+        set_coins(user.id, get_coins(user.id) + get_coins(ctx.author.id))
+        set_coins(ctx.author.id, 0)
+
+        embed = discord.Embed(
+          title=f'You got caught robbing {user.name}',
+          color=RED,
+          description=f'You paid **{user.name}** {get_coins(ctx.author.id)} {config["currency"]["symbols"]["currency_normal"]}'
+        )        
+
+      await ctx.send(embed=embed)
+    else:
+      amount = random.randint(50, 200)
+      set_coins(ctx.author.id, get_coins(ctx.author.id) + amount)
+      set_coins(user.id, get_coins(user.id) - amount)
+
+      embed = discord.Embed(
+        title=f'You robbed {user.name}',
+        color=COLOR,
+        description=f'You stole {amount} {config["currency"]["symbols"]["currency_normal"]}.'
+      )
+
+      await ctx.send(embed=embed)
+  else:
+    embed = discord.Embed(
+      title=f'You can\'t rob {user.name}',
+      color=RED,
+      description=f'**{user.name}** is too poor. You can only rob people with **1000+ coins!**'
+    )
+
+    await ctx.send(embed=embed)    
+
+@client.command(name='giftcoins', aliases=['gift', 'give'], help='💲Gift coins to someone.', usage='<user> <coins>')
+async def giftcoins(ctx, user: discord.Member, amount: int):
+  if user == ctx.author:
+    # user tries robbing themselves
+    embed = discord.Embed(
+      title=f'Wait-',
+      color=RED,
+      description=f'Why should you gift money to yourself? lol'
+    )        
+
+    await ctx.send(embed=embed)
+    return
+
+  if amount < 1:
+    embed = discord.Embed(
+      title=f'Invalid amount',
+      color=RED,
+      description=f'Please check the amount of coins you want to send.'
+    )
+
+    await ctx.send(embed=embed)    
+  else:
+    if get_coins(ctx.author.id) > 1000:
+      if amount > get_coins(ctx.author.id):
+        embed = discord.Embed(
+          title=f'Invalid amount',
+          color=RED,
+          description=f'Please check the amount of coins you want to send.'
+        )
+
+        await ctx.send(embed=embed)
+      else:
+        set_coins(ctx.author.id, get_coins(ctx.author.id) - amount)
+        set_coins(user.id, get_coins(user.id) + amount)
+
+        embed = discord.Embed(
+          title=f'Successful money transfer',
+          color=COLOR,
+          description=f'You gave {user.mention} **{amount}** coins.'
+        )
+
+        await ctx.send(embed=embed)        
+
+    else:
+      embed = discord.Embed(
+        title=f'You need more coins',
+        color=RED,
+        description=f'You can only do that if you have 1000+ coins.'
+      )
+
+      await ctx.send(embed=embed)   
+
+@client.command(name='leaderboard', aliases=['richest'], help='💲Displays the leaderboard for the richest users of the coins system.')
+async def leaderboard(ctx):
+  try:
+    infile = open(coins_file, 'rb')
+  except:
+    outfile = open(coins_file, 'wb')
+    pickle.dump({}, outfile)
+    outfile.close() # "wHy dOnT yOu jUSt UsE wItH sTaTeMeNt Or Do A OnElInEr" because why debugging when you can just use this LMAO
+    
+    infile = open(coins_file, 'rb')
+
+  data = pickle.load(infile)
+  infile.close()
+
+  def sortrich(x):
+    return get_coins(x)
+
+  richest = list(data.keys())[:10]
+  richest.sort(key=sortrich, reverse=True)
+
+  text = ''
+  num = 1
+  for rich in richest:
+    user = await client.fetch_user(rich)
+    text += f'**{num}.** {user.name}#{user.discriminator} ({get_coins(rich)} {config["currency"]["symbols"]["currency_normal"]})' + '\n'
+    num += 1
+
+  embed = discord.Embed(
+    title=f'Leaderboard',
+    color=COLOR,
+    description=text
+  )
+
+  await ctx.send(embed=embed)   
+
+
+@client.command(name='shop', aliases=['buy', 'purchase', 'store'], help='💲Buy various items for the economy system', usage='(<item> (<amount>))')
+async def shop(ctx, item=None, amount: int=1):
+  if not item:
+    text = ''
+    for item in shop_items.keys():
+      text += f'{shop_items[item]["icon"]} **{shop_items[item]["name"]}** (`{item}`): **{shop_items[item]["price"]}** {config["currency"]["symbols"]["currency_normal"]} Combinable: *{shop_items[item]["combinable"]}*\n> {shop_items[item]["description"]}\n\n'
+
+    await ctx.send(embed=embed_normal('Economy Shop', text, 'Use .buy <item_id> to purchase an item.'))
+
+  else:
+    if not item in shop_items.keys():
+      await ctx.send(embed=embed_normal('Item not found', 'Make sure you enter the **item ID** (e.g. \'cam\') **not name**. The item ID is the text in (brackets).', 'Use .shop to view the shop items.'))
+      return
+
+    user = ctx.author.id
+
+    total = shop_items[item]["price"]*amount
+    if get_coins(user) >= total:
+      change_coins(user, total*-1)
+      try:
+        d = get_data('data/inventories.pickle') 
+      except: # SpEcIfY a eXcEpTiOn NO! I dont care
+        d = {}
+              
+      try:
+        d[user][item] = {'amount': d[user][item]['amount'] + amount}
+      except: # SpEcIfY a eXcEpTiOn NO! I dont care
+        try:
+          d[user][item] = {'amount': amount}
+        except: # SpEcIfY a eXcEpTiOn NO! I dont care
+          d[user] = {item: {'amount': amount}}
+
+      set_data('data/inventories.pickle', d)
+      await ctx.send(embed=embed_normal('Purchase successful', f'You bought **{shop_items[item]["name"]}** x{amount} for {total} {config["currency"]["symbols"]["currency_normal"]}.'))
+    else:
+      await ctx.send(embed=embed_error('Too expensive', f'You need **{total}** {config["currency"]["symbols"]["currency_normal"]}, which is {total - get_coins(user)} more than you have.'))     
+
+@client.command(name='inventory', aliases=['inv'], help='💲Displays items you own in your inventory.', usage='(<user>)')
+async def inventory(ctx, user: discord.Member=None):
+  if not user:
+    user = ctx.author
+
+  inv = get_data('data/inventories.pickle', user.id)
+  if not inv:
+    text = '*Empty*'
+  else:
+    text = ''
+    for i in inv.keys():
+      text += f'**{shop_items[i]["name"]}**: {inv[i]["amount"]}x\n'
+  await ctx.send(embed=embed_error('Your inventory' if user == ctx.author else 'Inventory of ' + user.name + '#' + user.discriminator, text))
+
+@client.command(name='setcoins', help='🔒Sets a user\'s coins. (developer only)', usage='<amount> (<user>)')
+async def setcoins(ctx, amount: int, user: discord.Member=None):
+  if ctx.author.id in OWNERS:
+    set_coins(user.id if user else ctx.author.id, amount)
+    await ctx.send(embed=embed_normal('Success', 'Stonks 📈'))
+  else:
+    await ctx.send(embed=embed_error('You\'re not a developer', 'Not stonks 📉'))
+
+@client.command(name='meme', help='🎮Shows a random reddit meme. Specify "load count" to a high number to get more unique memes.', usage='(<load_count>)')
+async def meme(ctx, load_count: int=None):
   meme_loader = meme_get.RedditMemes()
   if not load_count:
     load_count = 100
@@ -1023,7 +1377,7 @@ async def meme(ctx, load_count=None):
     caption = ''
   await ctx.send(caption + meme_data._pic_url)
 
-@client.command(name='image', aliases=['picture', 'img', 'pic'], help='Create a funny image of an user (you by default).', usage='<style> (<user>)')
+@client.command(name='image', aliases=['picture', 'img', 'pic'], help='🎮Create a funny image of an user (you by default).', usage='<style> (<user>)')
 async def image(ctx, style, user:discord.Member=None):
   if not user:
     user = ctx.author
@@ -1056,7 +1410,7 @@ async def image(ctx, style, user:discord.Member=None):
 
   await ctx.send(file=discord.File(filepath))
 
-@client.command(name='sendembed', aliases=['embed'], help='Send an embed.', usage='For usage, see the docs.')
+@client.command(name='sendembed', aliases=['embed'], help='🔧Send an embed.', usage='For usage, see the docs.')
 @commands.has_permissions(embed_links=True)
 async def sendembed(ctx, *args):
   args = ' '.join(args)
@@ -1109,7 +1463,7 @@ async def sendembed(ctx, *args):
   
   await ctx.send(content=content, embed=embed)
 
-@client.command(name='animegif', aliases=['anime', 'animepics'], help='Get SFW anime GIFs. For the weebs.', usage='<[hug|wink|pat|cuddle]>')
+@client.command(name='animegif', aliases=['anime', 'animepics'], help='🎮Get SFW anime GIFs. For the weebs.', usage='<[hug|wink|pat|cuddle]>')
 async def animegif(ctx, topic=''):
   anime = anime_images_api.Anime_Images()
   try:
@@ -1122,11 +1476,11 @@ async def animegif(ctx, topic=''):
     await ctx.send(embed=embed)
     return
 
-@client.command(name='texttospeech', aliases=['tts', 'text2speech', 't2s'], help='Reads text in a voice channel.', usage='([en|de|fr]:) <text>')
+@client.command(name='texttospeech', aliases=['tts', 'text2speech', 't2s'], help='🔊Reads text in a voice channel.', usage='([en|de|fr]:) <text>')
 async def texttospeech(ctx, *args):
   text = ' '.join(args)
   if not text:
-    await ctx.send('There is no text...')
+    await ctx.send(embed=embed_error('No text found', ':x: There is no text to say...'))
     return
 
   if args[0] in ['en:', 'de:', 'fr:']:
@@ -1146,13 +1500,13 @@ async def texttospeech(ctx, *args):
   try:
     channel = ctx.author.voice.channel
   except:
-    await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
+    await ctx.send(embed=embed_error('Join a channel', ':x: Please join a voice channel and try again.'))
     return
 
   if ctx.author.voice and ctx.author.voice.channel:
     pass
   else:
-    await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
+    await ctx.send(embed=embed_error('Join a channel', ':x: Please join a voice channel and try again.'))
     return
 
   try:
@@ -1166,7 +1520,7 @@ async def texttospeech(ctx, *args):
 
 globals()['tempchannel_users'] = []
 
-@client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='Creates a temporary channel.', usage='[v|t] <time>(s) (x)')
+@client.command(name='tempcreate', aliases=['tcreate', 'tempc', 'tcc'], help='🔧Creates a temporary channel.', usage='[v|t] <time>(s) (x)')
 async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
   def getChannelName(ctx, timeout):
     return f'⏳│{ctx.message.author.display_name[:13].lower()}-{timeout}'
@@ -1186,15 +1540,15 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
   # ''', delete_after=3)
 
   if not ctype:
-    await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
+    await ctx.send(embed=embed_error('Channel type needed', ':x: No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.'))
     return
 
   if timeout is None and ctype[0] != 'v':
-    await ctx.send(':x: **ERROR:** Only voice channels don\'t need a timeout. Therefore, please give a valid timout argument.')
+    await ctx.send(embed=embed_error('Timeout needed', ':x: Only voice channels don\'t need a timeout. Therefore, please give a valid timout argument.'))
     return
 
   if ctype is None:
-    await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
+    await ctx.send(embed=embed_error('Channel type argument invalid', ':x: No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.'))
     return
 
   if timeout[-1] == 's':
@@ -1204,23 +1558,23 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
     timeout *= 60
 
   if timeout > 600:
-    await ctx.send(':x: **ERROR:** The maximum timeout is 600 seconds (10 minutes).')
+    await ctx.send(embed=embed_error('Timeout too big', ':x: The maximum timeout is 600 seconds (10 minutes).'))
     return
 
   if ctx.author.id in globals()['tempchannel_users']:
-    await ctx.send(':x: **ERROR:** You can\'t create two tempchannels at once.')
+    await ctx.send(embed=embed_error('You can only have one channel', ':x: You can\'t create two tempchannels at once.'))
     return
 
   category = ctx.channel.category
 
   if ctype[0] == 't':
-    await ctx.send(f':white_check_mark: Created text channel ***#{cname}*** with timeout ***{timeout}***.')
+    await ctx.send(embed=embed_normal('Created channel', f':white_check_mark: Created text channel ***#{cname}*** with timeout ***{timeout}***.'))
     
     try:
       channel = await ctx.guild.create_text_channel(cname, category=category)
       globals()['tempchannel_users'].append(ctx.author.id)
     except discord.errors.Forbidden as e:
-      await ctx.send(f':x: **ERROR:** Sorry, I don\'t have the permissions for this. Error:\n{e}')
+      await ctx.send(embed=embed_error('No permission', f'Sorry, I don\'t have the permissions for this. Error:\n`{e}`'))
       return
 
     if afk_timer:
@@ -1258,7 +1612,7 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
       await ctx.send(f':white_check_mark: Created voice channel ***#{cname}*** with timeout ***{timeout}***.')
       globals()['tempchannel_users'].append(ctx.author.id)
     except discord.errors.Forbidden as e:
-      await ctx.send(f':x: **ERROR:** Sorry, I don\'t have the permissions for this. Error:\n{e}')
+      await ctx.send(embed=embed_error('No permission', f':x: **ERROR:** Sorry, I don\'t have the permissions for this. Error:\n{e}'))
       return
 
     if afk_timer:
@@ -1284,11 +1638,11 @@ async def tempchannel(ctx, ctype=None, timeout=None, afk_timer=None):
       user_num += 1
 
   else:
-    await ctx.send(':x: **ERROR:** No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.')
+    await ctx.send(embed=embed_error('Channel type needed', ':x: No channel type argument is given. Channel type can only be `t(ext)` or `v(oice)`.'))
     return
 
 @commands.has_permissions(manage_channels=True)
-@client.command(name='templimit', aliases=['tl', 'ul', 'userlimit'], help='Edits a voice channel\'s user limit. Requires manage channels permission.', usage='<limit>')
+@client.command(name='templimit', aliases=['tl', 'ul', 'userlimit'], help='🔧Edits a voice channel\'s user limit. Requires manage channels permission.', usage='<limit>')
 async def templimit(ctx, limit=None):
   if not limit:
     limit = 0
@@ -1299,24 +1653,23 @@ async def templimit(ctx, limit=None):
   if ctx.author.voice and ctx.author.voice.channel:
     if ctx.message.author.display_name in channel.name:
       await channel.edit(user_limit=limit)
-      await ctx.send(f'''
-        :white_check_mark: New user limit for ***{channel.name}*** is **{limit}**.
-        Keep in mind that users with certain permissions can bypass this restriction.''')
+      await ctx.send(embed=embed_normal('Changed user limit', f''':white_check_mark: New user limit for ***{channel.name}*** is **{limit}**.\nKeep in mind that users with certain permissions can bypass this restriction.'''))
     else:
-      await ctx.send(discord.Embed(title='Error', color=COLOR, description=':x: You can only edit your own temporary channel.'))
+      await ctx.send(embed=discord.Embed(title='Error', color=COLOR, description=':x: You can only edit your own temporary channel.'))
   else:
-    await ctx.send(':x: **ERROR:** Please join a voice channel to change its userlimit and try again.')
+    await ctx.send(embed=embed_error('Join a channel', ':x: Please join a voice channel to change its userlimit and try again.'))
+    await ctx.send(embed=discord.Embed(title='Error', color=COLOR, description=':x: You can only edit your own temporary channel.'))
 
 @commands.has_permissions(connect=True)
-@client.command(name='playsong', aliases=['play', 'psong', 'song', 'music', 'playmusic' 'ps', 'p'], help='Search and play song on YouTube.', usage='<search>')
+@client.command(name='playsong', aliases=['play', 'p'], help='🔊Search and play song on YouTube.', usage='<search>')
 async def playsong(ctx, *args):
   if not args:
-    await  ctx.send(':x: **ERROR** No argument for the search term given.')
+    await  ctx.send(embed=embed_error('Search term needed', ':x: No argument for the search term given.'))
     return    
   try:
     result = ysp.VideosSearch(' '.join(args), limit=1).result()['result'][0]
   except Exception as e:
-    await  ctx.send(f':x: **ERROR** Sorry, I couldn\'t find videos on YouTube with that search term. Error:\n`{e}`')
+    await  ctx.send(embed=embed_error('Nothing found', f':x: Sorry, I couldn\'t find videos on YouTube with that search term. Error:\n`{e}`'))
     return
 
   url = result['link']
@@ -1368,19 +1721,19 @@ async def playsong(ctx, *args):
       if song_there:
           os.remove(CWD + '/temp/' + filename + '.' + filetype)
   except PermissionError:
-      await ctx.send(':x: **ERROR** Wait for the current playing music to end or use the \'stop\' command')
+      await ctx.send(embed=embed_error('Song already playing', ':x: Wait for the current playing music to end or use the \'stop\' command'))
       return
 
   try:
     channel = ctx.author.voice.channel
   except:
-    await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
+    await ctx.send(embed=embed_error('Join a channel', ':x: Please join a voice channel and try again.'))
     return
 
   if ctx.author.voice and ctx.author.voice.channel:
     pass
   else:
-    await ctx.send(':x: **ERROR:** Please join a voice channel and try again.')
+    await ctx.send(embed=embed_error('Join a channel', ':x: Please join a voice channel and try again.'))
     return
   
   try:
@@ -1416,7 +1769,7 @@ async def playsong(ctx, *args):
 
   print('After playing start')
 
-@client.command(name='pausesong', aliases=['pause', 'resume', 'resumesong'], help='Pauses or resumes a song.')
+@client.command(name='pausesong', aliases=['pause', 'resume', 'resumesong'], help='🔊Pauses or resumes a song.')
 async def pause(ctx):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   if voice.is_playing():
@@ -1424,7 +1777,7 @@ async def pause(ctx):
   else:
     voice.resume()
 
-@client.command(name='move', aliases=['connect', 'join', 'voice'], help='Move the voice client to another channel.')
+@client.command(name='move', aliases=['connect', 'join'], help='🔊Move the voice client to another channel.')
 async def move(ctx):
   channel = ctx.author.voice.channel
   try:
@@ -1435,10 +1788,10 @@ async def move(ctx):
     await asyncio.sleep(0.7) # I tried a lot and think that 0.7s is the best delay.
     voice.resume()
   except Exception as e:
-    await ctx.send(f':x: **ERROR** Couldn\'t move the voice client to your channel. Please join a voice channel and try again. Error:\n{e}')
+    await ctx.send(embed=embed_error('Could not move', f':x: Couldn\'t move the voice client to your channel. Please join a voice channel and try again. Error:\n{e}'))
     return
 
-@client.command(name='volume', help='Change the voice client volume.', usage='(<percentage>)')
+@client.command(name='volume', help='🔊Change the voice client volume.', usage='(<percentage>)')
 async def volume(ctx, number=None):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   voice.source = discord.PCMVolumeTransformer(voice.source)
@@ -1455,18 +1808,18 @@ async def volume(ctx, number=None):
   
   await ctx.send(embed=embed)
 
-@client.command(name='stopsong', aliases=['stop', 'skip'], help='Stops a song without leaving.')
+@client.command(name='stopsong', aliases=['stop', 'skip'], help='🔊Stops a song without leaving.')
 async def stopsong(ctx):
   voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
   voice.stop()
 
-@client.command(name='songname', aliases=['musicname', 'sn', 'mn'], help='What song is currently being played?')
+@client.command(name='songname', aliases=['musicname'], help='🔊What song is currently being played?')
 async def songname(ctx):
   embed = globals()['embed']
   try:
-    await ctx.send(f'Currently playing:', embed=embed)
+    await ctx.send(content=f'**Currently playing** (this could also be the last played song):', embed=embed)
   except:
-    await ctx.send('No song is currently playing.')
+    await ctx.send(embed=embed_error('No song active', 'No song is currently playing.'))
  
 chatbot_phrases = {
   'hi': 'Hello! :wink:',
@@ -1492,7 +1845,7 @@ context_phrases = [
 #   'wiki': 'Wikipedia Search'
 # }
 
-@client.command(name='chatbot', aliases=['cb'], help='Get information about the chatbot.', usage='[info|phrases]')
+@client.command(name='chatbot', aliases=['cb'], help='📃Get information about the chatbot.', usage='[info|phrases]')
 async def chatbot(ctx, *args):
   if not args:
     await ctx.send(discord.Embed(title='Argument error', color=COLOR, description=':x: Type either `.cb info`, `.cb setup` or `.cb phrases`.'))
@@ -1529,7 +1882,7 @@ __Context-Dependent Phrases__
     await ctx.send(discord.Embed(title='Argument error', color=COLOR, description=':x: Type either `.cb info`, `.cb setup` or `.cb phrases`.'))
 
 
-@client.command(name='clear', aliases=['cls', 'purge'], help='Clears the last x messages from a channel.', usage='<amount>')
+@client.command(name='clear', aliases=['cls', 'purge'], help='🔧Clears the last x messages from a channel.', usage='<amount>')
 @commands.has_permissions(manage_messages=True)
 async def clear(ctx, amount: int):
   if (amount < 1) or (amount > 100):
@@ -1551,7 +1904,7 @@ async def clear(ctx, amount: int):
   embed.set_footer(text='This message should delete itself after 5 seconds.')
   await ctx.send(embed=embed, delete_after=5)
   
-@client.command(name='anonymbox', aliases=['ab'], help='Information about the AnonymBox-System')
+@client.command(name='anonymbox', aliases=['ab'], help='📃Information about the AnonymBox-System')
 @commands.has_permissions(manage_channels=True)
 async def anonymbox(ctx, action=None):
   if action == 'setup':
@@ -1605,7 +1958,7 @@ async def on_message(message):
                           await textchannel.send(f'**[{message.guild.name}] {message.author}** » {message.content}')
                           return
     else:
-      if message.content.startswith('.anonymbox '):
+      if message.content.startswith('.anonymbox ') or message.content.startswith('.ab '):
         channel_id = message.content.split()[1]
         text = ' '.join(message.content.split()[2:])
         channel = client.get_channel(int(channel_id))
@@ -1613,7 +1966,7 @@ async def on_message(message):
           if name in channel.topic:
                     embed = discord.Embed(
           title=f'AnonymBox Message',
-          color=0x00EB00,
+          color=COLOR,
           description=text,
           timestamp=datetime.datetime.now()
           )
@@ -1632,104 +1985,105 @@ async def on_message(message):
       elif message.content.startswith('.help '):
         await channel.trigger_typing()
         await asyncio.sleep(1)
-        await channel.send('Hello there! :wave:')
+        await channel.send(embed=embed_normal('Information', 'Hello there! :wave:'))
 
         await channel.trigger_typing()
         await asyncio.sleep(1.5)
-        await channel.send('Please keep in mind that commands don\'t work in here.')
+        await channel.send(embed=embed_normal('Information', 'Please keep in mind that commands don\'t work in here.'))
 
         await channel.trigger_typing()
         await asyncio.sleep(2.5)
-        await channel.send('But you can write me for help & support!')
+        await channel.send(embed=embed_normal('Information', 'But you can write me for help & support!'))
 
         await channel.trigger_typing()
         await asyncio.sleep(2)
-        await channel.send('Don\'t worry, the messages will be redirected to a human ;)')
+        await channel.send(embed=embed_normal('Information', 'Don\'t worry, the messages will be redirected to a human ;)'))
 
         await channel.trigger_typing()
         await asyncio.sleep(3)
-        await channel.send('Bye! <3')
+        await channel.send(embed=embed_normal('Information', 'Bye! <3'))
 
-    for chatbot_name in chatbot_names:
-      if message.channel.topic:
-        if chatbot_name in message.channel.topic:
+    if not isinstance(message.channel, discord.DMChannel):
+      for chatbot_name in chatbot_names:
+        if message.channel.topic:
+          if chatbot_name in message.channel.topic:
 
-          response = chatbot_history[-1]
+            response = chatbot_history[-1]
 
-          phrase_num = 0
-          for phrase in context_phrases:
-            if response == phrase[0]:
-              if phrase[1] in message.content.lower():
-                response = phrase[2]
+            phrase_num = 0
+            for phrase in context_phrases:
+              if response == phrase[0]:
+                if phrase[1] in message.content.lower():
+                  response = phrase[2]
+                  await message.channel.send(response)
+                  chatbot_history.append(response)
+                  break
+              phrase_num += 1
+
+            for phrase in chatbot_phrases.keys():
+              if phrase in message.content.lower():
+                response = chatbot_phrases[phrase]
                 await message.channel.send(response)
                 chatbot_history.append(response)
                 break
-            phrase_num += 1
-
-          for phrase in chatbot_phrases.keys():
-            if phrase in message.content.lower():
-              response = chatbot_phrases[phrase]
-              await message.channel.send(response)
-              chatbot_history.append(response)
-              break
-      
-    for counting_name in counting_names:
-      if message.channel.topic:
-        if counting_name in message.channel.topic:
-          msg_count = 0
-          async for h_message in message.channel.history(limit=2):
-            if msg_count == 1:
-              if message.author.id == h_message.author.id:
-                try:
-                  await message.delete()
-                except:
-                  pass
-              try:
-                if int(h_message.content) + 1 != int(message.content):
+        
+      for counting_name in counting_names:
+        if message.channel.topic:
+          if counting_name in message.channel.topic:
+            msg_count = 0
+            async for h_message in message.channel.history(limit=2):
+              if msg_count == 1:
+                if message.author.id == h_message.author.id:
                   try:
                     await message.delete()
                   except:
                     pass
-              except:
                 try:
-                  await message.delete()
+                  if int(h_message.content) + 1 != int(message.content):
+                    try:
+                      await message.delete()
+                    except:
+                      pass
                 except:
-                  pass
-              if 'r1(' in message.channel.topic:
-                if not int(message.content) % 500:
+                  try:
+                    await message.delete()
+                  except:
+                    pass
+                if 'r1(' in message.channel.topic:
+                  if not int(message.content) % 500:
+                    worked = False
+                    try:
+                      reward1_role_id = int(message.channel.topic.split('r1(')[1].split(')')[0])
+                      worked = True
+                    except:
+                      pass
+                    if worked:
+                      role = discord.utils.get(message.author.guild.roles, id=reward1_role_id)
+                      await message.author.add_roles(role)
+                      await message.add_reaction('🎉')
+                      await message.add_reaction('🟡')
+                      return
+                if 'r2(' in message.channel.topic:
                   worked = False
                   try:
-                    reward1_role_id = int(message.channel.topic.split('r1(')[1].split(')')[0])
+                    reward2_role_id = int(message.channel.topic.split('r2(')[1].split(')')[0])
                     worked = True
                   except:
                     pass
                   if worked:
-                    role = discord.utils.get(message.author.guild.roles, id=reward1_role_id)
-                    await message.author.add_roles(role)
-                    await message.add_reaction('🎉')
-                    await message.add_reaction('🟡')
-                    return
-              if 'r2(' in message.channel.topic:
-                worked = False
-                try:
-                  reward2_role_id = int(message.channel.topic.split('r2(')[1].split(')')[0])
-                  worked = True
-                except:
-                  pass
-                if worked:
-                  for i in range(3, 10):
-                    i = int(i*'1')
-                    if int(message.content) % i == 0:
-                      role = discord.utils.get(message.author.guild.roles, id=reward2_role_id)
-                      await message.author.add_roles(role)
-                      await message.add_reaction('🎉')
-                      await message.add_reaction('⚪')
-                      return
-            msg_count += 1
-    if '@someone' in message.content:
-      await message.channel.send(f'Here\'s ***@someone:*** {random.choice(message.guild.members)}')
-  if message.content.replace('.', ''): 
-    await client.process_commands(message)
+                    for i in range(3, 10):
+                      i = int(i*'1')
+                      if int(message.content) % i == 0:
+                        role = discord.utils.get(message.author.guild.roles, id=reward2_role_id)
+                        await message.author.add_roles(role)
+                        await message.add_reaction('🎉')
+                        await message.add_reaction('⚪')
+                        return
+              msg_count += 1
+      if '@someone' == message.content:
+        await message.channel.send(embed=embed_normal('DiScOrD nOw HaS @SoMeOnE', f'Here\'s ***@someone:*** {random.choice(message.guild.members)}', 'Help, I\'ve fallen and I can\'t get up I need @someone'))
+    if message.content.replace('.', ''): 
+      await client.process_commands(message)
   
 try:
   client.run(token)

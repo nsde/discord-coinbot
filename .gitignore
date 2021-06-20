@@ -7,6 +7,7 @@ temp/
 .google-cookie
 .vscode/
 test.py
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
